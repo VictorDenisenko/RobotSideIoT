@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+	<Programm>
+		<Culture>ru-RU</Culture>
+	</Programm>
+	<Port>
+    <!--Serial port parameters -->
+    <PortName>COM8</PortName>
+	</Port>
+	<Robot>
+		<Serial>6X3W-595Q-WN47-IF4I-EF4X</Serial>
+    <Name>white.boteyes</Name>
+    <ModificationName>BotEyes-Basic</ModificationName>
+    <defaultWebSiteAddress>http://boteyes.ru/</defaultWebSiteAddress>
+    <speedTuningParam>-1</speedTuningParam>
+    <!--speed decreasing in pixels to go the robot directly. If the sign is "-", then left wheel goes slower-->
+  </Robot>
+  <RefPointsForInterpolation>
+    <Point10>10</Point10>
+    <Point20>8</Point20>
+    <Point30>6</Point30>
+    <Point40>6</Point40>
+    <Point50>6</Point50>
+    <Point60>6</Point60>
+    <Point70>6</Point70>
+    <Point80>8</Point80>
+    <Point90>14</Point90>
+    <Point100>20</Point100>
+  </RefPointsForInterpolation>
+</Settings>
