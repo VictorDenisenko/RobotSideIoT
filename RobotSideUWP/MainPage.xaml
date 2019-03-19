@@ -135,8 +135,8 @@
                             <TextBlock x:Name="textBlockSpeedTuningParam" Margin="10,0,0,0" TextWrapping="Wrap" Text="SpeedTuningParam" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxWindowsRestart" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="3:00" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlocWindowsRestart" Margin="10,0,0,0" TextWrapping="Wrap" Text="WindowsRestartTime" VerticalAlignment="Center"/>
+                            <TextBox x:Name="textBoxRealVoltage" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="12.5" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
+                            <TextBlock x:Name="textBlocRealVoltage" Margin="10,0,0,0" TextWrapping="Wrap" Text="RealVoltage" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
                         </StackPanel>

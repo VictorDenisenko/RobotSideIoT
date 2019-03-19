@@ -170,6 +170,10 @@ namespace RobotSideUWP
             CommonStruct.DistanceToZero = Convert.ToDouble(localSettings.Values["distanceToZero"]);
 
             CommonStruct.rebootAtNight = Convert.ToBoolean(localSettings.Values["RebootAtNight"]);
+
+            CommonStruct.localizationPoint = Convert.ToDouble(localSettings.Values["localizationAngle"]);
+            CommonStruct.deltaV = Convert.ToDouble(localSettings.Values["deltaV"]);
+            CommonStruct.VReal = Convert.ToDouble(localSettings.Values["VReal"]);
         }
 
         private void InitializeRobot()

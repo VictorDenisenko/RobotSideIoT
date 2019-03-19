@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 using Windows.Devices.Gpio;
 using Windows.System;
 using Windows.UI.Xaml;
+using System.Net.Http;
+using System.Net.Http.Headers;
+
 
 namespace RobotSideUWP
 {
@@ -469,6 +472,7 @@ namespace RobotSideUWP
         {
             try
             {
+
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 ReadWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 CommonStruct.readData = ReadWrite.Read();//В скобках надо писать количество символов в ответе, включая конец строки, иначе будет отвечать только черезх время таймаута
@@ -534,5 +538,7 @@ namespace RobotSideUWP
             {
             }
         }
+
+        
     }
-	}
+}

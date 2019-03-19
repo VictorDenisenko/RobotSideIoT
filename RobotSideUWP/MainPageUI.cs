@@ -424,7 +424,7 @@ namespace RobotSideUWP
                 CommonStruct.itIsTimeToAskVoltage = true;
                 if (CommonStruct.stopBeforeWas == true)
                 {
-                    CommonStruct.numberOfTicksAfterWheelsStop += 1;
+                    CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
                     if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) PlcControl.BatteryVoltageMeasuring();
                     //Я обнуляю этот счетчик в функции Wheels()
                 }

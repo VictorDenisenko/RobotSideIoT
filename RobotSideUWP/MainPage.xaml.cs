@@ -22,6 +22,8 @@ using Windows.UI.Xaml.Media;
 using System.Text;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace RobotSideUWP
 {
@@ -149,6 +151,10 @@ namespace RobotSideUWP
             timerCheckToRestart.Interval = new TimeSpan(0, 30, 0); //Интервал проверки времени перезагрузки Windows (часы, мин, сек)
             timerCheckToRestart.Start();
 
+            //Калибровка измерителя напряжения на аккумуляторе
+            textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
+            textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
+
             InitializeSpeech();
 
             Task.Delay(1000).Wait();
@@ -179,6 +185,13 @@ namespace RobotSideUWP
             client = new MqttClient("localhost");
 
             buttonStart_Click(null, null);
+        }
+
+        private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            CommonStruct.VReal = Convert.ToDouble(textBoxRealVoltage.Text);
+            CommonStruct.textBoxRealVoltageChanged = true;
+            localSettings.Values["VReal"] = CommonStruct.VReal.ToString();
         }
 
         private void SetTimeToRestar_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
@@ -686,6 +699,8 @@ namespace RobotSideUWP
                                 sArr3Before = "0";
                             }
                         }
+
+                    //await SendVoltageLevelToServer();
                     }
                 }
                 else
@@ -706,7 +721,7 @@ namespace RobotSideUWP
         {
         }
 
-        private void Client_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
+        private async void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
         {
             string topic = e.Topic;
             byte[] message = e.Message;
@@ -724,6 +739,54 @@ namespace RobotSideUWP
             {
             }
             Polling();
+
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(async () =>
+            {
+                await SendVoltageLevelToServer();
+            }));
+
+
+            //await SendVoltageLevelToServer();
+        }
+
+        public static async Task SendVoltageLevelToServer()
+        {
+            string ipAddress = CommonStruct.defaultWebSiteAddress;
+            ipAddress = "http://localhost:8080";
+            string chargeLevel = "92%";
+            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel);
+            try
+            {
+                var authData = string.Format("{0}:{1}", "admin", "admin");
+                var authHeaderValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authData));
+
+                using (HttpClient client = new HttpClient())
+                {
+                    client.MaxResponseContentBufferSize = 256000;
+                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authHeaderValue);
+                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Anonymous", authHeaderValue);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("None", authHeaderValue);
+                    HttpContent content = null;
+
+                    using (HttpResponseMessage response = await client.PutAsync(uri, content))
+                    {
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            ipAddress = "StatusCode: " + Convert.ToString(response.StatusCode);
+                        }
+                        if (response.Content != null)
+                        {
+                            string responseBodyAsText;
+                            responseBodyAsText = await response.Content.ReadAsStringAsync();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ipAddress = "StatusCode: " + ex.Message;
+                Current.NotifyUser(ex.Message, NotifyType.ErrorMessage);
+            }
         }
 
         #endregion Base Cycle
@@ -764,7 +827,7 @@ namespace RobotSideUWP
             client.Connect(clientId);//Может S/N вместо этого взять?
             client.Subscribe(new string[] { "190X-7620-35H8-9OW8-DAR4" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
             client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
-            client.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
+            client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
         }
 
         private void buttonStop_Click(object sender, RoutedEventArgs e)
