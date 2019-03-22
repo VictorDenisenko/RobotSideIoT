@@ -230,12 +230,13 @@ namespace RobotSideUWP
                     ReadWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
                     string s = ReadWrite.Read();
                     CommonStruct.stopBeforeWas = true;
-                }
+            }
                 catch(Exception e)
                 {
                     MainPage.Current.NotifyUserFromOtherThread("WheelsStop" + e.Message, NotifyType.StatusMessage);
+                    CommonStruct.stopBeforeWas = true;
                 }
-        }
+            }
 
         public static void WheelsStopSmoothly()
             {
@@ -524,6 +525,7 @@ namespace RobotSideUWP
             }
             catch (Exception e2)
             {
+                MainPage.Current.NotifyUserFromOtherThread("Cannot measure battery voltage. " + e2.Message, NotifyType.StatusMessage);
             }
         }
 

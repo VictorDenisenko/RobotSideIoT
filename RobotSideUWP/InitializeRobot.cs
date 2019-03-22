@@ -346,7 +346,6 @@ namespace RobotSideUWP
             buttonRestart.IsEnabled = isEnabled;
             buttonExit.IsEnabled = isEnabled;
             buttonWiFi.IsEnabled = isEnabled;
-            buttonStopTest.IsEnabled = isEnabled;
             checkRebootAtNight.IsEnabled = isEnabled;
         }
 

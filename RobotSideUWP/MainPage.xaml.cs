@@ -64,7 +64,6 @@ namespace RobotSideUWP
 
     public sealed partial class MainPage : Page
     {
-        private AppServiceConnection VideoService = null;
         public static MainPage Current;
         bool b = false;
         private string forwardDirection = "0";
@@ -74,13 +73,11 @@ namespace RobotSideUWP
         public ApplicationDataContainer localSettings = null;
         private ObservableCollection<DeviceInformation> listOfDevices;
         ReadWrite rw = null;
-        bool stopTest = false;
         public static ThreadPoolTimer DelayTimer;
         public DeviceInformation choosenDevice;
         string aqs = null;
         private ExtendedExecutionSession session = null;
         GpioPin pin26;//Зеленый светодиод
-        GpioPin pin6;
         string OsType = AnalyticsInfo.VersionInfo.DeviceFamily;
 
         DispatcherTimer timerCheckToRestart;
@@ -94,7 +91,28 @@ namespace RobotSideUWP
 
         string address = CommonStruct.defaultWebSiteAddress;
         MqttClient client = null;
-
+        /// /////////////
+        string sArr3Before = "";
+        string directionLeft; //направление вращения левого колеса
+        string directionRight;//направление вращения правого колеса
+        double speedLeft, speedRight, speedLeft0 = 0, speedRight0 = 0;
+        double speedTuningParam = CommonStruct.speedTuningParam;
+        double alpha = 0.0;
+        string wheelsAddress = CommonStruct.wheelsAddress;
+        string cameraAddress = CommonStruct.cameraAddress;
+        int minWheelsSpeedForTurning = CommonStruct.minWheelsSpeedForTurning;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
+        double minSpeed = 100;
+        bool firstEnterInYellowLeft = true;
+        bool firstEnterInYellowRight = true;
+        bool firstEnterInGreenRight = true;
+        bool firstEnterInGreenLeft = true;
+        bool firstEnterInRed = true;
+        
+        bool fromStopToStart = false;
+        string mem2 = "Stop";
+        int counterFromStopToStart = 0;
+        string lastColorArea = "";
+        int minAllowableSpeed = 15;
 
         public MainPage()
         {
@@ -175,14 +193,17 @@ namespace RobotSideUWP
                 pin26 = GpioController.GetDefault().OpenPin(26);
                 pin26.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
 
-                textBoxVideoData.Visibility = Visibility.Collapsed;
-                buttonStopTest.Visibility = Visibility.Collapsed;
                 checkBoxOnlyLocal.Visibility = Visibility.Collapsed;
-                buttonStopTest.Visibility = Visibility.Collapsed;
                 buttonExit.Visibility = Visibility.Collapsed;
             }
 
             client = new MqttClient("localhost");
+            dataFromRobot[0] = CommonStruct.decriptedSerial;
+            dataFromRobot[1] = "";
+            dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
+            directionLeft = backwardDirection; //направление вращения левого колеса
+            directionRight = backwardDirection;//направление вращения правого колеса
+            CommonStruct.wheelsWasStopped = true;
 
             buttonStart_Click(null, null);
         }
@@ -328,31 +349,7 @@ namespace RobotSideUWP
         
         private async void Polling()
         {
-            dataFromRobot[0] = CommonStruct.decriptedSerial;
-            dataFromRobot[1] = "";
-            dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
-            string directionLeft = backwardDirection; //направление вращения левого колеса
-            string directionRight = backwardDirection;//направление вращения правого колеса
-            double speedLeft, speedRight, speedLeft0 = 0, speedRight0 = 0;
-            double speedTuningParam = CommonStruct.speedTuningParam;
-            double alpha = 0.0;
-            string wheelsAddress = CommonStruct.wheelsAddress;
-            string cameraAddress = CommonStruct.cameraAddress;
-            int minWheelsSpeedForTurning = CommonStruct.minWheelsSpeedForTurning;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
-            double minSpeed = 100;
-            string sArr3Before = "";
-            bool firstEnterInYellowLeft = true;
-            bool firstEnterInYellowRight = true;
-            bool firstEnterInGreenRight = true;
-            bool firstEnterInGreenLeft = true;
-            bool firstEnterInRed = true;
-            CommonStruct.wheelsWasStopped = true;
-            bool fromStopToStart = false;
-            string mem2 = "Stop";
-            int counterFromStopToStart = 0;
-            string lastColorArea = "";
-            int minAllowableSpeed = 15;
-            
+                        
             #region Base Cycle
 
           //здесь начинался polling
@@ -751,10 +748,11 @@ namespace RobotSideUWP
 
         public static async Task SendVoltageLevelToServer()
         {
-            string ipAddress = CommonStruct.defaultWebSiteAddress;
-            ipAddress = "http://localhost:8080";
-            string chargeLevel = "92%";
-            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel);
+            string ipAddress = CommonStruct.defaultWebSiteAddress + ":8080";
+
+            string chargeLevel = CommonStruct.voltageLevelFromRobot;
+            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel + "&serial=" + CommonStruct.decriptedSerial);
+
             try
             {
                 var authData = string.Format("{0}:{1}", "admin", "admin");
@@ -825,7 +823,7 @@ namespace RobotSideUWP
             });
 
             client.Connect(clientId);//Может S/N вместо этого взять?
-            client.Subscribe(new string[] { "190X-7620-35H8-9OW8-DAR4" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+            client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
             client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
             client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
         }
@@ -960,11 +958,6 @@ namespace RobotSideUWP
         {
             CommonStruct.localizationPoint = trackBarLocalizationAngle.Value;
             localSettings.Values["localizationAngle"] = CommonStruct.localizationPoint;
-        }
-
-        private void buttonStopTest_Click(object sender, RoutedEventArgs e)
-        {
-            stopTest = true;
         }
 
         private void textBlockAngleFromIC_KeyUp(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)

@@ -190,9 +190,6 @@
                 <TextBlock x:Name="StatusBlock1" HorizontalAlignment="Left" Margin="26,596,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />
             </Grid>
         </Popup>
-        
-        <Button x:Name="buttonStopTest" Content="Stop Test" HorizontalAlignment="Left" Margin="637,596,0,0" VerticalAlignment="Top" Click="buttonStopTest_Click"/>
-        <TextBox x:Name="textBoxVideoData" HorizontalAlignment="Left" Margin="405,596,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="220" BorderThickness="1"/>
         <CheckBox x:Name="checkBoxOnlyLocal" Content="OnlyLocal" Checked="checkBoxOnlyLocal_Checked" Unchecked="checkBoxOnlyLocal_Unchecked"  HorizontalAlignment="Left" Margin="580,547,0,0" VerticalAlignment="Top"/>
         <Button x:Name="AISettings" Content="AI Settings" HorizontalAlignment="Left" Margin="152,512,0,0" VerticalAlignment="Top" Click="AISettings_Click" Width="100" Height="50"/>
         <TextBox x:Name="labelChargeLevel" HorizontalAlignment="Left" Margin="750,340,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="50%" VerticalAlignment="Top" BorderThickness="0" IsReadOnly="True" Background="#FF06970C" Foreground="#FFFFFDFD" />
@@ -201,6 +198,5 @@
         <Button x:Name="buttonRestart" Content="Restart" HorizontalAlignment="Left" Margin="889,512,0,0" VerticalAlignment="Top" Width="115" Click="buttonRestart_Click"/>
         <Button x:Name="buttonWiFi" Content="WiFi" HorizontalAlignment="Left" Height="50" Margin="278,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonWiFi_Click"/>
         <TextBlock x:Name="labelVersion" HorizontalAlignment="Left" Margin="750,654,0,0" TextWrapping="Wrap" Text="Version" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" FontSize="10" />
-
     </Grid>
 </Page>
