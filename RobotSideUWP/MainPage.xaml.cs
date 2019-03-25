@@ -61,7 +61,7 @@ namespace RobotSideUWP
     public sealed partial class MainPage : Page
     {
         public static MainPage Current;
-        bool b = false;
+        bool bConnect = true;
         private string forwardDirection = "0";
         private string backwardDirection = "1";
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
@@ -112,6 +112,7 @@ namespace RobotSideUWP
         int minAllowableSpeed = 15;
 
         DispatcherTimer watchdogTimer;
+        DispatcherTimer reconnectTimer;
 
         public MainPage()
         {
@@ -196,7 +197,12 @@ namespace RobotSideUWP
                 buttonExit.Visibility = Visibility.Collapsed;
             }
 
-            client = new MqttClient("localhost");
+            string address = CommonStruct.defaultWebSiteAddress;
+            int k = address.IndexOf("//");
+            int length = address.Length;
+            address = address.Remove(0, k + 2);
+
+            client = new MqttClient(address);
             dataFromRobot[0] = CommonStruct.decriptedSerial;
             dataFromRobot[1] = "";
             dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
@@ -204,11 +210,25 @@ namespace RobotSideUWP
             directionRight = backwardDirection;//направление вращения правого колеса
             CommonStruct.wheelsWasStopped = true;
 
-            this.watchdogTimer = new DispatcherTimer();
+            watchdogTimer = new DispatcherTimer();
             watchdogTimer.Tick += WatchdogTimer_Tick;
-            this.watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Интервал проверки времени перезагрузки Windows (дни, часы, мин, сек, ms)
+            watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Ватчдог таймер (дни, часы, мин, сек, ms)
+
+            reconnectTimer = new DispatcherTimer();
+            reconnectTimer.Tick += ReconnectTimer_Tick; ;
+            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
+            reconnectTimer.Start();
 
             buttonStart_Click(null, null);
+        }
+
+        private void ReconnectTimer_Tick(object sender, object e)
+        {
+            bool isConnected = client.IsConnected;
+            if((isConnected == false) && (bConnect == true))
+            {
+                client.Connect(clientId);
+            }
         }
 
         private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
@@ -740,12 +760,6 @@ namespace RobotSideUWP
             timeBefore = Convert.ToInt32(sArrBefore[15]);
             if (iArrayCounter == 0) isEntireMessage = true;
 
-
-            if(sArr[3] == "Stop")
-            {
-
-            }
-
             //Сюда входят сообщения и массивы в них и я анализирую, пропускать их в Polling или нет 
             if (iNumberOfMessage >= iNubmerOfMessageBefore)
             {//Здесь убираем перепутывание массивов между разными сообщениями
@@ -770,7 +784,6 @@ namespace RobotSideUWP
                             InitialConditions();
                         }
                     }
-                    
                 }
             }
         }
@@ -841,13 +854,13 @@ namespace RobotSideUWP
 
         #region Buttons
 
-        private async void buttonStart_Click(object sender, RoutedEventArgs e)
+        private void buttonStart_Click(object sender, RoutedEventArgs e)
         {
             RequestExtendedExecution();
 
             AllControlIsEnabled(false);
             LeftGroup.Visibility = Visibility.Visible;
-            b = true;
+            bConnect = true;
             c = null;
 
             buttonStop.Background = new SolidColorBrush(Windows.UI.Colors.Green);
@@ -862,16 +875,7 @@ namespace RobotSideUWP
             buttonStart.IsEnabled = false;
             if (CommonStruct.cameraController != "No") PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
             PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
-            await Task.Run(() =>
-            {
-                //Polling();
-                //client.Connect(clientId);//Может S/N вместо этого взять?
-                //client.Subscribe(new string[] { "190X-7620-35H8-9OW8-DAR4" }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                //client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
-                //client.MqttMsgPublishReceived += Client_MqttMsgPublishReceived;
-
-            });
-
+           
             try
             {
                 client.Connect(clientId);//Может S/N вместо этого взять?
@@ -880,6 +884,7 @@ namespace RobotSideUWP
                 client.ConnectionClosed += Client_ConnectionClosed;
                 client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
                 client.MqttMsgUnsubscribed += Client_MqttMsgUnsubscribed;
+                
             }
             catch (Exception e1)
             {
@@ -894,6 +899,8 @@ namespace RobotSideUWP
 
         private void Client_ConnectionClosed(object sender, EventArgs e)
         {
+
+            bool isConnected = client.IsConnected;
             Current.NotifyUserFromOtherThread("Connection Closed", NotifyType.StatusMessage);
         }
 
@@ -909,8 +916,7 @@ namespace RobotSideUWP
                 MainPage.Current.NotifyUserFromOtherThread(e1.Message, NotifyType.StatusMessage);
             }
 
-
-            b = false;
+            bConnect = false;
             c = "stop";
 
             AllControlIsEnabled(true);
