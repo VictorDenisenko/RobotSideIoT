@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ServiceModel;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.AppService;
+using uPLibrary.Networking.M2Mqtt;
+using uPLibrary.Networking.M2Mqtt.Messages;
 using Windows.ApplicationModel.Core;
 using Windows.ApplicationModel.ExtendedExecution;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Devices.SerialCommunication;
-using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.System;
 using Windows.System.Profile;
@@ -18,12 +20,6 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
-
-using System.Text;
-using uPLibrary.Networking.M2Mqtt;
-using uPLibrary.Networking.M2Mqtt.Messages;
-using System.Net.Http;
-using System.Net.Http.Headers;
 
 namespace RobotSideUWP
 {
@@ -87,6 +83,7 @@ namespace RobotSideUWP
 
         private static int sArrLength = 16;
         private string[] sArr = new string[sArrLength];
+        private string[] sArrBefore = new string[sArrLength];
         string clientId = "";
 
         string address = CommonStruct.defaultWebSiteAddress;
@@ -113,6 +110,8 @@ namespace RobotSideUWP
         int counterFromStopToStart = 0;
         string lastColorArea = "";
         int minAllowableSpeed = 15;
+
+        DispatcherTimer watchdogTimer;
 
         public MainPage()
         {
@@ -204,6 +203,10 @@ namespace RobotSideUWP
             directionLeft = backwardDirection; //направление вращения левого колеса
             directionRight = backwardDirection;//направление вращения правого колеса
             CommonStruct.wheelsWasStopped = true;
+
+            this.watchdogTimer = new DispatcherTimer();
+            watchdogTimer.Tick += WatchdogTimer_Tick;
+            this.watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Интервал проверки времени перезагрузки Windows (дни, часы, мин, сек, ms)
 
             buttonStart_Click(null, null);
         }
@@ -428,7 +431,7 @@ namespace RobotSideUWP
                         case "Stop":
                             sArr[4] = "0";
                             if (CommonStruct.cameraController != "No") PlcControl.CameraStop();
-                            break;
+                        break;
                         case "UpFast":
                             sArr[4] = "0";
                             direction = "1";
@@ -718,32 +721,81 @@ namespace RobotSideUWP
         {
         }
 
-        private async void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
+        bool isEntireMessage = true;//признак того 
+        int iNumberOfMessage = 0;
+        int iNubmerOfMessageBefore = 0;
+        int timeNow = 0;
+        int timeBefore = 0;
+        int iArrayCounter = 0;//Нужно чтобы отличить первый массив от последующих
+
+        private void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
         {
-            string topic = e.Topic;
-            byte[] message = e.Message;
-            string result = Encoding.UTF8.GetString(message);
-            string s = result;
-            string delim = "\"";
-            s = s.Replace(delim, "");//Строка с разделителями - запятыми
-            s = s.Replace(delim, "");
-            s = s.Replace("[", "");
-            s = s.Replace("]", "");
-            char[] separator = new char[1];
-            separator[0] = ',';
-            sArr = s.Split(separator, 16);
-            if (sArr[3] == "Stop")
+            string topic = e.Topic; byte[] message = e.Message; string result = Encoding.UTF8.GetString(message);
+            string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
+            s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
+            separator[0] = ','; sArr = s.Split(separator, 16);
+            iNumberOfMessage = Convert.ToInt32(sArr[14]);
+            iNubmerOfMessageBefore = Convert.ToInt32(sArrBefore[14]);
+            timeNow = Convert.ToInt32(sArr[15]);
+            timeBefore = Convert.ToInt32(sArrBefore[15]);
+            if (iArrayCounter == 0) isEntireMessage = true;
+
+
+            if(sArr[3] == "Stop")
             {
+
             }
+
+            //Сюда входят сообщения и массивы в них и я анализирую, пропускать их в Polling или нет 
+            if (iNumberOfMessage >= iNubmerOfMessageBefore)
+            {//Здесь убираем перепутывание массивов между разными сообщениями
+                if (isEntireMessage == true)
+                {//Знание, что все массивы из одного сообщения, нужно, чтобы начать фильтровать по временным меткам - они начинаются в каждом сообщении с нуля.
+                    if ((timeNow > timeBefore) || (iArrayCounter == 0))
+                    {//iArrayCounter == 0 нуужно потому, что в первом сообщении может быть timeNow =0 и тогда условие ">" не выполняется
+                        if ((sArr[3] == "Start") || (sArr[5] == "Start") || (sArr[4] != "Stop"))
+                        {//фильтруем по временным меткам
+                            var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                            {
+                                watchdogTimer.Stop();
+                                watchdogTimer.Start();
+                            });
+
+                            iArrayCounter++;
+                            sArrBefore = sArr;
+                            Polling();
+                        }
+                        else
+                        {
+                            InitialConditions();
+                        }
+                    }
+                    
+                }
+            }
+        }
+
+        private void WatchdogTimer_Tick(object sender, object e)
+        {
+            InitialConditions();
+        }
+
+        private void InitialConditions()
+        {
+            isEntireMessage = false;
+            timeNow = 0;
+            timeBefore = 0;
+            iArrayCounter = 0;
+            sArr[3] = "Stop";
+            sArr[5] = "Stop";
+            sArrBefore[3] = "Stop";
+            sArrBefore[5] = "Stop";
+            sArrBefore[15] = "0";
             Polling();
-
-            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(async () =>
+            var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                await SendVoltageLevelToServer();
-            }));
-
-
-            //await SendVoltageLevelToServer();
+                watchdogTimer.Stop();
+            });
         }
 
         public static async Task SendVoltageLevelToServer()
@@ -761,8 +813,6 @@ namespace RobotSideUWP
                 using (HttpClient client = new HttpClient())
                 {
                     client.MaxResponseContentBufferSize = 256000;
-                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authHeaderValue);
-                    //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Anonymous", authHeaderValue);
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("None", authHeaderValue);
                     HttpContent content = null;
 
@@ -822,15 +872,43 @@ namespace RobotSideUWP
 
             });
 
-            client.Connect(clientId);//Может S/N вместо этого взять?
-            client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-            client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
-            client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+            try
+            {
+                client.Connect(clientId);//Может S/N вместо этого взять?
+                client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
+                client.ConnectionClosed += Client_ConnectionClosed;
+                client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+                client.MqttMsgUnsubscribed += Client_MqttMsgUnsubscribed;
+            }
+            catch (Exception e1)
+            {
+                Current.NotifyUserFromOtherThread(e1.Message, NotifyType.StatusMessage);
+            }
+        }
+
+        private void Client_MqttMsgUnsubscribed(object sender, MqttMsgUnsubscribedEventArgs e)
+        {
+            Current.NotifyUserFromOtherThread("Unsubscibed", NotifyType.StatusMessage);
+        }
+
+        private void Client_ConnectionClosed(object sender, EventArgs e)
+        {
+            Current.NotifyUserFromOtherThread("Connection Closed", NotifyType.StatusMessage);
         }
 
         private void buttonStop_Click(object sender, RoutedEventArgs e)
         {
-            EndExtendedExecution();
+            try
+            {
+                EndExtendedExecution();
+                client.Disconnect();
+            }
+            catch(Exception e1)
+            {
+                MainPage.Current.NotifyUserFromOtherThread(e1.Message, NotifyType.StatusMessage);
+            }
+
 
             b = false;
             c = "stop";

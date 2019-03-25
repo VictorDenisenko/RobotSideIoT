@@ -484,7 +484,6 @@ namespace RobotSideUWP
         private void buttonCameraUp_PointerUp(object sender, PointerRoutedEventArgs e)
         {
             //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            PlcControl.CameraStop();
         }
 
         private void buttonCameraDown_PointerDown(object sender, PointerRoutedEventArgs e)

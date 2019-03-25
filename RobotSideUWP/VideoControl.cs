@@ -121,38 +121,7 @@ namespace RobotSideUWP
             }
         }
 
-        public static void FaceTrackingVertical()
-        {
-           
-
-            if (CommonVideoStruct.faceNumber > 0)
-            {
-
-                double speed = 200;
-                double speedMax = 0;
-                double speedMin = 150;
-
-                if (CommonVideoStruct.squareY > 2.0)//Здесь координаты уже приведены к системе, в которой ноль в центре экрана.
-                {
-                    speed = ((speedMax - speedMin) / ((100 - CommonVideoStruct.squareWidth) / 2)) * CommonVideoStruct.squareY + speedMin;
-                    PlcControl.CameraUpDown("1", speed);
-                }
-                else if (CommonVideoStruct.squareY < -2.0)
-                {
-                    double y = -CommonVideoStruct.squareY;
-                    speed = ((speedMax - speedMin) / ((100 - CommonVideoStruct.squareWidth) / 2)) * y + speedMin;
-                    PlcControl.CameraUpDown("0", speed);
-                }
-                else
-                {
-                    PlcControl.CameraStop();
-                }
-            }
-            else
-            {
-                PlcControl.CameraStop();
-            }
-        }
+      
 
     }
 }

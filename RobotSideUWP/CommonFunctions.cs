@@ -610,8 +610,9 @@ namespace RobotSideUWP
                     }
                 }
             }
-            catch (Exception )
+            catch (Exception e1)
             {
+                MainPage.Current.NotifyUserFromOtherThread("WriteToLog " + e1.Message, NotifyType.StatusMessage);
             }
         }
 
@@ -721,8 +722,9 @@ namespace RobotSideUWP
             {
                 elementContent = File.ReadAllText(CommonStruct.SSMLFilePath);
             }
-            catch (Exception )
+            catch (Exception e1)
             {
+                MainPage.Current.NotifyUserFromOtherThread("ReadFromSSMLSource " + e1.Message, NotifyType.StatusMessage);
             }
             return elementContent;
         }

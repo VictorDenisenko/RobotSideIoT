@@ -395,9 +395,10 @@ namespace RobotSideUWP
         }
 
         public static void CameraStop()
-			{//
-			try{
-                    string hexAddress = CommonStruct.cameraAddress;
+        {//
+            try
+            {
+                string hexAddress = CommonStruct.cameraAddress;
                 try
                 {
                     if (CommonStruct.cameraController == "GM51")
@@ -410,23 +411,23 @@ namespace RobotSideUWP
                         ReadWrite.Write("^RS" + hexAddress + "1" + "\r");
                     }
                 }
-                catch(Exception )
+                catch (Exception)
                 {
                 }
                 try
                 {
                     string s = ReadWrite.Read();
                 }
-                catch (Exception )
+                catch (Exception)
                 {
                 }
-				}
-			catch (Exception e1)
-				{
+            }
+            catch (Exception e1)
+            {
                 //CommonFunctions.WriteToLog(e1.Message + " CameraStop");
                 MainPage.Current.NotifyUserFromOtherThread("CameraStop: " + e1.Message, NotifyType.StatusMessage);
-                }
-			}
+            }
+        }
 
         private static double[] WheelsSpeedTuning(double speedLeft, double speedRight)
             {//Общая для всех режимов функция коррекции разброса скоростей колес
@@ -478,7 +479,6 @@ namespace RobotSideUWP
                 ReadWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 CommonStruct.readData = ReadWrite.Read();//В скобках надо писать количество символов в ответе, включая конец строки, иначе будет отвечать только черезх время таймаута
                 string s1 = CommonStruct.readData;
-
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
                 if ((data1 == "") || (data1 == null)) { data1 = "0"; }
@@ -538,6 +538,7 @@ namespace RobotSideUWP
             }
             catch (Exception e1)
             {
+                MainPage.Current.NotifyUserFromOtherThread("TimerRobotOff_Tick " + e1.Message, NotifyType.StatusMessage);
             }
         }
 
