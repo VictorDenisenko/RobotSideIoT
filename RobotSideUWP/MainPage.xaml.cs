@@ -173,12 +173,13 @@ namespace RobotSideUWP
             textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
             textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
 
-            InitializeSpeech();
+            //InitializeSpeech();
 
             Task.Delay(1000).Wait();
             if (CommonStruct.cameraController != "No") PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
             PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
 
+            ScenarioControl.ItemsSource = scenarios;
             if (Window.Current.Bounds.Width < 640)
             {
                 ScenarioControl.SelectedIndex = -1;
@@ -203,6 +204,8 @@ namespace RobotSideUWP
             address = address.Remove(0, k + 2);
 
             client = new MqttClient(address);
+            //client = new MqttClient("test.mosquitto.org");
+
             dataFromRobot[0] = CommonStruct.decriptedSerial;
             dataFromRobot[1] = "";
             dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
@@ -224,10 +227,17 @@ namespace RobotSideUWP
 
         private void ReconnectTimer_Tick(object sender, object e)
         {
-            bool isConnected = client.IsConnected;
-            if((isConnected == false) && (bConnect == true))
+            try
             {
-                client.Connect(clientId);
+                bool isConnected = client.IsConnected;
+                if ((isConnected == false) && (bConnect == true))
+                {
+                    client.Connect(clientId);
+                }
+            }
+            catch(Exception e1)
+            {
+                Current.NotifyUserFromOtherThread("ListAvailablePorts: Divece is not connected " + e1.Message, NotifyType.StatusMessage);
             }
         }
 
@@ -739,6 +749,7 @@ namespace RobotSideUWP
 
         private void Client_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
         {
+
         }
 
         bool isEntireMessage = true;//признак того 
@@ -884,7 +895,6 @@ namespace RobotSideUWP
                 client.ConnectionClosed += Client_ConnectionClosed;
                 client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
                 client.MqttMsgUnsubscribed += Client_MqttMsgUnsubscribed;
-                
             }
             catch (Exception e1)
             {

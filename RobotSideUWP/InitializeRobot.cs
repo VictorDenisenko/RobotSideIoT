@@ -45,10 +45,10 @@ namespace RobotSideUWP
             localSettings.Values["webSiteAddress2"] = "https://boteyes.com";
             localSettings.Values["webSiteAddress3"] = "http://boteyes.ru";
             localSettings.Values["webSiteAddress4"] = "https://boteyes.ru";
-            localSettings.Values["webSiteAddress5"] = "http://robotaxino.ru";
-            localSettings.Values["webSiteAddress6"] = "https://robotaxino.ru";
+            localSettings.Values["webSiteAddress5"] = "http://robotaxino.com";
+            localSettings.Values["webSiteAddress6"] = "https://robotaxino.com";
             localSettings.Values["webSiteAddress7"] = "http://localhost";
-            localSettings.Values["webSiteAddress8"] = "https://localhost:44384/";
+            localSettings.Values["webSiteAddress8"] = "https://localhost";
 
             localSettings.Values["Point10"] = 0;
             localSettings.Values["Point20"] = 0;
