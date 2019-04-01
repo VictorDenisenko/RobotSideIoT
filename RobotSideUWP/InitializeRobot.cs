@@ -274,32 +274,6 @@ namespace RobotSideUWP
             TimeSpan initTime = new TimeSpan(intHours, intMinutes, 0); //(часы, мин, сек);
             setTimeToRestartPicker.Time = initTime;
             setTimeToRestartPicker.AllowDrop = true;
-       }
-
-        private void ComboBoxComPorts_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var selectedItem = sender as ComboBox;
-            try
-            {
-                if (selectedItem.SelectedValue != null)
-                {
-                    var name = selectedItem.SelectedValue;
-                    CommonStruct.comPortIndex = Convert.ToInt16(selectedItem.SelectedIndex);
-                    localSettings.Values["comPortItem"] = selectedItem.SelectedItem;
-                    CommonStruct.comPortItem = localSettings.Values["comPortItem"].ToString();
-                    comboBoxComPorts.SelectedIndex = CommonStruct.comPortIndex;
-                    choosenDevice = listOfDevices[CommonStruct.comPortIndex];
-                    //await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
-                    //{
-                    //    Task.Delay(500).Wait();
-                    //}));
-                    rw = new ReadWrite();
-                }
-            }
-            catch (Exception e1)
-            {
-                MainPage.Current.NotifyUserFromOtherThread("ComboBoxComPorts_SelectionChanged " + e1.Message, NotifyType.StatusMessage);
-            }
         }
 
         private void AllControlIsEnabled(bool isEnabled)
@@ -324,7 +298,6 @@ namespace RobotSideUWP
             buttonGoDownFast.IsEnabled = isEnabled;
             buttonLanguageEng.IsEnabled = isEnabled;
             buttonLanguageRu.IsEnabled = isEnabled;
-            comboBoxComPorts.IsEnabled = isEnabled;
             buttonAbout.IsEnabled = isEnabled;
             if (isEnabled == true) { CommonStruct.allControlIsEnabled = true; }
             else { CommonStruct.allControlIsEnabled = false; }
@@ -375,38 +348,7 @@ namespace RobotSideUWP
             localSettings.Values["speedTuningParam"] = CommonStruct.speedTuningParam;
         }
 
-        void buttonGoDirect_PointerDown(object sender, PointerRoutedEventArgs e)
-            {
-            //PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
-            PlcControl.CameraGoDirectFast();            
-            }
-
-        void ButtonGoDownFast_PointerUp(object sender, PointerRoutedEventArgs e)
-            {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            PlcControl.CameraStop();
-            }
-
-        void buttonGoDownFast_PointerDown(object sender, PointerRoutedEventArgs e)
-            {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
-            string direction = "0";
-            PlcControl.CameraGoFast(direction);
-            CommonStruct.cameraPositionBefore = "bottom";
-            }
-
-        void buttonGoUpFast_PointerUp(object sender, PointerRoutedEventArgs e)
-            {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            }
-
-        void buttonGoUpFast_PointerDown(object sender, PointerRoutedEventArgs e)
-            {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
-            string direction = "1";
-            PlcControl.CameraGoFast(direction);
-            CommonStruct.cameraPositionBefore = "top";
-            }
+       
 
         public static void SavingApplicationStates()
             {

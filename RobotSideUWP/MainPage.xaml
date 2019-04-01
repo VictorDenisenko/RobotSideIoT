@@ -22,7 +22,7 @@
                 <CompositeTransform/>
             </ComboBox.RenderTransform>
         </ComboBox>
-        <ComboBox x:Name="comboBoxComPorts" ItemsSource="{Binding Source={StaticResource DeviceListSource}}" HorizontalAlignment="Left" Margin="26,142,0,0" VerticalAlignment="Top" Width="339" RenderTransformOrigin="0.5,0.5" Background="{ThemeResource AppBarBackground}" BorderBrush="{ThemeResource AppBarBorderThemeBrush}"/>
+        
         <TextBlock x:Name="labelWheelsSpeed" HorizontalAlignment="Left" Margin="110,206,0,0" TextWrapping="Wrap" Text="Wheels Speed" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
         <Slider x:Name="trackBarWheelsSpeed" HorizontalAlignment="Left" Margin="26,221,0,0" VerticalAlignment="Top" Width="261" Height="45" RenderTransformOrigin="0.5,0.5"/>
         <TextBox x:Name="textBoxWheelsSpeed" HorizontalAlignment="Left" Margin="301,220,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="40" Height="29" RenderTransformOrigin="0.5,0.5" BorderThickness="1"/>
@@ -35,7 +35,6 @@
         <CheckBox x:Name="checkRebootAtNight" Content="Reboot at night" IsChecked="True" HorizontalAlignment="Left" Margin="405,517,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
         <CheckBox x:Name="checkSmoothlyStop" Content="Stop Smoothly" IsChecked="True" HorizontalAlignment="Left" Margin="405,547,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
         <TextBlock x:Name="labelServerAddress" HorizontalAlignment="Left" Margin="142,24,0,0" TextWrapping="Wrap" Text="Website Address" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
-        <TextBlock x:Name="labelComPorts" HorizontalAlignment="Left" Margin="142,111,0,0" TextWrapping="Wrap" Text="Com Port" VerticalAlignment="Top" IsDoubleTapEnabled="False" IsHoldingEnabled="False" IsRightTapEnabled="False" IsTapEnabled="False" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
         <TextBlock x:Name="textBox1" HorizontalAlignment="Left" Margin="515,24,0,0" TextWrapping="Wrap" Text="Local Control" VerticalAlignment="Top" TextAlignment="Center" />
 
         <Button x:Name="buttonGoForward" Content="Go Forward" HorizontalAlignment="Left" Margin="492,56,0,0" VerticalAlignment="Top" Width="133" Height="71" />
@@ -170,7 +169,6 @@
                 <TextBlock  x:Name="textBlockAngleFromICaption"  HorizontalAlignment="Left" Margin="350,35,0,0"  TextWrapping="Wrap" Text="FromIC" VerticalAlignment="Top"/>
                 <TextBox  x:Name="textBlockAngleFromIC"  KeyUp="textBlockAngleFromIC_KeyUp"  HorizontalAlignment="Left" Margin="350,68,0,0"  TextWrapping="Wrap" Text="180" VerticalAlignment="Top" BorderThickness="1"/>
                 <TextBlock  x:Name="textBlockChooseVoice"  HorizontalAlignment="Left" Margin="45,240,0,0"  TextWrapping="Wrap" Text="Choose Voice" VerticalAlignment="Top"/>
-                <ComboBox x:Name="listboxVoiceChooser" SelectionChanged="ListboxVoiceChooser_SelectionChanged" Width="200" Height="Auto"  Margin="45,268,0,0" BorderThickness="1"  />
                 <TextBlock  x:Name="textBlockAngleCorrectedCaption"  HorizontalAlignment="Left" Margin="450,35,0,0"  TextWrapping="Wrap" Text="Corrected" VerticalAlignment="Top"/>
                 <TextBox  x:Name="textBlockAngleCorrected"  KeyUp="textBlockAngleFromIC_KeyUp"  HorizontalAlignment="Left" Margin="450,68,0,0"  TextWrapping="Wrap" Text="180" VerticalAlignment="Top" BorderThickness="1"/>
 

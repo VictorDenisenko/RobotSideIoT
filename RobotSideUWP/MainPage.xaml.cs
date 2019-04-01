@@ -51,6 +51,7 @@ namespace RobotSideUWP
             else if (GM51Button.IsChecked == true) { CommonStruct.cameraController = "GM51"; }
             else if (NoButton.IsChecked == true) { CommonStruct.cameraController = "No"; }
         }
+
     }
 
     public class Scenario
@@ -60,12 +61,13 @@ namespace RobotSideUWP
 
     public sealed partial class MainPage : Page
     {
+
+        PlcControl plcControl = null;
         public static MainPage Current;
         bool bConnect = true;
         private string forwardDirection = "0";
         private string backwardDirection = "1";
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
-        string c = null;
         public ApplicationDataContainer localSettings = null;
         private ObservableCollection<DeviceInformation> listOfDevices;
         ReadWrite rw = null;
@@ -113,9 +115,12 @@ namespace RobotSideUWP
 
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
+        
 
         public MainPage()
         {
+            plcControl = new PlcControl();
+            
             for (int i = 0; i < sArrLength - 1; i++) { sArr[i] = "0"; }
             clientId = Guid.NewGuid().ToString();
 
@@ -154,10 +159,8 @@ namespace RobotSideUWP
                 CommonStruct.cameraController = Convert.ToString(testObject2);
             }
 
-            ListAvailablePorts();
             InitializeUI();
             Current = this;
-            SelectItem();
             rw = new ReadWrite();
 
             InitializeRobot();
@@ -176,8 +179,7 @@ namespace RobotSideUWP
             //InitializeSpeech();
 
             Task.Delay(1000).Wait();
-            if (CommonStruct.cameraController != "No") PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
+            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
 
             ScenarioControl.ItemsSource = scenarios;
             if (Window.Current.Bounds.Width < 640)
@@ -214,7 +216,7 @@ namespace RobotSideUWP
             CommonStruct.wheelsWasStopped = true;
 
             watchdogTimer = new DispatcherTimer();
-            watchdogTimer.Tick += WatchdogTimer_Tick;
+            //watchdogTimer.Tick += WatchdogTimer_Tick;
             watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Ватчдог таймер (дни, часы, мин, сек, ms)
 
             reconnectTimer = new DispatcherTimer();
@@ -316,71 +318,7 @@ namespace RobotSideUWP
             }
         }
 
-        public void ListAvailablePorts()
-        {
-            string deviceID = "";
-            try
-            {
-                //string aqs = SerialDevice.GetDeviceSelector();//Это метод дает GUID всех последовательных портов
-                //var dis = await DeviceInformation.FindAllAsync(aqs);
-                //DeviceInformationCollection dis = await DeviceInformation.FindAllAsync(aqs);
-                DeviceInformationCollection dis = null;
-                Task t = Task.Run(async () => { dis = await DeviceInformation.FindAllAsync(aqs); });
-                t.Wait();
-                //DeviceInformation.FindAllAsync(aqs).AsTask().Wait();
-                string name = "";
-                string deviceIDName = "";
-                for (int i = 0; i < dis.Count; i++)
-                {
-                    listOfDevices.Add(dis[i]);
-                    name = dis[i].Name;
-                    deviceID = dis[i].Id;
-                    deviceIDName = CommonFunctions.DeviceIDName(deviceID);
-                    CommonStruct.deviceIDNames[i] = CommonFunctions.DeviceIDName(deviceID);
-                }
-                DeviceListSource.Source = CommonStruct.deviceIDNames;
-            }
-            catch (Exception ex)
-            {
-                MainPage.Current.NotifyUserFromOtherThread("ListAvailablePorts: Divece is not connected " + ex.Message, NotifyType.StatusMessage);
-            }
-        }
-
-        public void SelectItem()
-        {
-          try{
-                int j = 0;
-                foreach (DeviceInformation comPort in listOfDevices)
-                {
-                    if (CommonStruct.comPortItem == CommonFunctions.DeviceIDName(listOfDevices[j].Id))
-                    {
-                        comboBoxComPorts.SelectedItem = CommonFunctions.DeviceIDName(listOfDevices[j].Id);
-                        CommonStruct.comPortIndex = j;
-                        break;
-                    }
-                    else
-                    {
-                        j++;
-                    }
-                }
-                if (j >= listOfDevices.Count)
-                {
-                    comboBoxComPorts.SelectedIndex = 0;
-                    CommonStruct.comPortIndex = 0;
-                    Current.NotifyUser("Are you sure the choosen port is valid?", NotifyType.StatusMessage);
-                }
-                comboBoxComPorts.AllowDrop = true;
-                comboBoxComPorts.SelectedIndex = CommonStruct.comPortIndex;
-                comboBoxComPorts.SelectionChanged += ComboBoxComPorts_SelectionChanged;
-                choosenDevice = listOfDevices[CommonStruct.comPortIndex];
-            }
-            catch (Exception e)
-            {
-                MainPage.Current.NotifyUser("ComboBoxFilling(): " + e.Message, NotifyType.StatusMessage);
-            }
-        }
-        
-        private async void Polling()
+         private void Polling(string[] sArr)
         {
                         
             #region Base Cycle
@@ -395,18 +333,20 @@ namespace RobotSideUWP
                         pin26.Write(GpioPinValue.High);
                     }
 
-                    //if (itIsFirstLoop == "Yes")
-                    //{
-                    //    for (int i = 1; i < 16; i++)
-                    //    {//Начинаю от 1, чтобы не стирать серийный номер
-                    //        sArr[i] = "0";
-                    //    }
-                    //    itIsFirstLoop = "No";
-                    //}
+                //if (itIsFirstLoop == "Yes")
+                //{
+                //    for (int i = 1; i < 16; i++)
+                //    {//Начинаю от 1, чтобы не стирать серийный номер
+                //        sArr[i] = "0";
+                //    }
+                //    itIsFirstLoop = "No";
+                //}
 
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                //await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                //{
+                var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                     {
-                        textBox_x_coord.Text = sArr[1];//x_coord
+                    textBox_x_coord.Text = sArr[1];//x_coord
                         textBox_y_coord.Text = sArr[2];//y_coord
                         textBoxWheelsStop.Text = sArr[3];//wheelsStop
                         textBoxCameraAngle.Text = sArr[4];//сameraData
@@ -414,7 +354,7 @@ namespace RobotSideUWP
                         textBoxWheelsCorrection.Text = sArr[6];//Поправка для колес - движение прямо
                         textBoxSmileName.Text = sArr[7];//Smile Name
                         textBoxSmileName.Text = sArr[8];//Нелинейная коррекция есть = true
-                    }));
+                    });
 
                     if (sArr[8] == "false")
                     {
@@ -449,38 +389,18 @@ namespace RobotSideUWP
                         case "Up":
                             sArr[4] = "0";
                             direction = "1";
-                            PlcControl.CameraUpDown(direction);
+                            plcControl.CameraUpDown(direction);
                             CommonStruct.cameraPositionBefore = "slowUp";
                             break;
                         case "Down":
                             sArr[4] = "0";
                             direction = "0";
-                            PlcControl.CameraUpDown(direction);
+                            plcControl.CameraUpDown(direction);
                             CommonStruct.cameraPositionBefore = "slowDown";
                             break;
                         case "Stop":
                             sArr[4] = "0";
-                            if (CommonStruct.cameraController != "No") PlcControl.CameraStop();
-                        break;
-                        case "UpFast":
-                            sArr[4] = "0";
-                            direction = "1";
-                            CommonStruct.cameraPositionBefore = "top";
-                            PlcControl.CameraGoFast(direction);
-                            break;
-                        case "Center":
-                            sArr[4] = "0";
-                            PlcControl.CameraGoDirectFast();
-                            break;
-                        case "DownFast":
-                            sArr[4] = "0";
-                            direction = "0";
-                            CommonStruct.cameraPositionBefore = "bottom";
-                            PlcControl.CameraGoFast(direction);
-                            break;
-                        case "Calibr":
-                            sArr[4] = "0";
-                            //PlcControl.CameraPositionCalibration();
+                            if (CommonStruct.cameraController != "No") plcControl.CameraStop();
                             break;
                     }
 
@@ -526,7 +446,7 @@ namespace RobotSideUWP
                                 directionRight = forwardDirection;
                                 speedLeft = speedLeft0;
                                 speedRight = speedRight0;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                             }
                                 
                             if ((20 < alpha && alpha <= 70) && (speedRadius > minAllowableSpeed))
@@ -539,10 +459,10 @@ namespace RobotSideUWP
                                 speedRight = speedRight0 * (1 - 0.2 * (70 - alpha ) / (70 - 20)); 
                                 if ((firstEnterInGreenRight == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    PlcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly();
                                     firstEnterInGreenRight = false;
                                 }
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 lastColorArea = "green";
                             }
                             else
@@ -560,12 +480,12 @@ namespace RobotSideUWP
                                 speedRight = speedRight0;
                                 if ((firstEnterInGreenLeft == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    PlcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly();
                                     firstEnterInGreenLeft = false;
                                 }
                                 else
                                 {
-                                    PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                    plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                     lastColorArea = "green";
                                 }
                             }
@@ -582,13 +502,13 @@ namespace RobotSideUWP
                                 speedRight = 0.4 * speedRight0;
                                 if ((firstEnterInYellowLeft == true) && (fromStopToStart == true) && ((lastColorArea == "green") || (lastColorArea == "red")))
                                 {
-                                    PlcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly();
                                     firstEnterInYellowLeft = false;
                                     //sArr3Before = "0";
                                 }
                                 else
                                 {
-                                    PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                    plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                     lastColorArea = "yellow";
                                 }
                             }
@@ -605,13 +525,13 @@ namespace RobotSideUWP
                                 speedLeft = speedLeft0;
                                 if ((firstEnterInRed == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    PlcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly();
                                     firstEnterInRed = false;
                                     //sArr3Before = "0";
                                 }
                                 else
                                 {
-                                    PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                    plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                     lastColorArea = "red";
                                 }
                             }
@@ -628,12 +548,12 @@ namespace RobotSideUWP
                                 speedLeft = 0.4 * speedLeft0;
                                 if ((firstEnterInYellowRight == true) && (fromStopToStart == true) && ((lastColorArea == "green") || (lastColorArea == "red")))
                                 {
-                                    PlcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly();
                                     firstEnterInYellowRight = false;
                                 }
                                 else
                                 {
-                                    PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                    plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                     lastColorArea = "yellow";
                                 }
                             }
@@ -671,21 +591,21 @@ namespace RobotSideUWP
                                 directionRight = forwardDirection;
                                 speedRight = turnSpeed;
                                 speedLeft = turnSpeed;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "top":
                                 directionLeft = forwardDirection;
                                 directionRight = forwardDirection;
                                 speedRight = speedRight0;
                                 speedLeft = speedLeft0;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "right":
                                 directionLeft = forwardDirection;
                                 directionRight = backwardDirection;
                                 speedRight = turnSpeed;
                                 speedLeft = turnSpeed;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "topAndLeft":
                                 directionLeft = forwardDirection;
@@ -693,7 +613,7 @@ namespace RobotSideUWP
                                 speedRight = speedRight0;
                                 speedLeft = speedRight0 - turnSpeed;
                                 if (speedLeft < 0) { speedLeft = 0; }
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "topAndRight":
                                 directionLeft = forwardDirection;
@@ -701,14 +621,14 @@ namespace RobotSideUWP
                                 speedRight = speedLeft0 - turnSpeed;
                                 if (speedRight < 0) { speedRight = 0; }
                                 speedLeft = speedLeft0;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "bottom":
                                 directionLeft = backwardDirection;
                                 directionRight = backwardDirection;
                                 speedRight = speedRight0;
                                 speedLeft = speedLeft0;
-                                PlcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                                plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                         }
                     }
@@ -720,13 +640,14 @@ namespace RobotSideUWP
                             if ((CommonStruct.stopSmoothly == true) && (((directionLeft == forwardDirection) && (directionRight == forwardDirection)) || ((directionLeft == backwardDirection) && (directionRight == backwardDirection))))
                             //if (CommonStruct.stopSmoothly == true)
                                 {
-                                PlcControl.WheelsStopSmoothly();
+                                plcControl.WheelsStopSmoothly();
                                 sArr3Before = "0";
                             }
                             else
                             {
-                                PlcControl.WheelsStopSmoothly();
-                                sArr3Before = "0";
+                            //plcControl.WheelsStopSmoothly();
+                            plcControl.WheelsStop();
+                            sArr3Before = "0";
                             }
                         }
 
@@ -788,7 +709,7 @@ namespace RobotSideUWP
 
                             iArrayCounter++;
                             sArrBefore = sArr;
-                            Polling();
+                            Polling(sArr);
                         }
                         else
                         {
@@ -801,7 +722,7 @@ namespace RobotSideUWP
 
         private void WatchdogTimer_Tick(object sender, object e)
         {
-            InitialConditions();
+            //InitialConditions();
         }
 
         private void InitialConditions()
@@ -815,7 +736,7 @@ namespace RobotSideUWP
             sArrBefore[3] = "Stop";
             sArrBefore[5] = "Stop";
             sArrBefore[15] = "0";
-            Polling();
+            Polling(sArr);
             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 watchdogTimer.Stop();
@@ -872,7 +793,6 @@ namespace RobotSideUWP
             AllControlIsEnabled(false);
             LeftGroup.Visibility = Visibility.Visible;
             bConnect = true;
-            c = null;
 
             buttonStop.Background = new SolidColorBrush(Windows.UI.Colors.Green);
             buttonStop.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
@@ -884,8 +804,7 @@ namespace RobotSideUWP
             buttonStart.Foreground = new SolidColorBrush(Windows.UI.Colors.Gray);
             buttonStart.FontFamily = new FontFamily("Microsoft Sans Serif");
             buttonStart.IsEnabled = false;
-            if (CommonStruct.cameraController != "No") PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
+            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
            
             try
             {
@@ -927,7 +846,6 @@ namespace RobotSideUWP
             }
 
             bConnect = false;
-            c = "stop";
 
             AllControlIsEnabled(true);
             LeftGroup.Visibility = Visibility.Collapsed;

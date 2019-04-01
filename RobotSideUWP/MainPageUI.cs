@@ -15,10 +15,12 @@ namespace RobotSideUWP
     {
         private bool buttonEventIs = false;
         private object[] addresses = new string[9];
-        
+        ReadWrite readWrite = null;
 
         public void InitializeUI()
         {
+            readWrite = new ReadWrite();
+
             int i = 0;
 
             string appVersion = string.Format("v.: {0}.{1}.{2}.{3}",
@@ -61,19 +63,7 @@ namespace RobotSideUWP
 
             buttonCameraDown.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonCameraDown_PointerDown), true);
             buttonCameraDown.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonCameraDown_PointerUp), true);
-
-
-
-            buttonGoUpFast.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoUpFast_PointerDown), true);
-            buttonGoUpFast.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonGoUpFast_PointerUp), true);
-
-            buttonGoDownFast.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoDownFast_PointerDown), true);
-            buttonGoDownFast.AddHandler(PointerReleasedEvent, new PointerEventHandler(ButtonGoDownFast_PointerUp), true);
-
-            buttonGoDirect.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoDirect_PointerDown), true);
-
             
-
             buttonLanguageEng.Click += ButtonLanguageEng_Click;
             buttonLanguageRu.Click += ButtonLanguageRu_Click;
             
@@ -224,7 +214,6 @@ namespace RobotSideUWP
 
         private void buttonGoForward_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "reset");
             string directionLeft = forwardDirection;
             string directionRight = forwardDirection;
             CommonStruct.directionLeft = directionLeft;
@@ -234,20 +223,19 @@ namespace RobotSideUWP
             double speedLeft1 = speedLeft, speedRight1 = speedRight;
             CommonStruct.speedLeftLocal = speedLeft1;
             CommonStruct.speedRightLocal = speedRight1;
-            PlcControl.WheelsLocal(directionLeft, speedLeft1, directionRight, speedRight1);
+            plcControl.WheelsLocal(directionLeft, speedLeft1, directionRight, speedRight1);
         }
 
         private void buttonGoForward_PointerUp(object sender, PointerRoutedEventArgs e)
         {
             buttonEventIs = true;
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
             if (CommonStruct.stopSmoothly == true)
             {
-                PlcControl.WheelsStopLocalSmoothly();
+                plcControl.WheelsStopLocalSmoothly();
             }
             else
             {
-                PlcControl.WheelsStopLocal();
+                plcControl.WheelsStopLocal();
             }
         }
 
@@ -255,14 +243,13 @@ namespace RobotSideUWP
         {
             if (buttonEventIs == false)
             {
-                PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                 if (CommonStruct.stopSmoothly == true)
                 {
-                    PlcControl.WheelsStopLocalSmoothly();
+                    plcControl.WheelsStopLocalSmoothly();
                 }
                 else
                 {
-                    PlcControl.WheelsStopLocal();
+                    plcControl.WheelsStopLocal();
                 }
             }
             buttonEventIs = false;
@@ -271,26 +258,23 @@ namespace RobotSideUWP
 
         private void buttonGoLeft_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "reset");
             string directionLeft = backwardDirection;
             string directionRight = forwardDirection;
             CommonStruct.directionLeft = directionLeft;
             CommonStruct.directionRight = directionRight;
             double speedLeft = 0.3 * CommonStruct.maxWheelsSpeed;
             double speedRight = 0.3 * CommonStruct.maxWheelsSpeed;
-            PlcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
+            plcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
         }
 
         private void buttonGoLeft_PointerUp(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
-            PlcControl.WheelsStopLocal();
+           plcControl.WheelsStopLocal();
         }
         
 
         private void buttonGoBackward_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "reset");//Потому что у сенсорного экрана нет состояния "нажато". Есть только клик.
             string directionLeft = backwardDirection;
             string directionRight = backwardDirection;
             CommonStruct.directionLeft = directionLeft;
@@ -301,20 +285,19 @@ namespace RobotSideUWP
             double speedLeft1 = speedLeft, speedRight1 = speedRight;
             CommonStruct.speedLeftLocal = speedLeft1;
             CommonStruct.speedRightLocal = speedRight1;
-            PlcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
+            plcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
         }
 
         private void buttonGoBackward_PointerUp(object sender, PointerRoutedEventArgs e)
         {
             buttonEventIs = true;
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
             if (CommonStruct.stopSmoothly == true)
             {
-                PlcControl.WheelsStopLocalSmoothly();
+                plcControl.WheelsStopLocalSmoothly();
             }
             else
             {
-                PlcControl.WheelsStopLocal();
+                plcControl.WheelsStopLocal();
             }
         }
 
@@ -322,14 +305,13 @@ namespace RobotSideUWP
         {
             if (buttonEventIs == false)
             {
-                PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                 if (CommonStruct.stopSmoothly == true)
                 {
-                    PlcControl.WheelsStopLocalSmoothly();
+                    plcControl.WheelsStopLocalSmoothly();
                 }
                 else
                 {
-                    PlcControl.WheelsStopLocal();
+                    plcControl.WheelsStopLocal();
                 }
             }
             buttonEventIs = false;
@@ -338,25 +320,22 @@ namespace RobotSideUWP
 
         private void buttonGoRight_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "reset");
             string directionLeft = forwardDirection;
             string directionRight = backwardDirection;
             CommonStruct.directionLeft = directionLeft;
             CommonStruct.directionRight = directionRight;
             double speedLeft = 0.3 * CommonStruct.maxWheelsSpeed;
             double speedRight = 0.3 * CommonStruct.maxWheelsSpeed;
-            PlcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
+            plcControl.WheelsLocal(directionLeft, speedLeft, directionRight, speedRight);
         }
 
         private void buttonGoRight_PointerUp(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
-            PlcControl.WheelsStopLocal();
+            plcControl.WheelsStopLocal();
         }
 
         private void buttonGoRight_PointerExit(object sender, PointerRoutedEventArgs e)
         {
-            PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
             buttonGoRight_PointerUp(null, null);
         }
         
@@ -365,14 +344,12 @@ namespace RobotSideUWP
         {
             try
             {
-                PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//GO для обоих (Both) колес
 
-                ReadWrite.Write(CommonStruct.dataToWrite);
-                CommonStruct.readData = ReadWrite.Read();//В скобках надо писать количество символов в ответе, иначе будет отвечать только черезх время таймаута
+                readWrite.Write(CommonStruct.dataToWrite);
                 string s = CommonStruct.readData;
             }
             catch (Exception e1)
@@ -386,11 +363,10 @@ namespace RobotSideUWP
             buttonEventIs = true;
             try
                 {
-                    PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                     string directionLeft = CommonStruct.directionLeft;
                     string directionRight = CommonStruct.directionRight;
                     string hexAddress = CommonStruct.wheelsAddress;
-                    PlcControl.WheelsStopLocal();
+                    plcControl.WheelsStopLocal();
                 }
                 catch (Exception e1)
                 {
@@ -402,13 +378,11 @@ namespace RobotSideUWP
         {
             try
             {
-                PlcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//
-                ReadWrite.Write(CommonStruct.dataToWrite);
-                CommonStruct.readData = ReadWrite.Read();//В скобках надо писать количество символов в ответе, иначе будет отвечать только черезх время таймаута
+                readWrite.Write(CommonStruct.dataToWrite);
             }
             catch (Exception e1)
             {
@@ -428,7 +402,7 @@ namespace RobotSideUWP
                     var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                     {
                         CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
-                        if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) PlcControl.BatteryVoltageMeasuring();
+                       // if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
                     });
 
 
@@ -436,7 +410,7 @@ namespace RobotSideUWP
 
 
                     //CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
-                    //if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) PlcControl.BatteryVoltageMeasuring();
+                    //if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
                     //Я обнуляю этот счетчик в функции Wheels()
                 }
                 //else if (CommonStruct.stopBeforeWas == false)
@@ -475,29 +449,29 @@ namespace RobotSideUWP
 
         private void buttonCameraUp_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
+            //plcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
             string direction = "1";
-            PlcControl.CameraUpDown(direction);
+            plcControl.CameraUpDown(direction);
             CommonStruct.cameraPositionBefore = "slowUp";
         }
 
         private void buttonCameraUp_PointerUp(object sender, PointerRoutedEventArgs e)
         {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
+            //plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
 
         private void buttonCameraDown_PointerDown(object sender, PointerRoutedEventArgs e)
         {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
+            //plcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
             string direction = "0";
-            PlcControl.CameraUpDown(direction);
+            plcControl.CameraUpDown(direction);
             CommonStruct.cameraPositionBefore = "slowDown";
         }
 
         private void buttonCameraDown_PointerUp(object sender, PointerRoutedEventArgs e)
         {
-            //PlcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
-            PlcControl.CameraStop();
+            //plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
+            plcControl.CameraStop();
         }
         
 
@@ -545,7 +519,6 @@ namespace RobotSideUWP
             buttonCloseSettings.Content = "Close";
             buttonSave.Content = "Save";
             buttonSetDefault.Content = "Restore Defaults";
-            labelComPorts.Text = "Connect to";
             buttonSettings.Content = "Settings";
             AISettings.Content = "AI Settings";
             checkBoxOnlyLocal.Content = "OnlyLocal";
@@ -598,7 +571,6 @@ namespace RobotSideUWP
             buttonCloseSettings.Content = "Закрыть";
             buttonSave.Content = "Сохранить";
             buttonSetDefault.Content = "По умолчанию";
-            labelComPorts.Text = "Подключить к";
             buttonSettings.Content = "Настройки";
             AISettings.Content = "ИИ";
             checkBoxOnlyLocal.Content = "Локально";

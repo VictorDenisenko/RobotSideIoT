@@ -13,77 +13,13 @@ namespace RobotSideUWP
 		{
         static GpioPin pin6;//Выход для отключения питания 
         static TimeSpan delay = TimeSpan.FromMilliseconds(200);
+        public ReadWrite readWrite = null;
 
-        public static void CameraGoFast(string direction, int stepNumber)
-            {
-            try
-                {
-                    string hexAddress = CommonStruct.cameraAddress;
-                    string s = "";
-                    string PwrRange = CommonStruct.cameraPwrRange;
-                    if (CommonStruct.cameraController == "GM51")
-                    {
-                        string speed = "002";
-                        string _stepNumber = CommonFunctions.ZeroInFrontSet(stepNumber.ToString());
-                        ReadWrite.Write("^RO" + CommonStruct.cameraAddress + "5" + "\r");//Установка 1/5 шага. При шаге 1/4 не получается со временем.
 
-                        s = ReadWrite.Read();
-                        if (_stepNumber != "000")
-                        {
-                            HostWatchDog(CommonStruct.cameraAddress, "reset");
-                            string command = "^R1" + hexAddress + direction + speed + "000" + PwrRange + "\r";
-                            ReadWrite.Write(command);
-                            s = ReadWrite.Read();
-                            int timeToSleep = 100 * Convert.ToInt32(_stepNumber);
-                            HostWatchDog(CommonStruct.cameraAddress, "set");
-                        }
-                    }
-                    else if (CommonStruct.cameraController == "RD31")
-                    {
-                        double speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                        string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        ReadWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
-                        s = ReadWrite.Read();
-                    }
-                }   
-            catch (Exception e1)
-                {
-                //CommonFunctions.WriteToLog(e1.Message + " CameraGoFast");
-                MainPage.Current.NotifyUserFromOtherThread("CameraGoFast" + e1.Message, NotifyType.StatusMessage);
-               
-                }
-            }
-
-        public static void CameraGoFast(string direction)
-            {
-            try {
-                string hexAddress = CommonStruct.cameraAddress;
-                string PwrRange = CommonStruct.cameraPwrRange;
-                string s = "";
-                if (CommonStruct.cameraController == "GM51")
-                    {
-                        string speed = CommonStruct.cameraFastSpeed;//"004"  -это предельное значене, ниже не работает
-                        //string PwrRange = CommonStruct.cameraPwrRange;
-                        ReadWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/5 шага
-                        s = ReadWrite.Read();
-                        string command = "^R1" + hexAddress + direction + speed + "000" + PwrRange + "\r";
-                        ReadWrite.Write(command);
-                        s = ReadWrite.Read();
-                    }
-                    else if (CommonStruct.cameraController == "RD31")
-                    {
-                        double speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                        string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        ReadWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
-                        s = ReadWrite.Read();
-                    }
-                }
-            catch (Exception e1)
-                {
-                //CommonFunctions.WriteToLog(e1.Message + " CameraGoFast");
-                MainPage.Current.NotifyUserFromOtherThread("CameraGoFast" + e1.Message, NotifyType.StatusMessage);
-                }
-            }
+        public PlcControl()
+        {
+            readWrite = new ReadWrite();
+        }
 
         public static int CameraSpeedToPWM()
             {//Формирователь зависимости скорости камеры от положения движка 
@@ -96,58 +32,21 @@ namespace RobotSideUWP
             int outputSpeed = Convert.ToInt32(Math.Round(_outputSpeed, 0, MidpointRounding.AwayFromZero));
             return outputSpeed;
             }
-
-        public static void CameraGoDirectFast()
-            {
-            int stepNumber = 0;
-            string direction = "0";
-            try
-                {
-                switch (CommonStruct.cameraPositionBefore)
-                    {
-                    case "direct": direction = "1"; stepNumber = 0;
-                        break;
-                    case "top": direction = "0"; stepNumber = 0;
-                        break;
-                    case "bottom": direction = "1"; stepNumber = CommonStruct.directBottomDistance;
-                        break;
-                    case "slowUp": direction = "0"; stepNumber = CommonStruct.directBottomDistance;
-                        break;
-                    case "slowDown": direction = "1"; stepNumber = CommonStruct.directBottomDistance;
-                        break;
-                    }
-                if (stepNumber != 0)
-                    {
-                    CameraGoFast(direction, stepNumber);
-                    HostWatchDog(CommonStruct.cameraAddress, "set");
-                    CommonStruct.cameraPositionBefore = "direct";
-                    MainPage.Current.localSettings.Values["cameraPositionBefore"] = CommonStruct.cameraPositionBefore;
-                }
-                }
-            catch (Exception e1)
-                {
-                //CommonFunctions.WriteToLog(e1.Message + " CameraGoDirectFast");
-                MainPage.Current.NotifyUserFromOtherThread("CameraGoDirectFast" + e1.Message, NotifyType.StatusMessage);
-                }
-            }
         
-  		public static void HostWatchDog(string address, string setReset)
+  		public void HostWatchDog(string address, string setReset)
 			{
 			string interval = CommonStruct.interval;
-            string s = "";
             try
                 {
 			
 				if (setReset == "set")
 					{
-                    ReadWrite.Write("^RA" + address + interval + "\r");//Остановка через время, заданное в таймере
-                    s = ReadWrite.Read();
+                    readWrite.Write("^RA" + address + interval + "\r");//Остановка через время, заданное в таймере
 					}
 				else if (setReset == "reset")
 					{
 					interval = "999";
-                    ReadWrite.Write("^RA" + address + interval + "\r");
-                    s = ReadWrite.Read();
+                    readWrite.Write("^RA" + address + interval + "\r");
 					}
 				CommonStruct.portOpen = true;
 				}
@@ -159,7 +58,7 @@ namespace RobotSideUWP
                 }
 			}
 
-        public static void Wheels(string directionLeft, double _speedLeft, string directionRight, double _speedRight)
+        public void Wheels(string directionLeft, double _speedLeft, string directionRight, double _speedRight)
         {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
             try
             {
@@ -180,8 +79,7 @@ namespace RobotSideUWP
                     string commandLeft = directionLeft + speedLeft;
                     string commandRight = directionRight + speedRight;
                     CommonStruct.wheelsWasStopped = false;
-                    ReadWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
-                    string s = ReadWrite.Read();
+                    readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
                     CommonStruct.lastCommandLeft = commandLeft;
                     CommonStruct.lastCommandRight = commandRight;
                     CommonStruct.lastSpeedLeft = _speedLeft;
@@ -199,7 +97,7 @@ namespace RobotSideUWP
             }
         }
 
-        public static void WheelsLocal(string directionLeft, double _speedLeft, string directionRight, double _speedRight)
+        public void WheelsLocal(string directionLeft, double _speedLeft, string directionRight, double _speedRight)
             {//Управление кнопками на экране робота
             try {
                 double speedLeft0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[0];
@@ -211,8 +109,7 @@ namespace RobotSideUWP
                 string PwrRange = CommonStruct.wheelsPwrRange;
                 string commandLeft = directionLeft + speedLeft;
                 string commandRight = directionRight + speedRight;
-                ReadWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");
-                string s = ReadWrite.Read();
+                readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");
                 CommonStruct.stopBeforeWas = false;
             }
             catch (Exception e1)
@@ -222,13 +119,12 @@ namespace RobotSideUWP
                 }
             }
 
-        public static void WheelsStop()
+        public void WheelsStop()
             {
                 try
                 {
                     string hexAddress = CommonStruct.wheelsAddress;
-                    ReadWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
-                    string s = ReadWrite.Read();
+                    readWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
                     CommonStruct.stopBeforeWas = true;
             }
                 catch(Exception e)
@@ -238,7 +134,7 @@ namespace RobotSideUWP
                 }
             }
 
-        public static void WheelsStopSmoothly()
+        public void WheelsStopSmoothly()
             {
             try
             {
@@ -260,18 +156,15 @@ namespace RobotSideUWP
                     Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight);
                     Task.Delay(200).Wait();
                     string hexAddress = CommonStruct.wheelsAddress;
-                    ReadWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                    readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                     CommonStruct.wheelsWasStopped = true;
-                    string s = ReadWrite.Read();
-
                 }
                 else
                 {
                     Wheels(directionLeft, speedLeft, directionRight, speedRight);
                     string hexAddress = CommonStruct.wheelsAddress;
-                    ReadWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                    readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                     CommonStruct.wheelsWasStopped = true;
-                    string s = ReadWrite.Read();
                 }
                 CommonStruct.stopBeforeWas = true;
             }
@@ -281,14 +174,13 @@ namespace RobotSideUWP
             }
             }
 
-        public static void WheelsStopLocal()
+        public void WheelsStopLocal()
             {
             try
                 {
                 string hexAddress = CommonStruct.wheelsAddress;
-                ReadWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
+                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
                 Task.Delay(20).Wait();
-                string s = ReadWrite.Read();
                 CommonStruct.stopBeforeWas = true;
                 }
             catch (Exception e1)
@@ -297,7 +189,7 @@ namespace RobotSideUWP
                 }
             }
 
-        public static void WheelsStopLocalSmoothly()
+        public void WheelsStopLocalSmoothly()
             {
             try {
                 string hexAddress = CommonStruct.wheelsAddress;
@@ -319,9 +211,8 @@ namespace RobotSideUWP
                 Task.Delay(300).Wait();
                 WheelsLocal(directionLeft, k5 * speedLeft, directionRight, k5 * speedRight);
 
-                ReadWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
+                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
                 Task.Delay(20).Wait();
-                string s = ReadWrite.Read();
                 CommonStruct.stopBeforeWas = true;
             }
             catch (Exception e1)
@@ -330,30 +221,26 @@ namespace RobotSideUWP
                 }
             }
 
-		public static void CameraUpDown(string direction)
+		public void CameraUpDown(string direction)
 			{
 			try
                 {
                     string hexAddress = CommonStruct.cameraAddress;
-                    string s = "";
                     string PwrRange = CommonStruct.cameraPwrRange;
                     if (CommonStruct.cameraController == "GM51")
                     {
                         double speed = CameraSpeedToPWM();
                         if (speed <= 2) speed = 2;
                         string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        ReadWrite.Write("^RO" + CommonStruct.cameraAddress + "6" + "\r");//Установка 1/6 шага
-                        s = ReadWrite.Read();
+                        readWrite.Write("^RO" + CommonStruct.cameraAddress + "6" + "\r");//Установка 1/6 шага
                         string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
-                        ReadWrite.Write(command);
-                        s = ReadWrite.Read();
+                        readWrite.Write(command);
                     }
                     else if (CommonStruct.cameraController == "RD31")
                     {
                         double speed = CommonStruct.cameraSpeed;//от 0 до 100.
                         string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        ReadWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
-                        s = ReadWrite.Read();
+                        readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                     }
                 }
 			catch (Exception e1)
@@ -363,7 +250,7 @@ namespace RobotSideUWP
                 }
 			}
 
-        public static void CameraUpDown(string direction, double speed)
+        public void CameraUpDown(string direction, double speed)
         {
             try
             {
@@ -374,17 +261,14 @@ namespace RobotSideUWP
                 {
                     if (speed <= 2) speed = 2;
                     string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                    ReadWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/6 шага
-                    s = ReadWrite.Read();
+                    readWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/6 шага
                     string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
-                    ReadWrite.Write(command);
-                    s = ReadWrite.Read();
+                    readWrite.Write(command);
                 }
                 else if (CommonStruct.cameraController == "RD31")
                 {
                     speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                    ReadWrite.Write("^R1" + hexAddress + direction + speed + "000" + "4" + "\r");
-                    s = ReadWrite.Read();
+                    readWrite.Write("^R1" + hexAddress + direction + speed + "000" + "4" + "\r");
                 }
 
             }
@@ -394,32 +278,19 @@ namespace RobotSideUWP
             }
         }
 
-        public static void CameraStop()
+        public void CameraStop()
         {//
             try
             {
                 string hexAddress = CommonStruct.cameraAddress;
-                try
+                if (CommonStruct.cameraController == "GM51")
                 {
-                    if (CommonStruct.cameraController == "GM51")
-                    {
-                        ReadWrite.Write("^RC" + hexAddress + "\r");
-                    }
-                    else if (CommonStruct.cameraController == "RD31")
-                    {
-                        double speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                        ReadWrite.Write("^RS" + hexAddress + "1" + "\r");
-                    }
+                    readWrite.Write("^RC" + hexAddress + "\r");
                 }
-                catch (Exception)
+                else if (CommonStruct.cameraController == "RD31")
                 {
-                }
-                try
-                {
-                    string s = ReadWrite.Read();
-                }
-                catch (Exception)
-                {
+                    double speed = CommonStruct.cameraSpeed;//от 0 до 100.
+                    readWrite.Write("^RS" + hexAddress + "1" + "\r");
                 }
             }
             catch (Exception e1)
@@ -470,14 +341,12 @@ namespace RobotSideUWP
             return output;
         }
 
-        public static void BatteryVoltageMeasuring()
+        public void BatteryVoltageMeasuring()
         {
             try
             {
-
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                ReadWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
-                CommonStruct.readData = ReadWrite.Read();//В скобках надо писать количество символов в ответе, включая конец строки, иначе будет отвечать только черезх время таймаута
+                readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 string s1 = CommonStruct.readData;
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
@@ -500,7 +369,6 @@ namespace RobotSideUWP
                     CommonStruct.dVoltageCorrected = dVoltageAveraged + deltaV;
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }
-
 
                 if (CommonStruct.dVoltageCorrected < 10500)
                 {

@@ -3,240 +3,108 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.SerialCommunication;
 using Windows.Storage.Streams;
+using System.Collections.ObjectModel;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using System.Threading;
 
 namespace RobotSideUWP
 {
     public class ReadWrite
     {
-        static ReadWriteClass rwc;
+        private SerialDevice serialPort = null;
+        DataWriter dataWriteObject = null;
+        DataReader dataReaderObject = null;
 
         public ReadWrite()
         {
-            rwc = new ReadWriteClass();
-            rwc.Open();
+            comPortInit();
         }
 
-        public static void Write(string dataToWrite)
+        private async void comPortInit()
         {
-            ReadWriteClass rwc = new ReadWriteClass();
-            rwc.Write(dataToWrite);
-        }
-
-        public static string Read()
-        {
-            ReadWriteClass rwc = new ReadWriteClass();
-            Task.Delay(20).Wait();
-            string readData = rwc.ReadLine();
-            return readData;
-        }
-    }
-
-    public class ReadWriteClass
-    {
-        static SerialDevice device = null;
-        DataReader dataReaderObject = null;
-        DataWriter dataWriteObject = null;
-        string fullDataFromPort = "";
-        string testVariable1 = "";
-
-        static MainPage rootPage = MainPage.Current;
-
-        public ReadWriteClass()
-        {
-        }
-
-        public void Open()
-        {
-            bool openSuccess = false;
+            string aqs = SerialDevice.GetDeviceSelector("UART0");
+            var dis = await DeviceInformation.FindAllAsync(aqs);
             try
             {
-                openSuccess = OpenDeviceAsync();
+                serialPort = await SerialDevice.FromIdAsync(dis[0].Id);
+                if (serialPort == null) return;
+                serialPort.WriteTimeout = TimeSpan.FromMilliseconds(1000);
+                serialPort.ReadTimeout = TimeSpan.FromMilliseconds(1000);
+                serialPort.BaudRate = 9600;
+                serialPort.Parity = SerialParity.None;
+                serialPort.StopBits = SerialStopBitCount.One;
+                serialPort.DataBits = 8;
+                serialPort.Handshake = SerialHandshake.None;
+                dataWriteObject = new DataWriter(serialPort.OutputStream);
+                Listen();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("Open() " + e.Message.ToString(), NotifyType.ErrorMessage);
-            }
-            if (openSuccess == true)
-            {
-                PortInit();
-            }
-        }
-
-        public static bool OpenDeviceAsync()
-        {
-            DeviceInformation entry = rootPage.choosenDevice;
-            if (device != null)
-            {
-                device.Dispose();
-            }
-            Task t = Task.Run(async () => { device = await SerialDevice.FromIdAsync(entry.Id); });
-            t.Wait();
-            //SerialDevice device1 = await SerialDevice.FromIdAsync(entry.Id);
-            bool successfullyOpenedDevice = false;
-            if (device != null) { successfullyOpenedDevice = true; }
-            else { successfullyOpenedDevice = false; }
-            return successfullyOpenedDevice;
-        }
-
-        private void PortInit()
-        {
-            if (device == null)
-            {
-                MainPage.Current.NotifyUserFromOtherThread("Device is not connected", NotifyType.ErrorMessage);
-            }
-            else
-            {
-                device.BaudRate = 9600;
-                device.Parity = SerialParity.None;
-                device.DataBits = 8;
-                device.StopBits = SerialStopBitCount.One;
-                device.Handshake = SerialHandshake.None;
-                device.BreakSignalState = false;
-                int ReadTimeoutInput = 4000;
-                device.ReadTimeout = new System.TimeSpan(ReadTimeoutInput * 10000);//Одна миллисекунда = 10 тыс. тиков
-                int WriteTimeoutInput = 1000;
-                device.WriteTimeout = new System.TimeSpan(WriteTimeoutInput * 10000);//Одна миллисекунда = 10 тыс. тиков
-                MainPage.Current.NotifyUserFromOtherThread("Connected to " + device.PortName, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThread("comPortInit() ", NotifyType.ErrorMessage);
             }
         }
 
-        public async void Write(string dataToWrite)
+        public void Write(string dataToWrite)
         {
-            if (device != null)
+            try
             {
-                try
+                if (serialPort != null)
                 {
-                    dataWriteObject = new DataWriter(device.OutputStream);
-                    await WriteAsync(dataToWrite);
-                }
-                catch (Exception exception)
-                {
-                    MainPage.Current.NotifyUserFromOtherThread(exception.Message.ToString(), NotifyType.ErrorMessage);
-                }
-                finally
-                {
-                    dataWriteObject.DetachStream();
-                    dataWriteObject = null;
-                }
-            }
-        }
-
-        private async Task WriteAsync(string dataToWrite)
-        {
-            CommonStruct.thereAreNoIONow = false;
-            Task<UInt32> storeAsyncTask;
-            Object WriteCancelLock = new Object();
-            if ((dataToWrite.Length != 0))
-            {
-                dataWriteObject.WriteString(dataToWrite);
-                lock (WriteCancelLock)
-                {
-                    storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
-                }
-                UInt32 bytesWritten = await storeAsyncTask;
-            }
-            else
-            {
-                rootPage.NotifyUserFromOtherThread("No input received to write", NotifyType.StatusMessage);
-            }
-            CommonStruct.thereAreNoIONow = true;
-        }
-
-        public string ReadLine()
-        {
-            string oneChar = "";
-            string readData = "";
-            for (int i = 0; i < 35; i++)
-            {
-                oneChar = Read(1);
-                if (oneChar != "\r")
-                {
-                    readData += oneChar;
-                    fullDataFromPort = readData;
+                    //await WriteAsync(dataToWrite);
+                    dataWriteObject.WriteString(dataToWrite);
+                    dataWriteObject.StoreAsync();
                 }
                 else
                 {
-                    i = 35;
+                    MainPage.Current.NotifyUserFromOtherThread("Connection to commport error ", NotifyType.ErrorMessage);
                 }
             }
-            return readData;
+            catch (Exception ex)
+            {
+                MainPage.Current.NotifyUserFromOtherThread("Write() " + ex.Message, NotifyType.StatusMessage);
+            }
         }
 
-        public string Read(uint ReadBufferLength)
+        private async void Listen()
         {
-            CommonStruct.thereAreNoIONow = false;
-            string readData = "";
-            if (device != null)
-            {
-                try
-                {
-                    if (dataReaderObject == null)
-                    {
-                        dataReaderObject = new DataReader(device.InputStream);
-                    }
-                    readData = ReadAsync(ReadBufferLength);
-                }
-                catch (Exception exception)
-                {
-                    MainPage.Current.NotifyUserFromOtherThread(exception.Message.ToString(), NotifyType.ErrorMessage);
-                }
-                finally
-                {
-                    if (CommonStruct.portOpen == true)
-                    {
-                        dataReaderObject.DetachStream();
-                        dataReaderObject = null;
-                    }
-                }
-            }
-            else
-            {
-
-            }
-            CommonStruct.thereAreNoIONow = true;
-            return readData;
-        }
-
-        private string ReadAsync(uint ReadBufferLength)
-        {
-            string outputData = "";
             try
             {
-
-                UInt32 bytesRead = 0;
-                Task<UInt32> loadAsyncTask;
-                Object ReadCancelLock = new Object();
-
-                lock (ReadCancelLock)
+                if (serialPort != null)
                 {
-                    //dataReaderObject.InputStreamOptions = InputStreamOptions.ReadAhead;
-                    //dataReaderObject.InputStreamOptions = InputStreamOptions.Partial;
-                    dataReaderObject.InputStreamOptions = InputStreamOptions.None;
-                    loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
-                    //string x = dataReaderObject.ReadString(loadAsyncTask);
+                    dataReaderObject = new DataReader(serialPort.InputStream);
+                    while (true)
+                    {
+                        await ReadAsync();
+                    }
                 }
-                Task t = Task.Run(async () => { bytesRead = await loadAsyncTask; });
-                bool b = t.Wait(1000);
-                if (bytesRead > 0)
-                {
-                    outputData = dataReaderObject.ReadString(bytesRead);
-                    testVariable1 = outputData;
-                    CommonStruct.portOpen = true;
-                }
-                else
-                {
-                    CommonStruct.portOpen = false;
-                    MainPage.Current.NotifyUserFromOtherThread("ReadAsync() bytesRead<0: COM-порт не отвечает.", NotifyType.StatusMessage);
-                }
-                CommonStruct.thereAreNoIONow = true;
-                return outputData;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("ReadAsync(): COM-порт: " + fullDataFromPort + " " + testVariable1 + " " + e.Message, NotifyType.StatusMessage);
-                CommonStruct.thereAreNoIONow = true;
-                return "";
+                MainPage.Current.NotifyUserFromOtherThread("Listen() " + ex.Message, NotifyType.StatusMessage);
+            }
+            finally
+            {
+                if (dataReaderObject != null)
+                {
+                    dataReaderObject.DetachStream();
+                    dataReaderObject = null;
+                }
             }
         }
+
+        private async Task ReadAsync()
+        {
+            Task<UInt32> loadAsyncTask;
+            uint ReadBufferLength = 64;
+            dataReaderObject.InputStreamOptions = InputStreamOptions.Partial;
+            loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
+            UInt32 bytesRead = await loadAsyncTask;
+            if (bytesRead > 0)
+            {
+                string receivedData = dataReaderObject.ReadString(bytesRead);
+            }
+        }
+
     }
 }
