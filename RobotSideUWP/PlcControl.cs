@@ -177,7 +177,7 @@ namespace RobotSideUWP
                 }
                     
 
-                CommonStruct.stopBeforeWas = true;
+                
                 }
                 catch(Exception e)
                 {
@@ -213,7 +213,8 @@ namespace RobotSideUWP
 
                             smoothlyStopTimer.Stop();
                             stopTimerCounter = 0;
-                            }
+                            CommonStruct.stopBeforeWas = true;
+                        }
                             break;
                     }
                 
