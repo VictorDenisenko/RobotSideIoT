@@ -124,7 +124,7 @@ namespace RobotSideUWP
         public static long startTimeOfStop { get; set; }
         public static string outputString = "";
 
-
+        public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
     }
 
     public struct CommonVideoStruct
@@ -255,7 +255,7 @@ namespace RobotSideUWP
                 }
             catch (Exception e)
                 {
-                await CommonFunctions.WriteToLog(e.Message + " ZeroInFrontReset");
+                //await CommonFunctions.WriteToLog(e.Message + " ZeroInFrontReset");
                 MainPage.Current.NotifyUserFromOtherThread("ZeroInFrontReset: " + e.Message, NotifyType.StatusMessage);
                 return output;
                 }
@@ -323,7 +323,7 @@ namespace RobotSideUWP
 				}
 			catch (Exception e)
 				{
-                await CommonFunctions.WriteToLog(e.Message + " Encryption");
+                //await CommonFunctions.WriteToLog(e.Message + " Encryption");
                 MainPage.Current.NotifyUserFromOtherThread("Encryption: " + e.Message, NotifyType.StatusMessage);
                 return e.Message;
 				}
@@ -345,7 +345,7 @@ namespace RobotSideUWP
 				}
 			catch (Exception e)
 				{
-                await CommonFunctions.WriteToLog(e.Message + " Decryption");
+                //await CommonFunctions.WriteToLog(e.Message + " Decryption");
                 MainPage.Current.NotifyUserFromOtherThread("Decryption: " + e.Message, NotifyType.StatusMessage);
                 return e.Message;
 				}

@@ -5,7 +5,8 @@ using Windows.System;
 using Windows.UI.Xaml;
 using System.Net.Http;
 using System.Net.Http.Headers;
-
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
 
 namespace RobotSideUWP
 {
@@ -14,11 +15,17 @@ namespace RobotSideUWP
         static GpioPin pin6;//Выход для отключения питания 
         static TimeSpan delay = TimeSpan.FromMilliseconds(200);
         public ReadWrite readWrite = null;
-
+        public DispatcherTimer smoothlyStopTimer;
+        public int stopTimerCounter = 0;
 
         public PlcControl()
         {
             readWrite = new ReadWrite();
+
+            smoothlyStopTimer = new DispatcherTimer();
+            smoothlyStopTimer.Tick += SmoothlyStopTimer_Tick;
+            smoothlyStopTimer.Interval = new TimeSpan(0, 0, 0, 0, 200); //Таймер для плавной сотановки (дни, часы, мин, сек, ms)
+            //smoothlyStopTimer.Start();
         }
 
         public static int CameraSpeedToPWM()
@@ -78,7 +85,7 @@ namespace RobotSideUWP
                     string PwrRange = CommonStruct.wheelsPwrRange;
                     string commandLeft = directionLeft + speedLeft;
                     string commandRight = directionRight + speedRight;
-                    CommonStruct.wheelsWasStopped = false;
+                    //CommonStruct.wheelsWasStopped = false;
                     readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
                     CommonStruct.lastCommandLeft = commandLeft;
                     CommonStruct.lastCommandRight = commandRight;
@@ -137,42 +144,96 @@ namespace RobotSideUWP
         public void WheelsStopSmoothly()
             {
             try
-            {
+                {
+                    double speedLeft = CommonStruct.lastSpeedLeft;
+                    double speedRight = CommonStruct.lastSpeedRight;
+                    string directionLeft = CommonStruct.directionLeft;
+                    string directionRight = CommonStruct.directionRight;
+                    double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
+                    stopTimerCounter = 0;
+                //if ((speedLeft > 30) && (speedRight > 30)) 
+                    if ((speedLeft > 0) && (speedRight > 0)) {
+                        Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
+                        Task t = new Task(async () => {
+                            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                                smoothlyStopTimer.Start();
+                            }));
+                        });
+                        t.Start();
+                    }
+                    else
+                    {
+                        //Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                    Task t = new Task(async () => {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                            smoothlyStopTimer.Start();
+                        }));
+                    });
+                    t.Start();
+                    //string hexAddress = CommonStruct.wheelsAddress;
+                    //readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                    //CommonStruct.wheelsWasStopped = true;
+                    //MainPage.Current.NotifyUserFromOtherThread(CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
+                }
+                    
+
+                CommonStruct.stopBeforeWas = true;
+                }
+                catch(Exception e)
+                {
+                    MainPage.Current.NotifyUserFromOtherThread("WheelsStopSmoothly" + e.Message, NotifyType.StatusMessage);
+                }
+            }
+
+        private void SmoothlyStopTimer_Tick(object sender, object e)
+        {
+            try {
+                stopTimerCounter++;
                 double speedLeft = CommonStruct.lastSpeedLeft;
                 double speedRight = CommonStruct.lastSpeedRight;
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
                 double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
-                int T = CommonStruct.smoothStopTime;
-                int deltaT = Convert.ToInt32(T / 5.0);//Длительность тороможения каждого участка, в миллисекундах 
-                if ((speedLeft > 30) && (speedRight > 30))
-                {
-                    Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
-                    Task.Delay(200).Wait();
-                    Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight);
-                    Task.Delay(200).Wait();
-                    Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight);
-                    Task.Delay(200).Wait();
-                    Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight);
-                    Task.Delay(200).Wait();
-                    string hexAddress = CommonStruct.wheelsAddress;
-                    readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                    CommonStruct.wheelsWasStopped = true;
-                }
-                else
-                {
-                    Wheels(directionLeft, speedLeft, directionRight, speedRight);
-                    string hexAddress = CommonStruct.wheelsAddress;
-                    readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                    CommonStruct.wheelsWasStopped = true;
-                }
-                CommonStruct.stopBeforeWas = true;
+
+                
+                    switch (stopTimerCounter) {
+                        case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
+                        case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
+                        case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
+                        case 4: {
+                                string hexAddress = CommonStruct.wheelsAddress;
+                                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                                //smoothlyStopTimer.Stop();
+                                //Task t = new Task(async () => {
+                                //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                                //        smoothlyStopTimer.Stop();
+                                //    }));
+                                //});
+                                //t.Start();
+
+                            smoothlyStopTimer.Stop();
+                            stopTimerCounter = 0;
+                            }
+                            break;
+                    }
+                
+                    //switch (stopTimerCounter) {
+                    //    case 1: {
+                    //            //Wheels(directionLeft, speedLeft, directionRight, speedRight);
+                    //            string hexAddress = CommonStruct.wheelsAddress;
+                    //            readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                    //            //smoothlyStopTimer.Stop();
+                    //            stopTimerCounter = 0;
+                    //        }
+                    //        break;
+                    //}
+                
+                
             }
-            catch(Exception e)
-            {
-                MainPage.Current.NotifyUserFromOtherThread("WheelsStopSmoothly" + e.Message, NotifyType.StatusMessage);
+            catch(Exception e1) {
+                MainPage.Current.NotifyUserFromOtherThread("SmoothlyStopTimer_Tick" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
             }
-            }
+        }
 
         public void WheelsStopLocal()
             {
@@ -348,6 +409,7 @@ namespace RobotSideUWP
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 string s1 = CommonStruct.readData;
+                if (s1 == "") return;
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
                 if ((data1 == "") || (data1 == null)) { data1 = "0"; }
@@ -390,6 +452,8 @@ namespace RobotSideUWP
                 if (levelCeiling >= 100) levelCeiling = 100;
 
                 CommonStruct.voltageLevelFromRobot = levelCeiling.ToString() + "%";
+                
+                HostWatchDog(CommonStruct.wheelsAddress, "set");
             }
             catch (Exception e2)
             {

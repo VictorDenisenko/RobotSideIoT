@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.SerialCommunication;
 using Windows.Storage.Streams;
-using System.Collections.ObjectModel;
-using Windows.UI.Xaml;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
-using System.Threading;
+using Windows.UI.Xaml;
+using Windows.ApplicationModel.Core;
 
 namespace RobotSideUWP
 {
@@ -15,10 +15,26 @@ namespace RobotSideUWP
         private SerialDevice serialPort = null;
         DataWriter dataWriteObject = null;
         DataReader dataReaderObject = null;
+        DispatcherTimer sendAfterDelayTimer;
+        DateTime timeNow;
+        DateTime timeSent;
+        long ticksSent = 0;
+        string _dataToWrite = "";
 
         public ReadWrite()
         {
             comPortInit();
+            sendAfterDelayTimer = new DispatcherTimer();
+            sendAfterDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 100); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
+            sendAfterDelayTimer.Tick += SendAfterDelayTimer_Tick;
+        }
+
+        private void SendAfterDelayTimer_Tick(object sender, object e)
+        {
+            WriteNested(_dataToWrite);
+            sendAfterDelayTimer.Stop();
+            timeSent = DateTime.Now;
+            ticksSent = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
         }
 
         private async void comPortInit()
@@ -37,23 +53,55 @@ namespace RobotSideUWP
                 serialPort.DataBits = 8;
                 serialPort.Handshake = SerialHandshake.None;
                 dataWriteObject = new DataWriter(serialPort.OutputStream);
-                Listen();
+                dataReaderObject = new DataReader(serialPort.InputStream);
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("comPortInit() ", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThread("comPortInit() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
         public void Write(string dataToWrite)
         {
+            try {
+                timeNow = DateTime.Now;
+                var ticksNow = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+
+                long deltaTicks = (ticksNow - ticksSent) / 10000;
+
+                if (deltaTicks < 50) {
+                    if (dataToWrite == "Stop") {
+                        var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+                            sendAfterDelayTimer.Start();
+                        });
+                    }
+                } else {
+                    WriteNested(dataToWrite);
+                    timeSent = DateTime.Now;
+                    ticksSent = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+                }
+            }
+            catch (Exception e) {
+            }
+        }
+
+        public async void WriteNested(string dataToWrite)
+        {
+            CommonStruct.permissionToSend = false;
+            _dataToWrite = dataToWrite;
             try
             {
                 if (serialPort != null)
                 {
-                    //await WriteAsync(dataToWrite);
+                    Task<UInt32> storeAsyncTask;
                     dataWriteObject.WriteString(dataToWrite);
-                    dataWriteObject.StoreAsync();
+                    storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
+                    UInt32 bytesWritten = await storeAsyncTask;
+                    if (bytesWritten > 0)
+                    {
+                        await ReadAsync();
+                        CommonStruct.permissionToSend = true;
+                    }
                 }
                 else
                 {
@@ -62,49 +110,48 @@ namespace RobotSideUWP
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("Write() " + ex.Message, NotifyType.StatusMessage);
-            }
-        }
-
-        private async void Listen()
-        {
-            try
-            {
-                if (serialPort != null)
-                {
-                    dataReaderObject = new DataReader(serialPort.InputStream);
-                    while (true)
-                    {
-                        await ReadAsync();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MainPage.Current.NotifyUserFromOtherThread("Listen() " + ex.Message, NotifyType.StatusMessage);
-            }
-            finally
-            {
-                if (dataReaderObject != null)
-                {
-                    dataReaderObject.DetachStream();
-                    dataReaderObject = null;
-                }
+                MainPage.Current.NotifyUserFromOtherThread("WriteNested() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
         private async Task ReadAsync()
         {
+            var receivedStrings = "";
+            var receivedSimbol = "";
             Task<UInt32> loadAsyncTask;
-            uint ReadBufferLength = 64;
-            dataReaderObject.InputStreamOptions = InputStreamOptions.Partial;
-            loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
-            UInt32 bytesRead = await loadAsyncTask;
-            if (bytesRead > 0)
+            uint ReadBufferLength = 1;
+            UInt32 bytesRead = 0;
+            int slashIndex = 0;
+            int k = 0;//Счетчик предельно допустимого количества символов - предохранение от зависания в цикле
+            try
             {
-                string receivedData = dataReaderObject.ReadString(bytesRead);
+                dataReaderObject.InputStreamOptions = InputStreamOptions.ReadAhead;
+                while ((receivedSimbol != "\r") && (k < 35))
+                {
+                    loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
+                    bytesRead = await loadAsyncTask;
+                    receivedSimbol = dataReaderObject.ReadString(1);
+                    receivedStrings += receivedSimbol;
+                    k++;
+                    //MainPage.Current.NotifyUserFromOtherThread(receivedStrings + "  ", NotifyType.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                MainPage.Current.NotifyUserFromOtherThread("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
+            }
+            try
+            {
+                var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    slashIndex = receivedStrings.IndexOf("\r", 0);
+                    if (slashIndex != 5) CommonStruct.readData = receivedStrings;
+                });
+            }
+            catch (Exception ex)
+            {
+                MainPage.Current.NotifyUserFromOtherThread("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
-
     }
 }

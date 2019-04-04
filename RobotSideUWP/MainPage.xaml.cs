@@ -85,7 +85,7 @@ namespace RobotSideUWP
 
         private static int sArrLength = 16;
         private string[] sArr = new string[sArrLength];
-        private string[] sArrBefore = new string[sArrLength];
+        private string[] arrBefore = new string[sArrLength];
         string clientId = "";
 
         string address = CommonStruct.defaultWebSiteAddress;
@@ -239,7 +239,7 @@ namespace RobotSideUWP
             }
             catch(Exception e1)
             {
-                Current.NotifyUserFromOtherThread("ListAvailablePorts: Divece is not connected " + e1.Message, NotifyType.StatusMessage);
+                Current.NotifyUserFromOtherThread("ReconnectTimer_Tick " + e1.Message, NotifyType.StatusMessage);
             }
         }
 
@@ -318,14 +318,14 @@ namespace RobotSideUWP
             }
         }
 
-         private void Polling(string[] sArr)
+         private void Polling(string[] arr)
         {
                         
             #region Base Cycle
 
           //здесь начинался polling
             dataFromRobot[2] = CommonStruct.voltageLevelFromRobot;
-                if (sArr != null)
+                if (arr != null)
                 {
                     if (OsType == "Windows.IoT")
                     {
@@ -346,30 +346,30 @@ namespace RobotSideUWP
                 //{
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                     {
-                    textBox_x_coord.Text = sArr[1];//x_coord
-                        textBox_y_coord.Text = sArr[2];//y_coord
-                        textBoxWheelsStop.Text = sArr[3];//wheelsStop
-                        textBoxCameraAngle.Text = sArr[4];//сameraData
-                        textBoxKeys.Text = sArr[5];//Управление клавишами
-                        textBoxWheelsCorrection.Text = sArr[6];//Поправка для колес - движение прямо
-                        textBoxSmileName.Text = sArr[7];//Smile Name
-                        textBoxSmileName.Text = sArr[8];//Нелинейная коррекция есть = true
+                    textBox_x_coord.Text = arr[1];//x_coord
+                        textBox_y_coord.Text = arr[2];//y_coord
+                        textBoxWheelsStop.Text = arr[3];//wheelsStop
+                        textBoxCameraAngle.Text = arr[4];//сameraData
+                        textBoxKeys.Text = arr[5];//Управление клавишами
+                        textBoxWheelsCorrection.Text = arr[6];//Поправка для колес - движение прямо
+                        textBoxSmileName.Text = arr[7];//Smile Name
+                        textBoxSmileName.Text = arr[8];//Нелинейная коррекция есть = true
                     });
 
-                    if (sArr[8] == "false")
+                    if (arr[8] == "false")
                     {
                         CommonStruct.wheelsNonlinearTuningIs = false;
                     }
-                    else if (sArr[8] == "true")
+                    else if (arr[8] == "true")
                     {
                         CommonStruct.wheelsNonlinearTuningIs = true;
                     }
 
-                    if ((sArr[6] != null) && (sArr[6] != "Corr") && (sArr[6] != "0") && (sArr[6] != ""))
+                    if ((arr[6] != null) && (arr[6] != "Corr") && (arr[6] != "0") && (arr[6] != ""))
                     {//Передача параметра подстройки скоростей колес из браузера в робот
                         try
                         {
-                            CommonStruct.speedTuningParam = Convert.ToDouble(sArr[6]);
+                            CommonStruct.speedTuningParam = Convert.ToDouble(arr[6]);
                         }
                         catch (Exception e)
                         {
@@ -384,39 +384,39 @@ namespace RobotSideUWP
                     }
 
                     string direction = "0";
-                    switch (sArr[4])
+                    switch (arr[4])
                     {//Управление камерой
                         case "Up":
-                            sArr[4] = "0";
+                            arr[4] = "0";
                             direction = "1";
                             plcControl.CameraUpDown(direction);
                             CommonStruct.cameraPositionBefore = "slowUp";
                             break;
                         case "Down":
-                            sArr[4] = "0";
+                            arr[4] = "0";
                             direction = "0";
                             plcControl.CameraUpDown(direction);
                             CommonStruct.cameraPositionBefore = "slowDown";
                             break;
                         case "Stop":
-                            sArr[4] = "0";
+                            arr[4] = "0";
                             if (CommonStruct.cameraController != "No") plcControl.CameraStop();
                             break;
                     }
 
                     //Управление колесами. Макс. speedRadius равен 100 пикселям
-                    if ((sArr[1] == "") || (sArr[1] == null)) { sArr[1] = "0"; }
-                    if ((sArr[2] == "") || (sArr[2] == null)) { sArr[2] = "0"; }
+                    if ((arr[1] == "") || (arr[1] == null)) { arr[1] = "0"; }
+                    if ((arr[2] == "") || (arr[2] == null)) { arr[2] = "0"; }
 
-                    if (sArr[5] == "Stop")
+                    if (arr[5] == "Stop")
                     {//Управление мышкой  
-                        double speedRadius = CommonFunctions.SpeedRadius(sArr[1], sArr[2]);//
+                        double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
                         if (speedRadius > 90) speedRadius = 100;
                         speedLeft0 = speedRadius;
                         speedRight0 = speedRadius;
-                        alpha = CommonFunctions.Degrees(sArr[1], sArr[2]);//
+                        alpha = CommonFunctions.Degrees(arr[1], arr[2]);//
 
-                        if ((sArr[3] == "Start") && (mem2 == "Stop"))
+                        if ((arr[3] == "Start") && (mem2 == "Stop"))
                         {
                             counterFromStopToStart = counterFromStopToStart + 1;
                             if (counterFromStopToStart == 1)
@@ -425,7 +425,7 @@ namespace RobotSideUWP
                                 lastColorArea = "";
                             }
                         }
-                        else if ((sArr[3] == "Stop") && (mem2 == "Start"))
+                        else if ((arr[3] == "Stop") && (mem2 == "Start"))
                         {
                             fromStopToStart = false;
                             counterFromStopToStart = 0;
@@ -434,9 +434,11 @@ namespace RobotSideUWP
                         {
                             counterFromStopToStart = 0;
                         }
-                        mem2 = sArr[3];
+                        mem2 = arr[3];
 
-                        if ((sArr[3] == "Start") || (speedRadius > 1))
+                    //Current.NotifyUserFromOtherThread(CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
+
+                    if ((arr[3] == "Start") || (speedRadius > 1))
                         {//Управление мышкой  
                             sArr3Before = "КолесаВращались";
 
@@ -564,15 +566,15 @@ namespace RobotSideUWP
                         }
                     }
                     ///////////Управление клавишами
-                    if (((sArr[5] != "Stop") && (sArr[5] != null) && (sArr[5] != "0")) && (sArr[3] == "Start"))
+                    if (((arr[5] != "Stop") && (arr[5] != null) && (arr[5] != "0")) && (arr[3] == "Start"))
                     {//Управление клавишами
                         sArr3Before = "КолесаВращались";
                         double xCoord = 0.0;
                         double yCoord = 0.0;
                         try
                         {
-                            xCoord = Convert.ToDouble(sArr[1]);
-                            yCoord = -Convert.ToDouble(sArr[2]);
+                            xCoord = Convert.ToDouble(arr[1]);
+                            yCoord = -Convert.ToDouble(arr[2]);
                         }
                         catch (Exception e)
                         {
@@ -584,7 +586,7 @@ namespace RobotSideUWP
                         speedLeft0 = speedY;//скорость левого колеса
                         speedRight0 = speedY;//скорость правого колеса
 
-                        switch (sArr[5])
+                        switch (arr[5])
                         {//Управление клавишами
                             case "left":
                                 directionLeft = backwardDirection;
@@ -633,7 +635,7 @@ namespace RobotSideUWP
                         }
                     }
                     ///////////////////////////////////////////
-                    if (sArr[3] == "Stop") // !=Start - нельзя, т.к. с сервера идет поток нулей, который будет останавливать колеса
+                    if (arr[3] == "Stop") // !=Start - нельзя, т.к. с сервера идет поток нулей, который будет останавливать колеса
                     {
                         if (sArr3Before == "КолесаВращались")
                         {
@@ -651,7 +653,7 @@ namespace RobotSideUWP
                             }
                         }
 
-                    //await SendVoltageLevelToServer();
+                    //SendVoltageLevelToServer();
                     }
                 }
                 else
@@ -682,14 +684,26 @@ namespace RobotSideUWP
 
         private void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
         {
+            if (plcControl.stopTimerCounter == 0) {
+                __Client_MqttMsgPublishReceivedAsync(sender, e);
+            }
+        }
+
+         private void __Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
+        {
+
+            //Current.NotifyUserFromOtherThread("MQTT " + CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
+
             string topic = e.Topic; byte[] message = e.Message; string result = Encoding.UTF8.GetString(message);
             string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
             s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
             separator[0] = ','; sArr = s.Split(separator, 16);
+            if (sArr[14] == "0") arrBefore[14] = "0";
             iNumberOfMessage = Convert.ToInt32(sArr[14]);
-            iNubmerOfMessageBefore = Convert.ToInt32(sArrBefore[14]);
+            iNubmerOfMessageBefore = Convert.ToInt32(arrBefore[14]);
             timeNow = Convert.ToInt32(sArr[15]);
-            timeBefore = Convert.ToInt32(sArrBefore[15]);
+            
+            timeBefore = Convert.ToInt32(arrBefore[15]);
             if (iArrayCounter == 0) isEntireMessage = true;
 
             //Сюда входят сообщения и массивы в них и я анализирую, пропускать их в Polling или нет 
@@ -708,7 +722,7 @@ namespace RobotSideUWP
                             });
 
                             iArrayCounter++;
-                            sArrBefore = sArr;
+                            arrBefore = sArr;
                             Polling(sArr);
                         }
                         else
@@ -723,6 +737,7 @@ namespace RobotSideUWP
         private void WatchdogTimer_Tick(object sender, object e)
         {
             //InitialConditions();
+            CommonStruct.permissionToSend = true;
         }
 
         private void InitialConditions()
@@ -733,9 +748,9 @@ namespace RobotSideUWP
             iArrayCounter = 0;
             sArr[3] = "Stop";
             sArr[5] = "Stop";
-            sArrBefore[3] = "Stop";
-            sArrBefore[5] = "Stop";
-            sArrBefore[15] = "0";
+            arrBefore[3] = "Stop";
+            arrBefore[5] = "Stop";
+            arrBefore[15] = "0";
             Polling(sArr);
             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
@@ -745,9 +760,10 @@ namespace RobotSideUWP
 
         public static async Task SendVoltageLevelToServer()
         {
-            string ipAddress = CommonStruct.defaultWebSiteAddress + ":8080";
+            string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
 
             string chargeLevel = CommonStruct.voltageLevelFromRobot;
+            if (chargeLevel == "") return;
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel + "&serial=" + CommonStruct.decriptedSerial);
 
             try
@@ -778,7 +794,7 @@ namespace RobotSideUWP
             catch (Exception ex)
             {
                 ipAddress = "StatusCode: " + ex.Message;
-                Current.NotifyUser(ex.Message, NotifyType.ErrorMessage);
+                Current.NotifyUser("SendVoltageLevelToServer() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -813,6 +829,7 @@ namespace RobotSideUWP
                 client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
                 client.ConnectionClosed += Client_ConnectionClosed;
                 client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+
                 client.MqttMsgUnsubscribed += Client_MqttMsgUnsubscribed;
             }
             catch (Exception e1)

@@ -162,6 +162,7 @@ namespace RobotSideUWP
             {
                 Task t = new Task(async () =>
                 {
+                    //await CommonFunctions.WriteToLog(strMessage);
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
                      {
                          Current.StatusBlock.Text = strMessage;
@@ -399,15 +400,12 @@ namespace RobotSideUWP
                 if (CommonStruct.stopBeforeWas == true)
                 {
 
-                    var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                    {
+                    //var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    //{
                         CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
-                       // if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
-                    });
-
-
-
-
+                        if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
+                        SendVoltageLevelToServer();
+                    //});
 
                     //CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
                     //if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
