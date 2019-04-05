@@ -15,6 +15,8 @@ namespace RobotSideUWP
     {
         public delegate void InvokeReadData();
         DispatcherTimer timerChargeLevel;
+        DispatcherTimer hostWatchdogInitTimer;
+        int kHostWtahdogTicks = 0;
 
         private void WriteDefaultSettings()
         {
@@ -27,7 +29,6 @@ namespace RobotSideUWP
             localSettings.Values["cameraController"] = "No";
             localSettings.Values["CameraSpeed"] = 100;
             localSettings.Values["CameraFastSpeed"] = 6;//Если ШД гудит и не крутится, надо увеличить это число, т.е. уменьшить скорость 
-            localSettings.Values["cameraPositionBefore"] = "bottom";
             localSettings.Values["stepNumberForCalibration"] = 15;
             localSettings.Values["directTopDistance"] = 5;
             localSettings.Values["directBottomDistance"] = 10;
@@ -92,7 +93,6 @@ namespace RobotSideUWP
 
             CommonStruct.cameraFastSpeed = CommonFunctions.ZeroInFrontSet(Convert.ToString(localSettings.Values["CameraFastSpeed"]));
             textBoxCameraFastSpeed.Text = Convert.ToInt16(CommonStruct.cameraFastSpeed).ToString();
-            CommonStruct.cameraPositionBefore = Convert.ToString(localSettings.Values["cameraPositionBefore"]);
             CommonStruct.stepNumberForCalibration = Convert.ToString(localSettings.Values["stepNumberForCalibration"]);
             textBoxStepNumberForCalibration.Text = CommonStruct.stepNumberForCalibration.ToString();
             CommonStruct.directTopDistance = Convert.ToInt16(localSettings.Values["directTopDistance"]);
@@ -274,6 +274,44 @@ namespace RobotSideUWP
             TimeSpan initTime = new TimeSpan(intHours, intMinutes, 0); //(часы, мин, сек);
             setTimeToRestartPicker.Time = initTime;
             setTimeToRestartPicker.AllowDrop = true;
+
+            hostWatchdogInitTimer = new DispatcherTimer();
+            hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
+            hostWatchdogInitTimer.Start();
+
+        }
+
+        private void HostWatchdogInitTimer_Tick(object sender, object e) {
+            kHostWtahdogTicks++;
+            try {
+                switch (kHostWtahdogTicks) {
+                    case 1: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
+                        break;
+                    case 2: {
+                            if (CommonStruct.cameraController == "No") {
+                                if (CommonStruct.readData == "!0002014\r") {
+                                    hostWatchdogInitTimer.Stop();
+                                }
+                            }
+                        }
+                        break;
+
+                    case 3: {
+                                plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
+                        }
+                        break;
+                    case 4: {
+                            if (CommonStruct.readData == "!0003014\r") {
+                                hostWatchdogInitTimer.Stop();
+                            }
+                        }
+                        break;
+                }
+            }
+            catch(Exception e1) {
+                string message = e1.Message;
+            }
         }
 
         private void AllControlIsEnabled(bool isEnabled)

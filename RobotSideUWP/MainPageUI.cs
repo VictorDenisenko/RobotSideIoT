@@ -450,7 +450,6 @@ namespace RobotSideUWP
             //plcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
             string direction = "1";
             plcControl.CameraUpDown(direction);
-            CommonStruct.cameraPositionBefore = "slowUp";
         }
 
         private void buttonCameraUp_PointerUp(object sender, PointerRoutedEventArgs e)
@@ -463,7 +462,6 @@ namespace RobotSideUWP
             //plcControl.HostWatchDog(CommonStruct.cameraAddress, "reset");
             string direction = "0";
             plcControl.CameraUpDown(direction);
-            CommonStruct.cameraPositionBefore = "slowDown";
         }
 
         private void buttonCameraDown_PointerUp(object sender, PointerRoutedEventArgs e)

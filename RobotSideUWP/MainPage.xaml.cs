@@ -83,9 +83,9 @@ namespace RobotSideUWP
         int timeToRestartMinutes = 0;
         DateTime now;
 
-        private static int sArrLength = 16;
-        private string[] sArr = new string[sArrLength];
-        private string[] arrBefore = new string[sArrLength];
+        private string[] sArr = new string[16] { "0", "0", "0", "Stop", "Stop", "Stop", "Corr", "You", "0", "0", "0", "0", "0", "0", "0", "0" };
+
+        private string[] arrBefore = new string[16];
         string clientId = "";
 
         string address = CommonStruct.defaultWebSiteAddress;
@@ -120,10 +120,7 @@ namespace RobotSideUWP
         public MainPage()
         {
             plcControl = new PlcControl();
-            
-            for (int i = 0; i < sArrLength - 1; i++) { sArr[i] = "0"; }
             clientId = Guid.NewGuid().ToString();
-
             InitializeComponent();
             listOfDevices = new ObservableCollection<DeviceInformation>();
             localSettings = ApplicationData.Current.LocalSettings;
@@ -235,6 +232,7 @@ namespace RobotSideUWP
                 if ((isConnected == false) && (bConnect == true))
                 {
                     client.Connect(clientId);
+                    Current.NotifyUserFromOtherThread("MQTT Reconnected ", NotifyType.StatusMessage);
                 }
             }
             catch(Exception e1)
@@ -373,8 +371,8 @@ namespace RobotSideUWP
                         }
                         catch (Exception e)
                         {
-                            Current.NotifyUser("if ((sArr[6] != null)" + e.Message, NotifyType.StatusMessage);
-                            //CommonFunctions.WriteToLog(e.Message + "CommonStruct.speedTuningParam = Convert.ToDouble(sArr[6]);");
+                            Current.NotifyUser("if ((arr[6] != null)" + e.Message, NotifyType.StatusMessage);
+                            //CommonFunctions.WriteToLog(e.Message + "CommonStruct.speedTuningParam = Convert.ToDouble(arr[6]);");
                         }
 
                         dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
@@ -387,19 +385,17 @@ namespace RobotSideUWP
                     switch (arr[4])
                     {//Управление камерой
                         case "Up":
-                            arr[4] = "0";
+                            arr[4] = "Stop";
                             direction = "1";
                             plcControl.CameraUpDown(direction);
-                            CommonStruct.cameraPositionBefore = "slowUp";
                             break;
                         case "Down":
-                            arr[4] = "0";
+                            arr[4] = "Stop";
                             direction = "0";
                             plcControl.CameraUpDown(direction);
-                            CommonStruct.cameraPositionBefore = "slowDown";
                             break;
                         case "Stop":
-                            arr[4] = "0";
+                            arr[4] = "Stop";
                             if (CommonStruct.cameraController != "No") plcControl.CameraStop();
                             break;
                     }
