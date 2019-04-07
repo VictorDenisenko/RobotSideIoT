@@ -32,6 +32,7 @@ namespace RobotSideUWP
         public static string cameraPwrRange = "3";
 		public static int connectionNumber { get; set; }
         public static string defaultWebSiteAddress { get; set; }
+        public static string webAddressForMQTT { get; set; }
         public static string stepNumberForCalibration { get; set; }
         public static int directTopDistance = 0;
         public static int directBottomDistance { get; set; }
@@ -110,7 +111,6 @@ namespace RobotSideUWP
 
         public static bool wheelsWasStopped = true;
         public static int initTime;
-        public static bool itIsTimeToAskVoltage = false;
 
         public static double dVoltageCorrected = 12500;
         public static string voltageLevelFromRobot = "";

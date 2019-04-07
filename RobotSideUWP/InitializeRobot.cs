@@ -14,7 +14,6 @@ namespace RobotSideUWP
     public sealed partial class MainPage : Page
     {
         public delegate void InvokeReadData();
-        DispatcherTimer timerChargeLevel;
         DispatcherTimer hostWatchdogInitTimer;
         int kHostWtahdogTicks = 0;
 
@@ -252,13 +251,7 @@ namespace RobotSideUWP
 
             AllControlIsEnabled(false);
 
-            timerChargeLevel = new DispatcherTimer();
-            timerChargeLevel.Tick += TimerChargeLevel_Tick;
-            timerChargeLevel.Interval = new TimeSpan(0, 0, 10); //(часы, мин, сек)
-            //timerChargeLevel.Interval = new TimeSpan(0, 0, 2); //(часы, мин, сек)
-            timerChargeLevel.Start();
-
-            //Код инициализации для перезагрузки Windows ночью
+           //Код инициализации для перезагрузки Windows ночью
             object testObject3 = localSettings.Values["initTime"];
             if (!testObject3.GetType().Equals(typeof(int)))
             {
@@ -279,12 +272,11 @@ namespace RobotSideUWP
             hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
             hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
             hostWatchdogInitTimer.Start();
-
         }
 
         private void HostWatchdogInitTimer_Tick(object sender, object e) {
             kHostWtahdogTicks++;
-            try {
+            try {//использую четыре тика, чтобы корректно записать и считать ответ на установку сторожевого таймера
                 switch (kHostWtahdogTicks) {
                     case 1: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                         break;
@@ -296,7 +288,6 @@ namespace RobotSideUWP
                             }
                         }
                         break;
-
                     case 3: {
                                 plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
                         }

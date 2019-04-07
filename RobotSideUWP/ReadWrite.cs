@@ -25,7 +25,7 @@ namespace RobotSideUWP
         {
             comPortInit();
             sendAfterDelayTimer = new DispatcherTimer();
-            sendAfterDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 100); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
+            sendAfterDelayTimer.Interval = new TimeSpan(0, 0, 0, 0, 100); //Таймер для прореживания данных перед посылкой в порт (дни, часы, мин, сек, ms)
             sendAfterDelayTimer.Tick += SendAfterDelayTimer_Tick;
         }
 
@@ -69,7 +69,7 @@ namespace RobotSideUWP
 
                 long deltaTicks = (ticksNow - ticksSent) / 10000;
 
-                if (deltaTicks < 50) {
+                if (deltaTicks < 30) {
                     if (dataToWrite == "Stop") {
                         var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
                             sendAfterDelayTimer.Start();
@@ -114,6 +114,7 @@ namespace RobotSideUWP
             }
         }
 
+        string testString = "";
         private async Task ReadAsync()
         {
             var receivedStrings = "";
@@ -146,7 +147,11 @@ namespace RobotSideUWP
                 {
                     slashIndex = receivedStrings.IndexOf("\r", 0);
                     if (slashIndex != 5) CommonStruct.readData = receivedStrings;
+
+                    testString = testString + " ," + receivedStrings;
                 });
+
+                MainPage.Current.NotifyUserFromOtherThread(testString, NotifyType.ErrorMessage);
             }
             catch (Exception ex)
             {

@@ -15,11 +15,11 @@ namespace RobotSideUWP
     {
         private bool buttonEventIs = false;
         private object[] addresses = new string[9];
-        ReadWrite readWrite = null;
+        //static ReadWrite readWrite = null;
 
         public void InitializeUI()
         {
-            readWrite = new ReadWrite();
+            //readWrite = new ReadWrite();
 
             int i = 0;
 
@@ -350,7 +350,7 @@ namespace RobotSideUWP
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//GO для обоих (Both) колес
 
-                readWrite.Write(CommonStruct.dataToWrite);
+                PlcControl.readWrite.Write(CommonStruct.dataToWrite);
                 string s = CommonStruct.readData;
             }
             catch (Exception e1)
@@ -383,65 +383,11 @@ namespace RobotSideUWP
                 string directionRight = CommonStruct.directionRight;
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//
-                readWrite.Write(CommonStruct.dataToWrite);
+                PlcControl.readWrite.Write(CommonStruct.dataToWrite);
             }
             catch (Exception e1)
             {
                 Current.NotifyUser("buttonStopWheels_PointerExit" + e1.Message + " COM port do not answer + buttonStopWheels_Click", NotifyType.ErrorMessage);
-            }
-        }
-
-        private void TimerChargeLevel_Tick(object sender, object e)
-        {
-            timerChargeLevel.Stop();
-            try
-            {
-                CommonStruct.itIsTimeToAskVoltage = true;
-                if (CommonStruct.stopBeforeWas == true)
-                {
-
-                    //var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                    //{
-                        CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
-                        if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
-                        SendVoltageLevelToServer();
-                    //});
-
-                    //CommonStruct.numberOfTicksAfterWheelsStop += 1;//Это сделано, чтобы измерения не выполнялись во время движения. Только в покое
-                    //if (CommonStruct.numberOfTicksAfterWheelsStop >= 2) plcControl.BatteryVoltageMeasuring();
-                    //Я обнуляю этот счетчик в функции Wheels()
-                }
-                //else if (CommonStruct.stopBeforeWas == false)
-                //{
-                //    CommonStruct.numberOfTicksAfterWheelsStop = 0;
-                //}
-
-                double levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
-                if (levelCeiling >= 80) levelCeiling = 100;
-
-                if (levelCeiling < 0 )
-                {
-                    labelChargeLevel.Text = "Measure...";
-                }
-                else
-                {
-                    labelChargeLevel.Text = levelCeiling.ToString() + "%";
-                }
-                timerChargeLevel.Start();
-                if (levelCeiling > 40)
-                {
-                    labelChargeLevel.Background =  new SolidColorBrush(Windows.UI.Colors.Green);
-                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
-                }
-                else
-                {
-                    labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Red);
-                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
-                }
-            }
-            catch (Exception e1)
-            {
-                Current.NotifyUser("TimerChargeLevel_Tick" + e1.Message + "supplyVoltage", NotifyType.ErrorMessage);
             }
         }
 
@@ -455,6 +401,7 @@ namespace RobotSideUWP
         private void buttonCameraUp_PointerUp(object sender, PointerRoutedEventArgs e)
         {
             //plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
+            plcControl.CameraStop();
         }
 
         private void buttonCameraDown_PointerDown(object sender, PointerRoutedEventArgs e)

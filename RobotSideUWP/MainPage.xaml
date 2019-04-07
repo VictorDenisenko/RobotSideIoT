@@ -89,7 +89,8 @@
         <Button x:Name="buttonExit" Content="Exit" HorizontalAlignment="Left" Margin="889,578,0,0" VerticalAlignment="Top" Height="50" Width="115" Click="buttonExit_Click"/>
         <Button x:Name="buttonAbout" Content="About" HorizontalAlignment="Left" Margin="278,429,0,0" VerticalAlignment="Top" Height="50" Width="100" Click="buttonAbout_Click"/>
         <TextBlock x:Name="labelChooseLanguage" HorizontalAlignment="Left" Margin="65,398,0,0" TextWrapping="Wrap" Text="Choose Language" VerticalAlignment="Top" TextAlignment="Center"/>
-        <TextBlock x:Name="StatusBlock" HorizontalAlignment="Left" Margin="26,596,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />
+        <!--<TextBlock x:Name="StatusBlock" HorizontalAlignment="Left" Margin="26,596,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />-->
+        <TextBlock x:Name="StatusBlock" HorizontalAlignment="Left" Margin="26,5,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />
         <Button x:Name="buttonSettings" Content="Settings" HorizontalAlignment="Left" Margin="26,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonSettings_Click" Height="50"/>
 
 

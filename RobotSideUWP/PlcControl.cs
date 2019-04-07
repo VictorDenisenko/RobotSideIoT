@@ -14,7 +14,7 @@ namespace RobotSideUWP
 		{
         static GpioPin pin6;//Выход для отключения питания 
         static TimeSpan delay = TimeSpan.FromMilliseconds(200);
-        public ReadWrite readWrite = null;
+        public static ReadWrite readWrite = null;
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
 
@@ -145,39 +145,19 @@ namespace RobotSideUWP
             {
             try
                 {
-                    double speedLeft = CommonStruct.lastSpeedLeft;
-                    double speedRight = CommonStruct.lastSpeedRight;
-                    string directionLeft = CommonStruct.directionLeft;
-                    string directionRight = CommonStruct.directionRight;
-                    double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
-                    stopTimerCounter = 0;
-                //if ((speedLeft > 30) && (speedRight > 30)) 
-                    if ((speedLeft > 0) && (speedRight > 0)) {
-                        Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
-                        Task t = new Task(async () => {
-                            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
-                                smoothlyStopTimer.Start();
-                            }));
-                        });
-                        t.Start();
-                    }
-                    else
-                    {
-                        //Wheels(directionLeft, speedLeft, directionRight, speedRight);
-                    Task t = new Task(async () => {
-                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
-                            smoothlyStopTimer.Start();
-                        }));
-                    });
-                    t.Start();
-                    //string hexAddress = CommonStruct.wheelsAddress;
-                    //readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                    //CommonStruct.wheelsWasStopped = true;
-                    //MainPage.Current.NotifyUserFromOtherThread(CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
-                }
-                    
-
-                
+                double speedLeft = CommonStruct.lastSpeedLeft;
+                double speedRight = CommonStruct.lastSpeedRight;
+                string directionLeft = CommonStruct.directionLeft;
+                string directionRight = CommonStruct.directionRight;
+                double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
+                stopTimerCounter = 0;
+                Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
+                Task t = new Task(async () => {
+                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                        smoothlyStopTimer.Start();
+                    }));
+                });
+                t.Start();
                 }
                 catch(Exception e)
                 {
@@ -194,42 +174,27 @@ namespace RobotSideUWP
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
                 double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
+                switch (stopTimerCounter) {
+                    case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
+                    case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
+                    case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
+                    case 4: {
+                            string hexAddress = CommonStruct.wheelsAddress;
+                            readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                            //smoothlyStopTimer.Stop();
+                            //Task t = new Task(async () => {
+                            //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                            //        smoothlyStopTimer.Stop();
+                            //    }));
+                            //});
+                            //t.Start();
 
-                
-                    switch (stopTimerCounter) {
-                        case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
-                        case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
-                        case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
-                        case 4: {
-                                string hexAddress = CommonStruct.wheelsAddress;
-                                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                                //smoothlyStopTimer.Stop();
-                                //Task t = new Task(async () => {
-                                //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
-                                //        smoothlyStopTimer.Stop();
-                                //    }));
-                                //});
-                                //t.Start();
-
-                            smoothlyStopTimer.Stop();
-                            stopTimerCounter = 0;
-                            CommonStruct.stopBeforeWas = true;
-                        }
-                            break;
+                        smoothlyStopTimer.Stop();
+                        stopTimerCounter = 0;
+                        CommonStruct.stopBeforeWas = true;
                     }
-                
-                    //switch (stopTimerCounter) {
-                    //    case 1: {
-                    //            //Wheels(directionLeft, speedLeft, directionRight, speedRight);
-                    //            string hexAddress = CommonStruct.wheelsAddress;
-                    //            readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                    //            //smoothlyStopTimer.Stop();
-                    //            stopTimerCounter = 0;
-                    //        }
-                    //        break;
-                    //}
-                
-                
+                        break;
+                }
             }
             catch(Exception e1) {
                 MainPage.Current.NotifyUserFromOtherThread("SmoothlyStopTimer_Tick" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
@@ -407,8 +372,8 @@ namespace RobotSideUWP
         {
             try
             {
-                CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
+                //CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                //readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 string s1 = CommonStruct.readData;
                 if (s1 == "") return;
                 string data1 = s1.Remove(0, 5);
@@ -453,8 +418,6 @@ namespace RobotSideUWP
                 if (levelCeiling >= 100) levelCeiling = 100;
 
                 CommonStruct.voltageLevelFromRobot = levelCeiling.ToString() + "%";
-                
-                HostWatchDog(CommonStruct.wheelsAddress, "set");
             }
             catch (Exception e2)
             {

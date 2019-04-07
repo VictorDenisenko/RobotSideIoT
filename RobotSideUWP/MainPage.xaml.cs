@@ -70,8 +70,6 @@ namespace RobotSideUWP
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
         public ApplicationDataContainer localSettings = null;
         private ObservableCollection<DeviceInformation> listOfDevices;
-        ReadWrite rw = null;
-        public static ThreadPoolTimer DelayTimer;
         public DeviceInformation choosenDevice;
         string aqs = null;
         private ExtendedExecutionSession session = null;
@@ -83,8 +81,8 @@ namespace RobotSideUWP
         int timeToRestartMinutes = 0;
         DateTime now;
 
-        private string[] sArr = new string[16] { "0", "0", "0", "Stop", "Stop", "Stop", "Corr", "You", "0", "0", "0", "0", "0", "0", "0", "0" };
-
+        private string[] sArr = new string[16] { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" };
+        private string[] arrInitial = new string[16] { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" };
         private string[] arrBefore = new string[16];
         string clientId = "";
 
@@ -115,11 +113,10 @@ namespace RobotSideUWP
 
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
-        
+        DispatcherTimer chargeLevelTimer;
 
         public MainPage()
         {
-            plcControl = new PlcControl();
             clientId = Guid.NewGuid().ToString();
             InitializeComponent();
             listOfDevices = new ObservableCollection<DeviceInformation>();
@@ -158,7 +155,6 @@ namespace RobotSideUWP
 
             InitializeUI();
             Current = this;
-            rw = new ReadWrite();
 
             InitializeRobot();
 
@@ -176,7 +172,6 @@ namespace RobotSideUWP
             //InitializeSpeech();
 
             Task.Delay(1000).Wait();
-            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
 
             ScenarioControl.ItemsSource = scenarios;
             if (Window.Current.Bounds.Width < 640)
@@ -200,9 +195,9 @@ namespace RobotSideUWP
             string address = CommonStruct.defaultWebSiteAddress;
             int k = address.IndexOf("//");
             int length = address.Length;
-            address = address.Remove(0, k + 2);
+            CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
 
-            client = new MqttClient(address);
+            client = new MqttClient(CommonStruct.webAddressForMQTT);
             //client = new MqttClient("test.mosquitto.org");
 
             dataFromRobot[0] = CommonStruct.decriptedSerial;
@@ -213,7 +208,7 @@ namespace RobotSideUWP
             CommonStruct.wheelsWasStopped = true;
 
             watchdogTimer = new DispatcherTimer();
-            //watchdogTimer.Tick += WatchdogTimer_Tick;
+            watchdogTimer.Tick += WatchdogTimer_Tick;
             watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Ватчдог таймер (дни, часы, мин, сек, ms)
 
             reconnectTimer = new DispatcherTimer();
@@ -221,6 +216,10 @@ namespace RobotSideUWP
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
             reconnectTimer.Start();
 
+            chargeLevelTimer = new DispatcherTimer();
+            chargeLevelTimer.Tick += ChargeLevelTimer_TickAsync;
+            chargeLevelTimer.Interval = new TimeSpan(0, 0, 0, 0, 20); //Таймер для запуска измерений через 100мс после первой команды остановки (дни, часы, мин, сек, ms)
+            //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
             buttonStart_Click(null, null);
         }
 
@@ -229,10 +228,20 @@ namespace RobotSideUWP
             try
             {
                 bool isConnected = client.IsConnected;
-                if ((isConnected == false) && (bConnect == true))
-                {
+                if ((isConnected == false) && (bConnect == true)) {
                     client.Connect(clientId);
+                    client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+
                     Current.NotifyUserFromOtherThread("MQTT Reconnected ", NotifyType.StatusMessage);
+                    if (OsType == "Windows.IoT") {
+                        pin26.SetDriveMode(GpioPinDriveMode.Output);
+                        pin26.Write(GpioPinValue.Low);
+                    }
+                } else {
+                    if (OsType == "Windows.IoT") {
+                        pin26.SetDriveMode(GpioPinDriveMode.Output);
+                        pin26.Write(GpioPinValue.High);
+                    }
                 }
             }
             catch(Exception e1)
@@ -318,33 +327,13 @@ namespace RobotSideUWP
 
          private void Polling(string[] arr)
         {
-                        
             #region Base Cycle
-
-          //здесь начинался polling
             dataFromRobot[2] = CommonStruct.voltageLevelFromRobot;
                 if (arr != null)
                 {
-                    if (OsType == "Windows.IoT")
-                    {
-                        pin26.SetDriveMode(GpioPinDriveMode.Output);
-                        pin26.Write(GpioPinValue.High);
-                    }
-
-                //if (itIsFirstLoop == "Yes")
-                //{
-                //    for (int i = 1; i < 16; i++)
-                //    {//Начинаю от 1, чтобы не стирать серийный номер
-                //        sArr[i] = "0";
-                //    }
-                //    itIsFirstLoop = "No";
-                //}
-
-                //await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
-                //{
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                     {
-                    textBox_x_coord.Text = arr[1];//x_coord
+                        textBox_x_coord.Text = arr[1];//x_coord
                         textBox_y_coord.Text = arr[2];//y_coord
                         textBoxWheelsStop.Text = arr[3];//wheelsStop
                         textBoxCameraAngle.Text = arr[4];//сameraData
@@ -376,7 +365,6 @@ namespace RobotSideUWP
                         }
 
                         dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
-
                         textBoxWheelsSpeedTuning.Text = CommonStruct.speedTuningParam.ToString();
                         trackBarWheelsSpeedTuning.Value = Convert.ToInt32(CommonStruct.speedTuningParam);
                     }
@@ -385,17 +373,14 @@ namespace RobotSideUWP
                     switch (arr[4])
                     {//Управление камерой
                         case "Up":
-                            arr[4] = "Stop";
                             direction = "1";
                             plcControl.CameraUpDown(direction);
                             break;
                         case "Down":
-                            arr[4] = "Stop";
                             direction = "0";
                             plcControl.CameraUpDown(direction);
                             break;
                         case "Stop":
-                            arr[4] = "Stop";
                             if (CommonStruct.cameraController != "No") plcControl.CameraStop();
                             break;
                     }
@@ -404,7 +389,7 @@ namespace RobotSideUWP
                     if ((arr[1] == "") || (arr[1] == null)) { arr[1] = "0"; }
                     if ((arr[2] == "") || (arr[2] == null)) { arr[2] = "0"; }
 
-                    if (arr[5] == "Stop")
+                    if ((arr[5] == "0") && (arr[4] == "0"))
                     {//Управление мышкой  
                         double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
                         if (speedRadius > 90) speedRadius = 100;
@@ -636,20 +621,20 @@ namespace RobotSideUWP
                         if (sArr3Before == "КолесаВращались")
                         {
                             if ((CommonStruct.stopSmoothly == true) && (((directionLeft == forwardDirection) && (directionRight == forwardDirection)) || ((directionLeft == backwardDirection) && (directionRight == backwardDirection))))
-                            //if (CommonStruct.stopSmoothly == true)
-                                {
-                                plcControl.WheelsStopSmoothly();
-                                sArr3Before = "0";
+                            {
+                            plcControl.WheelsStopSmoothly();
+                            sArr3Before = "0";
+                                var __ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+                                    chargeLevelTimer.Start();
+                                });
                             }
                             else
                             {
-                            //plcControl.WheelsStopSmoothly();
+                            plcControl.WheelsStopSmoothly();
                             plcControl.WheelsStop();
                             sArr3Before = "0";
                             }
                         }
-
-                    //SendVoltageLevelToServer();
                     }
                 }
                 else
@@ -659,16 +644,52 @@ namespace RobotSideUWP
                         pin26.Write(GpioPinValue.Low);
                     }
                 }
-
             if (OsType == "Windows.IoT")
-            {
+            {//Чтобы зеленый не остался гореть, когда нет данных. 
                 pin26.Write(GpioPinValue.Low);
             }
         }
 
-        private void Client_MqttMsgSubscribed(object sender, MqttMsgSubscribedEventArgs e)
+        int kNymberOfTicks = 0;
+        private void ChargeLevelTimer_TickAsync(object sender, object e)
         {
+            try {
+                kNymberOfTicks++;
+                string s1 = "";
+                if (kNymberOfTicks == 1) {
+                    CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                    PlcControl.readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
+                    //readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
+                    s1 = CommonStruct.readData;
+                } else {
+                    kNymberOfTicks = 0;
+                    CommonStruct.voltageLevelFromRobot = CommonStruct.readData;
+                    SendVoltageLevelToServer();
+                    chargeLevelTimer.Stop();
+                }
+                
+                
 
+                double levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
+                if (levelCeiling >= 80) levelCeiling = 100;
+
+                if (levelCeiling < 0) {
+                    labelChargeLevel.Text = "Measure...";
+                } else {
+                    labelChargeLevel.Text = levelCeiling.ToString() + "%";
+                }
+
+                if (levelCeiling > 40) {
+                    labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
+                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
+                } else {
+                    labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Red);
+                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
+                }
+            }
+            catch(Exception e1) {
+                Current.NotifyUser("ChargeLevelTimer_TickAsync " + e1.Message, NotifyType.ErrorMessage);
+            }
         }
 
         bool isEntireMessage = true;//признак того 
@@ -680,45 +701,43 @@ namespace RobotSideUWP
 
         private void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
         {
-            if (plcControl.stopTimerCounter == 0) {
+            //Current.NotifyUserFromOtherThread("MQTT " + CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
+            string topic = e.Topic; byte[] message = e.Message; string result = Encoding.UTF8.GetString(message);
+            string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
+            s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
+            separator[0] = ','; sArr = s.Split(separator, 16);
+
+            if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.decriptedSerial)) {
                 __Client_MqttMsgPublishReceivedAsync(sender, e);
             }
         }
 
          private void __Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
         {
-
-            //Current.NotifyUserFromOtherThread("MQTT " + CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
-
-            string topic = e.Topic; byte[] message = e.Message; string result = Encoding.UTF8.GetString(message);
-            string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
-            s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
-            separator[0] = ','; sArr = s.Split(separator, 16);
             if (sArr[14] == "0") arrBefore[14] = "0";
             iNumberOfMessage = Convert.ToInt32(sArr[14]);
             iNubmerOfMessageBefore = Convert.ToInt32(arrBefore[14]);
             timeNow = Convert.ToInt32(sArr[15]);
-            
             timeBefore = Convert.ToInt32(arrBefore[15]);
             if (iArrayCounter == 0) isEntireMessage = true;
 
             //Сюда входят сообщения и массивы в них и я анализирую, пропускать их в Polling или нет 
             if (iNumberOfMessage >= iNubmerOfMessageBefore)
-            {//Здесь убираем перепутывание массивов между разными сообщениями
+            {//Здесь убираем перепутывание массивов между разными сообщениями. Конкретнее, на границе между сообщениями последняя посылка из старого сообщения может прийти позже первой посылки из нового
                 if (isEntireMessage == true)
                 {//Знание, что все массивы из одного сообщения, нужно, чтобы начать фильтровать по временным меткам - они начинаются в каждом сообщении с нуля.
                     if ((timeNow > timeBefore) || (iArrayCounter == 0))
-                    {//iArrayCounter == 0 нуужно потому, что в первом сообщении может быть timeNow =0 и тогда условие ">" не выполняется
-                        if ((sArr[3] == "Start") || (sArr[5] == "Start") || (sArr[4] != "Stop"))
-                        {//фильтруем по временным меткам
+                    {//фильтруем по временным меткам. Здесь iArrayCounter == 0 нуужно потому, что в первом сообщении может быть timeNow =0 и тогда условие ">" не выполняется
+                        if ((sArr[3] == "Start") || (sArr[4] == "Start") || (sArr[5] != "Stop"))
+                        {//sArr[5] != "Stop" потому что это управление клавишами, тем нет команды Start. Там все старт кроме Stop
                             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                             {
-                                watchdogTimer.Stop();
-                                watchdogTimer.Start();
+                                watchdogTimer.Stop();//Стоп и сразу Старт нужны, чтобы момент запуска таймера совпадал с временем прихода посылки
+                                watchdogTimer.Start();//т.е. это дублирование сторожевого таймера внутри модулей.
                             });
 
-                            iArrayCounter++;
-                            arrBefore = sArr;
+                            iArrayCounter++;//счетчик количества посылок. Нужен, чтобы отличить первую посылку от остальных 
+                            sArr.CopyTo(arrBefore, 0);
                             Polling(sArr);
                         }
                         else
@@ -732,20 +751,19 @@ namespace RobotSideUWP
 
         private void WatchdogTimer_Tick(object sender, object e)
         {
-            //InitialConditions();
+            InitialConditions();//Внутри этой фоункции стоит остановка по таймеру. Т.е. если данные не пришли, то во всех модулях останется команда Стоп. 
             CommonStruct.permissionToSend = true;
         }
 
         private void InitialConditions()
-        {
+        {//Здесь мы пропускаем все посылки для остановки, но для повышения надежности скорость делаем нулевой и 
             isEntireMessage = false;
             timeNow = 0;
             timeBefore = 0;
             iArrayCounter = 0;
-            sArr[3] = "Stop";
-            sArr[5] = "Stop";
-            arrBefore[3] = "Stop";
-            arrBefore[5] = "Stop";
+            sArr[1] = "0";
+            sArr[2] = "0";
+            arrBefore[14] = "0";
             arrBefore[15] = "0";
             Polling(sArr);
             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -800,6 +818,7 @@ namespace RobotSideUWP
 
         private void buttonStart_Click(object sender, RoutedEventArgs e)
         {
+            plcControl = new PlcControl();
             RequestExtendedExecution();
 
             AllControlIsEnabled(false);
@@ -816,17 +835,14 @@ namespace RobotSideUWP
             buttonStart.Foreground = new SolidColorBrush(Windows.UI.Colors.Gray);
             buttonStart.FontFamily = new FontFamily("Microsoft Sans Serif");
             buttonStart.IsEnabled = false;
-            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
+            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");//Обязательно надо, т.к. при начлаьной загрузке по умолчанию стоит, что нет камеры
            
             try
             {
                 client.Connect(clientId);//Может S/N вместо этого взять?
                 client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                client.MqttMsgSubscribed += Client_MqttMsgSubscribed;
                 client.ConnectionClosed += Client_ConnectionClosed;
                 client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
-
-                client.MqttMsgUnsubscribed += Client_MqttMsgUnsubscribed;
             }
             catch (Exception e1)
             {
@@ -834,16 +850,15 @@ namespace RobotSideUWP
             }
         }
 
-        private void Client_MqttMsgUnsubscribed(object sender, MqttMsgUnsubscribedEventArgs e)
-        {
-            Current.NotifyUserFromOtherThread("Unsubscibed", NotifyType.StatusMessage);
-        }
-
         private void Client_ConnectionClosed(object sender, EventArgs e)
         {
 
             bool isConnected = client.IsConnected;
             Current.NotifyUserFromOtherThread("Connection Closed", NotifyType.StatusMessage);
+            if (OsType == "Windows.IoT") {
+                pin26.SetDriveMode(GpioPinDriveMode.Output);
+                pin26.Write(GpioPinValue.Low);
+            }
         }
 
         private void buttonStop_Click(object sender, RoutedEventArgs e)
