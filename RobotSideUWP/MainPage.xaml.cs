@@ -116,6 +116,7 @@ namespace RobotSideUWP
         int counterFromStopToStart = 0;
         string lastColorArea = "";
         int minAllowableSpeed = 15;
+        string cameraIsStopped = "no";
 
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
@@ -232,9 +233,7 @@ namespace RobotSideUWP
             readWrite = new ReadWrite();
             //Task.Delay(1000).Wait();
             plcControl = new PlcControl();
-
-
-           // buttonStart_Click(null, null);
+            // buttonStart_Click(null, null);
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
@@ -388,18 +387,24 @@ namespace RobotSideUWP
                     }
 
                     string direction = "0";
-                    switch (arr[4])
-                    {//Управление камерой
+                    switch (arr[4]) {//Управление камерой
                         case "Up":
                             direction = "1";
                             plcControl.CameraUpDown(direction);
+                            cameraIsStopped = "no";
                             break;
                         case "Down":
                             direction = "0";
                             plcControl.CameraUpDown(direction);
+                            cameraIsStopped = "no";
                             break;
                         case "Stop":
-                            if (CommonStruct.cameraController != "No") plcControl.CameraStop();
+                            if (cameraIsStopped == "no") {
+                                if (CommonStruct.cameraController != "No") {
+                                    plcControl.CameraStop();
+                                    cameraIsStopped = "yes";
+                                }
+                            }
                             break;
                     }
 
@@ -727,7 +732,7 @@ namespace RobotSideUWP
                 {//Знание, что все массивы из одного сообщения, нужно, чтобы начать фильтровать по временным меткам - они начинаются в каждом сообщении с нуля.
                     if ((timeNow > timeBefore) || (iArrayCounter == 0))
                     {//фильтруем по временным меткам. Здесь iArrayCounter == 0 нуужно потому, что в первом сообщении может быть timeNow =0 и тогда условие ">" не выполняется
-                        if ((sArr[3] == "Start") || (sArr[4] == "Start") || (sArr[5] != "Stop"))
+                        if ((sArr[3] == "Start") || (sArr[4] == "Start") || ((sArr[5] != "Stop") && ((sArr[3] == "Start"))))
                         {//sArr[5] != "Stop" потому что это управление клавишами, тем нет команды Start. Там все старт кроме Stop
                             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                             {

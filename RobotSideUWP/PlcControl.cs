@@ -174,18 +174,17 @@ namespace RobotSideUWP
                     case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
                     case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
                     case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
-                    case 4: {
+                    case 4: 
                             string hexAddress = CommonStruct.wheelsAddress;
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             break;
-                        }
-                    case 5: {
+                        
+                    case 5: 
                             MainPage.Current.ChargeLevelMeasure();
                             smoothlyStopTimer.Stop();
                             stopTimerCounter = 0;
                             CommonStruct.stopBeforeWas = true;
-                    }
-                        break;
+                            break;
                 }
             }
             catch(Exception e1) {
