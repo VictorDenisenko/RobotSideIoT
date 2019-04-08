@@ -269,7 +269,7 @@ namespace RobotSideUWP
             setTimeToRestartPicker.AllowDrop = true;
 
             hostWatchdogInitTimer = new DispatcherTimer();
-            hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+            hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);//таймер для начальной установка сторожевых таймеров в модулях
             hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
             hostWatchdogInitTimer.Start();
         }
@@ -281,6 +281,7 @@ namespace RobotSideUWP
                     case 1: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                         break;
                     case 2: {
+                            buttonStart_Click(null, null);
                             if (CommonStruct.cameraController == "No") {
                                 if (CommonStruct.readData == "!0002014\r") {
                                     hostWatchdogInitTimer.Stop();

@@ -72,7 +72,6 @@ namespace RobotSideUWP
         public ApplicationDataContainer localSettings = null;
         private ObservableCollection<DeviceInformation> listOfDevices;
         public DeviceInformation choosenDevice;
-        string aqs = null;
         private ExtendedExecutionSession session = null;
         GpioPin pin26;//Зеленый светодиод
         string OsType = AnalyticsInfo.VersionInfo.DeviceFamily;
@@ -122,7 +121,6 @@ namespace RobotSideUWP
             InitializeComponent();
             listOfDevices = new ObservableCollection<DeviceInformation>();
             localSettings = ApplicationData.Current.LocalSettings;
-            aqs = SerialDevice.GetDeviceSelector();//Это метод  дает GUID всех последовательных портов lf
 
             object testObject = localSettings.Values["defaultWebSiteAddress"];
             if (testObject == null)
@@ -169,8 +167,6 @@ namespace RobotSideUWP
             //Калибровка измерителя напряжения на аккумуляторе
             textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
             textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
-
-            //InitializeSpeech();
 
             Task.Delay(1000).Wait();
 
@@ -223,9 +219,11 @@ namespace RobotSideUWP
             //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
 
             readWrite = new ReadWrite();
+            //Task.Delay(1000).Wait();
             plcControl = new PlcControl();
 
-            buttonStart_Click(null, null);
+
+           // buttonStart_Click(null, null);
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
@@ -248,6 +246,8 @@ namespace RobotSideUWP
                         pin26.Write(GpioPinValue.High);
                     }
                 }
+
+                if (readWrite.serialPort == null) readWrite.comPortInit();
             }
             catch(Exception e1)
             {
@@ -257,9 +257,11 @@ namespace RobotSideUWP
 
         private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
         {
-            CommonStruct.VReal = Convert.ToDouble(textBoxRealVoltage.Text);
-            CommonStruct.textBoxRealVoltageChanged = true;
-            localSettings.Values["VReal"] = CommonStruct.VReal.ToString();
+            if (textBoxRealVoltage.Text != "") {
+                CommonStruct.VReal = Convert.ToDouble(textBoxRealVoltage.Text);
+                CommonStruct.textBoxRealVoltageChanged = true;
+                localSettings.Values["VReal"] = CommonStruct.VReal.ToString();
+            }
         }
 
         private void SetTimeToRestar_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
@@ -333,7 +335,7 @@ namespace RobotSideUWP
          private void Polling(string[] arr)
         {
             #region Base Cycle
-            dataFromRobot[2] = CommonStruct.voltageLevelFromRobot;
+            //dataFromRobot[2] = CommonStruct.voltageLevelFromRobot;
                 if (arr != null)
                 {
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -657,12 +659,15 @@ namespace RobotSideUWP
 
         private void ChargeLevelTimer_TickAsync(object sender, object e)
         {
+            double levelCeiling = 0.0;
             try {
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//
                 chargeLevelTimer.Stop();
 
-                double levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
+                labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
+                if (CommonStruct.voltageLevelFromRobot == "") return;
+                levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
                 if (levelCeiling > 40) {
                     labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
                     labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
@@ -821,10 +826,14 @@ namespace RobotSideUWP
            
             try
             {
-                client.Connect(clientId);//Может S/N вместо этого взять?
-                client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                client.ConnectionClosed += Client_ConnectionClosed;
-                client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+                if (CommonStruct.decriptedSerial.Length == 24) {
+                    client.Connect(clientId);//Может S/N вместо этого взять?
+                    client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                    client.ConnectionClosed += Client_ConnectionClosed;
+                    client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+                } else {
+                    Current.NotifyUserFromOtherThread("Robot Serial Number is incorrect ", NotifyType.ErrorMessage);
+                }
             }
             catch (Exception e1)
             {

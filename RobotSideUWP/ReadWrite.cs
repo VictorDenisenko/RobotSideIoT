@@ -12,7 +12,7 @@ namespace RobotSideUWP
 {
     public class ReadWrite
     {
-        private SerialDevice serialPort = null;
+        public SerialDevice serialPort = null;
         DataWriter dataWriteObject = null;
         DataReader dataReaderObject = null;
         DispatcherTimer sendAfterDelayTimer;
@@ -38,7 +38,7 @@ namespace RobotSideUWP
             ticksSent = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
         }
 
-        private async void comPortInit()
+        public async void comPortInit()
         {
             string aqs = SerialDevice.GetDeviceSelector("UART0");
             var dis = await DeviceInformation.FindAllAsync(aqs);
@@ -75,6 +75,7 @@ namespace RobotSideUWP
                         var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
                             sendAfterDelayTimer.Start();
                         });
+                        MainPage.Current.NotifyUserFromOtherThread("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
                     }
                 } else {
                     WriteNested(dataToWrite);
@@ -83,6 +84,7 @@ namespace RobotSideUWP
                 }
             }
             catch (Exception e) {
+                MainPage.Current.NotifyUserFromOtherThread("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
             }
         }
 
@@ -144,13 +146,15 @@ namespace RobotSideUWP
                     if (slashIndex != 5) CommonStruct.readData = receivedStrings;
 
                     if (receivedStrings.Length > 10) {
-                        string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings) + "%";
-                        await MainPage.SendVoltageLevelToServer(batteryVoltage);
+                        string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings);
+                        await MainPage.SendVoltageLevelToServer(batteryVoltage + "%");
+                        CommonStruct.voltageLevelFromRobot = batteryVoltage;
                     }
 
-                    testString = testString + " ," + receivedStrings;
+                    testString = testString + "   " + receivedStrings;
+                    MainPage.Current.NotifyUserForTesting(testString); 
                 });
-                MainPage.Current.NotifyUserFromOtherThread(testString, NotifyType.ErrorMessage);
+                //MainPage.Current.NotifyUserFromOtherThreadForTesting(testString, NotifyType.ErrorMessage);
             }
             catch (Exception ex)
             {

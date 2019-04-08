@@ -176,25 +176,31 @@ namespace RobotSideUWP
                      }));
                 });
                 t.Start();
-                //t.Wait();
-                //CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
-                //{
-                //    Current.StatusBlock.Text = strMessage;
-                //    Current.StatusBlock1.Text = strMessage;
-                //}));
-                
-
-                //if (type == NotifyType.ErrorMessage)
-                //{
-                //    Current.StatusBlock.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
-                //}
-                //else
-                //{
-                //    Current.StatusBlock.Foreground = new SolidColorBrush(Windows.UI.Colors.Black);
-                //}
             }
             catch(Exception e)
             {
+
+            }
+        }
+
+        public void NotifyUserForTesting(string strMessage)
+        {
+            try {
+                //Task t = new Task(async () => {
+                //    //await CommonFunctions.WriteToLog(strMessage);
+                //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                //    {
+                        Current.StatusBlockForTesting.Text = strMessage;
+                //        if (type == NotifyType.ErrorMessage) {
+                //            Current.StatusBlockForTesting.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
+                //        } else {
+                //            Current.StatusBlockForTesting.Foreground = new SolidColorBrush(Windows.UI.Colors.Black);
+                //        }
+                //    }));
+                //});
+                //t.Start();
+            }
+            catch (Exception e) {
 
             }
         }
@@ -438,7 +444,7 @@ namespace RobotSideUWP
             buttonExit.Content = "Exit";
             labelChooseLanguage.Text = "Выберите язык:";
             buttonAbout.Content = "About";
-            labelServerAddress.Text = "Http web address";
+            labelServerAddress.Text = "Https web address";
             CommonStruct.NotifyPressStop = "If you want the settings to be accessible, press the button 'Stop'";
             labelSmileName.Text = "Smile";
             buttonGoUpFast.Content = "GoUpFast";

@@ -370,7 +370,7 @@ namespace RobotSideUWP
             try
             {
                 string s1 = input;
-                if (s1 == "") return "";
+                if ((s1 == "")||(input.Length != 25)) return "";
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
                 if ((data1 == "") || (data1 == null)) { data1 = "0"; }
@@ -410,7 +410,7 @@ namespace RobotSideUWP
                 levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
                 if (levelCeiling >= 100) levelCeiling = 100;
 
-                CommonStruct.voltageLevelFromRobot = levelCeiling.ToString() + "%";
+                CommonStruct.voltageLevelFromRobot = levelCeiling.ToString();
             }
             catch (Exception e2)
             {
@@ -420,7 +420,7 @@ namespace RobotSideUWP
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)
-        {
+        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумулятор естанем меньше 10500 В.
             try
             {
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
