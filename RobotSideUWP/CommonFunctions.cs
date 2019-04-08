@@ -240,7 +240,7 @@ namespace RobotSideUWP
                 }
 			}
 
-		public static async Task<string> ZeroInFrontReset(string number)
+		public static string ZeroInFrontReset(string number)
 			{
             string output = null;
             try

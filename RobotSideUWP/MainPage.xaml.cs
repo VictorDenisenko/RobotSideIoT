@@ -61,7 +61,7 @@ namespace RobotSideUWP
 
     public sealed partial class MainPage : Page
     {
-
+        public static ReadWrite readWrite = null;
         PlcControl plcControl = null;
         public static MainPage Current;
         bool bConnect = true;
@@ -220,6 +220,10 @@ namespace RobotSideUWP
             chargeLevelTimer.Tick += ChargeLevelTimer_TickAsync;
             chargeLevelTimer.Interval = new TimeSpan(0, 0, 0, 0, 20); //Таймер для запуска измерений через 100мс после первой команды остановки (дни, часы, мин, сек, ms)
             //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
+
+            readWrite = new ReadWrite();
+            plcControl = new PlcControl();
+
             buttonStart_Click(null, null);
         }
 
@@ -650,35 +654,14 @@ namespace RobotSideUWP
             }
         }
 
-        int kNymberOfTicks = 0;
         private void ChargeLevelTimer_TickAsync(object sender, object e)
         {
             try {
-                kNymberOfTicks++;
-                string s1 = "";
-                if (kNymberOfTicks == 1) {
-                    CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                    PlcControl.readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
-                    //readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
-                    s1 = CommonStruct.readData;
-                } else {
-                    kNymberOfTicks = 0;
-                    CommonStruct.voltageLevelFromRobot = CommonStruct.readData;
-                    SendVoltageLevelToServer();
-                    chargeLevelTimer.Stop();
-                }
-                
-                
+                CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                readWrite.Write(CommonStruct.dataToWrite);//
+                chargeLevelTimer.Stop();
 
-                double levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
-                if (levelCeiling >= 80) levelCeiling = 100;
-
-                if (levelCeiling < 0) {
-                    labelChargeLevel.Text = "Measure...";
-                } else {
-                    labelChargeLevel.Text = levelCeiling.ToString() + "%";
-                }
-
+                double levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
                 if (levelCeiling > 40) {
                     labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
                     labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
@@ -772,11 +755,11 @@ namespace RobotSideUWP
             });
         }
 
-        public static async Task SendVoltageLevelToServer()
+        public static async Task SendVoltageLevelToServer(string chargeLevel)
         {
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
 
-            string chargeLevel = CommonStruct.voltageLevelFromRobot;
+            //string chargeLevel = CommonStruct.voltageLevelFromRobot;
             if (chargeLevel == "") return;
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel + "&serial=" + CommonStruct.decriptedSerial);
 
@@ -818,7 +801,6 @@ namespace RobotSideUWP
 
         private void buttonStart_Click(object sender, RoutedEventArgs e)
         {
-            plcControl = new PlcControl();
             RequestExtendedExecution();
 
             AllControlIsEnabled(false);
@@ -887,8 +869,6 @@ namespace RobotSideUWP
             buttonStop.Foreground = new SolidColorBrush(Windows.UI.Colors.Gray);
             buttonStop.FontFamily = new FontFamily("Microsoft Sans Serif");
             buttonStop.IsEnabled = false;
-            //rw = new ReadWriteClass();
-
         }
 
         private void buttonSettings_Click(object sender, RoutedEventArgs e)

@@ -20,6 +20,7 @@ namespace RobotSideUWP
         DateTime timeSent;
         long ticksSent = 0;
         string _dataToWrite = "";
+        
 
         public ReadWrite()
         {
@@ -89,27 +90,21 @@ namespace RobotSideUWP
         {
             CommonStruct.permissionToSend = false;
             _dataToWrite = dataToWrite;
-            try
-            {
-                if (serialPort != null)
-                {
+            try {
+                if (serialPort != null) {
                     Task<UInt32> storeAsyncTask;
                     dataWriteObject.WriteString(dataToWrite);
                     storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
                     UInt32 bytesWritten = await storeAsyncTask;
-                    if (bytesWritten > 0)
-                    {
+                    if (bytesWritten > 0) {
                         await ReadAsync();
                         CommonStruct.permissionToSend = true;
                     }
-                }
-                else
-                {
+                } else {
                     MainPage.Current.NotifyUserFromOtherThread("Connection to commport error ", NotifyType.ErrorMessage);
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 MainPage.Current.NotifyUserFromOtherThread("WriteNested() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
@@ -126,7 +121,7 @@ namespace RobotSideUWP
             int k = 0;//Счетчик предельно допустимого количества символов - предохранение от зависания в цикле
             try
             {
-                dataReaderObject.InputStreamOptions = InputStreamOptions.ReadAhead;
+                dataReaderObject.InputStreamOptions = InputStreamOptions.Partial;
                 while ((receivedSimbol != "\r") && (k < 35))
                 {
                     loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
@@ -143,20 +138,26 @@ namespace RobotSideUWP
             }
             try
             {
-                var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                 {
                     slashIndex = receivedStrings.IndexOf("\r", 0);
                     if (slashIndex != 5) CommonStruct.readData = receivedStrings;
 
+                    if (receivedStrings.Length > 10) {
+                        //string batteryVoltage = plcControl.BatteryVoltageHandling(receivedStrings);
+                        //await MainPage.SendVoltageLevelToServer(batteryVoltage);
+                    }
+
                     testString = testString + " ," + receivedStrings;
                 });
-
                 MainPage.Current.NotifyUserFromOtherThread(testString, NotifyType.ErrorMessage);
             }
             catch (Exception ex)
             {
                 MainPage.Current.NotifyUserFromOtherThread("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
             }
+           
         }
+
     }
 }

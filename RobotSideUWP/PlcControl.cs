@@ -14,18 +14,14 @@ namespace RobotSideUWP
 		{
         static GpioPin pin6;//Выход для отключения питания 
         static TimeSpan delay = TimeSpan.FromMilliseconds(200);
-        public static ReadWrite readWrite = null;
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
 
         public PlcControl()
         {
-            readWrite = new ReadWrite();
-
             smoothlyStopTimer = new DispatcherTimer();
             smoothlyStopTimer.Tick += SmoothlyStopTimer_Tick;
             smoothlyStopTimer.Interval = new TimeSpan(0, 0, 0, 0, 200); //Таймер для плавной сотановки (дни, часы, мин, сек, ms)
-            //smoothlyStopTimer.Start();
         }
 
         public static int CameraSpeedToPWM()
@@ -48,12 +44,12 @@ namespace RobotSideUWP
 			
 				if (setReset == "set")
 					{
-                    readWrite.Write("^RA" + address + interval + "\r");//Остановка через время, заданное в таймере
+                    MainPage.readWrite.Write("^RA" + address + interval + "\r");//Остановка через время, заданное в таймере
 					}
 				else if (setReset == "reset")
 					{
 					interval = "999";
-                    readWrite.Write("^RA" + address + interval + "\r");
+                    MainPage.readWrite.Write("^RA" + address + interval + "\r");
 					}
 				CommonStruct.portOpen = true;
 				}
@@ -86,7 +82,7 @@ namespace RobotSideUWP
                     string commandLeft = directionLeft + speedLeft;
                     string commandRight = directionRight + speedRight;
                     //CommonStruct.wheelsWasStopped = false;
-                    readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
+                    MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
                     CommonStruct.lastCommandLeft = commandLeft;
                     CommonStruct.lastCommandRight = commandRight;
                     CommonStruct.lastSpeedLeft = _speedLeft;
@@ -116,7 +112,7 @@ namespace RobotSideUWP
                 string PwrRange = CommonStruct.wheelsPwrRange;
                 string commandLeft = directionLeft + speedLeft;
                 string commandRight = directionRight + speedRight;
-                readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");
+                MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");
                 CommonStruct.stopBeforeWas = false;
             }
             catch (Exception e1)
@@ -131,7 +127,7 @@ namespace RobotSideUWP
                 try
                 {
                     string hexAddress = CommonStruct.wheelsAddress;
-                    readWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
+                    MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
                     CommonStruct.stopBeforeWas = true;
             }
                 catch(Exception e)
@@ -180,7 +176,7 @@ namespace RobotSideUWP
                     case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
                     case 4: {
                             string hexAddress = CommonStruct.wheelsAddress;
-                            readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                            MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             //smoothlyStopTimer.Stop();
                             //Task t = new Task(async () => {
                             //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
@@ -206,7 +202,7 @@ namespace RobotSideUWP
             try
                 {
                 string hexAddress = CommonStruct.wheelsAddress;
-                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
+                MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
                 Task.Delay(20).Wait();
                 CommonStruct.stopBeforeWas = true;
                 }
@@ -238,7 +234,7 @@ namespace RobotSideUWP
                 Task.Delay(300).Wait();
                 WheelsLocal(directionLeft, k5 * speedLeft, directionRight, k5 * speedRight);
 
-                readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
+                MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих колес
                 Task.Delay(20).Wait();
                 CommonStruct.stopBeforeWas = true;
             }
@@ -259,15 +255,15 @@ namespace RobotSideUWP
                         double speed = CameraSpeedToPWM();
                         if (speed <= 2) speed = 2;
                         string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        readWrite.Write("^RO" + CommonStruct.cameraAddress + "6" + "\r");//Установка 1/6 шага
+                        MainPage.readWrite.Write("^RO" + CommonStruct.cameraAddress + "6" + "\r");//Установка 1/6 шага
                         string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
-                        readWrite.Write(command);
+                        MainPage.readWrite.Write(command);
                     }
                     else if (CommonStruct.cameraController == "RD31")
                     {
                         double speed = CommonStruct.cameraSpeed;//от 0 до 100.
                         string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                        readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
+                        MainPage.readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                     }
                 }
 			catch (Exception e1)
@@ -288,14 +284,14 @@ namespace RobotSideUWP
                 {
                     if (speed <= 2) speed = 2;
                     string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
-                    readWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/6 шага
+                    MainPage.readWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/6 шага
                     string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
-                    readWrite.Write(command);
+                    MainPage.readWrite.Write(command);
                 }
                 else if (CommonStruct.cameraController == "RD31")
                 {
                     speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                    readWrite.Write("^R1" + hexAddress + direction + speed + "000" + "4" + "\r");
+                    MainPage.readWrite.Write("^R1" + hexAddress + direction + speed + "000" + "4" + "\r");
                 }
 
             }
@@ -312,12 +308,12 @@ namespace RobotSideUWP
                 string hexAddress = CommonStruct.cameraAddress;
                 if (CommonStruct.cameraController == "GM51")
                 {
-                    readWrite.Write("^RC" + hexAddress + "\r");
+                    MainPage.readWrite.Write("^RC" + hexAddress + "\r");
                 }
                 else if (CommonStruct.cameraController == "RD31")
                 {
                     double speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                    readWrite.Write("^RS" + hexAddress + "1" + "\r");
+                    MainPage.readWrite.Write("^RS" + hexAddress + "1" + "\r");
                 }
             }
             catch (Exception e1)
@@ -368,18 +364,16 @@ namespace RobotSideUWP
             return output;
         }
 
-        public void BatteryVoltageMeasuring()
+        public string BatteryVoltageHandling(string input)
         {
+            double levelCeiling = 0.0;
             try
             {
-                //CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                //readWrite.Write(CommonStruct.dataToWrite);//Вывод команды чтения из АЦП
                 string s1 = CommonStruct.readData;
-                if (s1 == "") return;
+                if (s1 == "") return "";
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
                 if ((data1 == "") || (data1 == null)) { data1 = "0"; }
-                //double supplyVoltage = (Convert.ToDouble(data1) / 100.0);
                 string voltageRange = s1.Substring(10, 1);
                 string flag154 = s1.Substring(12, 1);
                 string voltageAveraged = s1.Substring(14, 5);
@@ -388,7 +382,6 @@ namespace RobotSideUWP
 
                 double deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dVoltageAveraged + deltaV;
-
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
                 {
@@ -414,7 +407,7 @@ namespace RobotSideUWP
                     timerRobotOff.Start();
                 }
 
-                double levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
+                levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
                 if (levelCeiling >= 100) levelCeiling = 100;
 
                 CommonStruct.voltageLevelFromRobot = levelCeiling.ToString() + "%";
@@ -423,6 +416,7 @@ namespace RobotSideUWP
             {
                 MainPage.Current.NotifyUserFromOtherThread("Cannot measure battery voltage. " + e2.Message, NotifyType.StatusMessage);
             }
+            return levelCeiling.ToString();
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)

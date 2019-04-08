@@ -19,8 +19,6 @@ namespace RobotSideUWP
 
         public void InitializeUI()
         {
-            //readWrite = new ReadWrite();
-
             int i = 0;
 
             string appVersion = string.Format("v.: {0}.{1}.{2}.{3}",
@@ -350,7 +348,7 @@ namespace RobotSideUWP
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//GO для обоих (Both) колес
 
-                PlcControl.readWrite.Write(CommonStruct.dataToWrite);
+                readWrite.Write(CommonStruct.dataToWrite);
                 string s = CommonStruct.readData;
             }
             catch (Exception e1)
@@ -383,7 +381,7 @@ namespace RobotSideUWP
                 string directionRight = CommonStruct.directionRight;
                 string hexAddress = CommonStruct.wheelsAddress;
                 CommonStruct.dataToWrite = "^RC" + hexAddress + "\r";//
-                PlcControl.readWrite.Write(CommonStruct.dataToWrite);
+                readWrite.Write(CommonStruct.dataToWrite);
             }
             catch (Exception e1)
             {
