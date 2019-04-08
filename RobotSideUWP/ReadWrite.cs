@@ -16,8 +16,6 @@ namespace RobotSideUWP
         DataWriter dataWriteObject = null;
         DataReader dataReaderObject = null;
         DispatcherTimer sendAfterDelayTimer;
-        DateTime timeNow;
-        DateTime timeSent;
         long ticksSent = 0;
         string _dataToWrite = "";
         
@@ -34,8 +32,7 @@ namespace RobotSideUWP
         {
             WriteNested(_dataToWrite);
             sendAfterDelayTimer.Stop();
-            timeSent = DateTime.Now;
-            ticksSent = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+            ticksSent = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
         }
 
         public async void comPortInit()
@@ -64,24 +61,25 @@ namespace RobotSideUWP
 
         public void Write(string dataToWrite)
         {
+            _dataToWrite = dataToWrite;
             try {
-                timeNow = DateTime.Now;
-                var ticksNow = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+                //timeNow = DateTime.Now;
+                var ticksNow = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
 
                 long deltaTicks = (ticksNow - ticksSent) / 10000;
 
                 if (deltaTicks < 30) {
-                    if (dataToWrite == "Stop") {
+                    if ((dataToWrite == "^RC0002\r")||(dataToWrite == "^RS00031\r")) {
                         var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
                             sendAfterDelayTimer.Start();
                         });
-                        MainPage.Current.NotifyUserFromOtherThread("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
+                        MainPage.Current.NotifyUserFromOtherThread("Write() " + dataToWrite + ", deltaTicks < 30 мкс", NotifyType.ErrorMessage);
                     }
                 } else {
                     WriteNested(dataToWrite);
-                    timeSent = DateTime.Now;
-                    ticksSent = timeNow.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
                 }
+                //timeSent = DateTime.Now;
+                ticksSent = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
             }
             catch (Exception e) {
                 MainPage.Current.NotifyUserFromOtherThread("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
@@ -147,14 +145,17 @@ namespace RobotSideUWP
 
                     if (receivedStrings.Length > 10) {
                         string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings);
-                        await MainPage.SendVoltageLevelToServer(batteryVoltage + "%");
-                        CommonStruct.voltageLevelFromRobot = batteryVoltage;
+                        if (batteryVoltage != "") {
+                            await MainPage.SendVoltageLevelToServer(batteryVoltage + "%");
+                            CommonStruct.voltageLevelFromRobot = batteryVoltage;
+                        }
                     }
-
                     testString = testString + "   " + receivedStrings;
-                    MainPage.Current.NotifyUserForTesting(testString); 
+                    MainPage.Current.NotifyUserForTesting(testString);
+                    if (testString.Length > 400) testString = "";
                 });
                 //MainPage.Current.NotifyUserFromOtherThreadForTesting(testString, NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThread("", NotifyType.ErrorMessage);
             }
             catch (Exception ex)
             {

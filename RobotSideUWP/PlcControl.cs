@@ -177,17 +177,13 @@ namespace RobotSideUWP
                     case 4: {
                             string hexAddress = CommonStruct.wheelsAddress;
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
-                            //smoothlyStopTimer.Stop();
-                            //Task t = new Task(async () => {
-                            //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
-                            //        smoothlyStopTimer.Stop();
-                            //    }));
-                            //});
-                            //t.Start();
-
-                        smoothlyStopTimer.Stop();
-                        stopTimerCounter = 0;
-                        CommonStruct.stopBeforeWas = true;
+                            break;
+                        }
+                    case 5: {
+                            MainPage.Current.ChargeLevelMeasure();
+                            smoothlyStopTimer.Stop();
+                            stopTimerCounter = 0;
+                            CommonStruct.stopBeforeWas = true;
                     }
                         break;
                 }

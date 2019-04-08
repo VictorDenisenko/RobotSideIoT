@@ -8,12 +8,8 @@ using Windows.UI.Xaml.Input;
 
 namespace RobotSideUWP
 {
-    public delegate string AsyncMethodCaller(string key);
-    public delegate void AsyncForCamera(string direction, string stepNumber);
-
     public sealed partial class MainPage : Page
     {
-        public delegate void InvokeReadData();
         DispatcherTimer hostWatchdogInitTimer;
         int kHostWtahdogTicks = 0;
 
@@ -268,20 +264,23 @@ namespace RobotSideUWP
             setTimeToRestartPicker.Time = initTime;
             setTimeToRestartPicker.AllowDrop = true;
 
-            hostWatchdogInitTimer = new DispatcherTimer();
-            hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);//таймер для начальной установка сторожевых таймеров в модулях
-            hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
-            hostWatchdogInitTimer.Start();
         }
 
         private void HostWatchdogInitTimer_Tick(object sender, object e) {
             kHostWtahdogTicks++;
             try {//использую четыре тика, чтобы корректно записать и считать ответ на установку сторожевого таймера
                 switch (kHostWtahdogTicks) {
-                    case 1: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
+                    case 1:
+                        //CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                        //readWrite.Write(CommonStruct.dataToWrite);//
                         break;
-                    case 2: {
-                            buttonStart_Click(null, null);
+                    case 2:
+                        buttonStart_Click(null, null);
+                        break;
+                    case 3: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
+                        break;
+                    case 4: {
+                            
                             if (CommonStruct.cameraController == "No") {
                                 if (CommonStruct.readData == "!0002014\r") {
                                     hostWatchdogInitTimer.Stop();
@@ -289,11 +288,11 @@ namespace RobotSideUWP
                             }
                         }
                         break;
-                    case 3: {
+                    case 5: {
                                 plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
                         }
                         break;
-                    case 4: {
+                    case 6: {
                             if (CommonStruct.readData == "!0003014\r") {
                                 hostWatchdogInitTimer.Stop();
                             }

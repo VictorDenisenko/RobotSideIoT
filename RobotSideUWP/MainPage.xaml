@@ -197,6 +197,7 @@
         <Button x:Name="buttonShutdown" Click="buttonShutdown_Click" Content="Shutdown" HorizontalAlignment="Left" Margin="750,512,0,0" VerticalAlignment="Top" Width="115"/>
         <Button x:Name="buttonRestart" Content="Restart" HorizontalAlignment="Left" Margin="889,512,0,0" VerticalAlignment="Top" Width="115" Click="buttonRestart_Click"/>
         <Button x:Name="buttonWiFi" Content="WiFi" HorizontalAlignment="Left" Height="50" Margin="278,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonWiFi_Click"/>
+        <Button x:Name="buttonTesting" Content="Testing" HorizontalAlignment="Left" Height="50" Margin="278,592,0,0" VerticalAlignment="Top" Width="100" Click="ButtonTesting_Click"/>
         <TextBlock x:Name="labelVersion" HorizontalAlignment="Left" Margin="750,654,0,0" TextWrapping="Wrap" Text="Version" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" FontSize="10" />
     </Grid>
 </Page>

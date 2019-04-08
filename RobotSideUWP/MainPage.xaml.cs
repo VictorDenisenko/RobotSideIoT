@@ -53,6 +53,12 @@ namespace RobotSideUWP
             if(plcControl != null) plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
 
+        private void ButtonTesting_Click(object sender, RoutedEventArgs e)
+        {
+            kHostWtahdogTicks = 0;
+            //HostWatchdogInitTimer_Tick(null, null);
+            hostWatchdogInitTimer.Start();
+        }
     }
 
     public class Scenario
@@ -113,7 +119,7 @@ namespace RobotSideUWP
 
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
-        DispatcherTimer chargeLevelTimer;
+        //public static DispatcherTimer chargeLevelTimer;
 
         public MainPage()
         {
@@ -213,10 +219,15 @@ namespace RobotSideUWP
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
             reconnectTimer.Start();
 
-            chargeLevelTimer = new DispatcherTimer();
-            chargeLevelTimer.Tick += ChargeLevelTimer_TickAsync;
-            chargeLevelTimer.Interval = new TimeSpan(0, 0, 0, 0, 20); //Таймер для запуска измерений через 100мс после первой команды остановки (дни, часы, мин, сек, ms)
+            //chargeLevelTimer = new DispatcherTimer();
+            //chargeLevelTimer.Tick += ChargeLevelTimer_TickAsync;
+            //chargeLevelTimer.Interval = new TimeSpan(0, 0, 0, 0, 10); //Таймер для запуска измерений через 100мс после первой команды остановки (дни, часы, мин, сек, ms)
+                                                                      
             //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
+            hostWatchdogInitTimer = new DispatcherTimer();
+            hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);//таймер для начальной установка сторожевых таймеров в модулях
+            hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
+            hostWatchdogInitTimer.Start();
 
             readWrite = new ReadWrite();
             //Task.Delay(1000).Wait();
@@ -631,9 +642,9 @@ namespace RobotSideUWP
                             {
                             plcControl.WheelsStopSmoothly();
                             sArr3Before = "0";
-                                var __ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
-                                    chargeLevelTimer.Start();
-                                });
+                                //var __ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+                                //    chargeLevelTimer.Start();
+                                //});
                             }
                             else
                             {
@@ -657,16 +668,15 @@ namespace RobotSideUWP
             }
         }
 
-        private void ChargeLevelTimer_TickAsync(object sender, object e)
+        public void ChargeLevelMeasure()
         {
             double levelCeiling = 0.0;
             try {
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//
-                chargeLevelTimer.Stop();
 
-                labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
                 if (CommonStruct.voltageLevelFromRobot == "") return;
+                labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
                 levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
                 if (levelCeiling > 40) {
                     labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
