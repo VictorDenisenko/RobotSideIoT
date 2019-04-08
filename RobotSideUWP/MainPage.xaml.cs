@@ -50,6 +50,7 @@ namespace RobotSideUWP
             if (RD31Button.IsChecked == true) { CommonStruct.cameraController = "RD31"; }
             else if (GM51Button.IsChecked == true) { CommonStruct.cameraController = "GM51"; }
             else if (NoButton.IsChecked == true) { CommonStruct.cameraController = "No"; }
+            if(plcControl != null) plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
 
     }
@@ -817,7 +818,6 @@ namespace RobotSideUWP
             buttonStart.Foreground = new SolidColorBrush(Windows.UI.Colors.Gray);
             buttonStart.FontFamily = new FontFamily("Microsoft Sans Serif");
             buttonStart.IsEnabled = false;
-            if (CommonStruct.cameraController != "No") plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");//Обязательно надо, т.к. при начлаьной загрузке по умолчанию стоит, что нет камеры
            
             try
             {

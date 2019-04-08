@@ -144,8 +144,8 @@ namespace RobotSideUWP
                     if (slashIndex != 5) CommonStruct.readData = receivedStrings;
 
                     if (receivedStrings.Length > 10) {
-                        //string batteryVoltage = plcControl.BatteryVoltageHandling(receivedStrings);
-                        //await MainPage.SendVoltageLevelToServer(batteryVoltage);
+                        string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings) + "%";
+                        await MainPage.SendVoltageLevelToServer(batteryVoltage);
                     }
 
                     testString = testString + " ," + receivedStrings;

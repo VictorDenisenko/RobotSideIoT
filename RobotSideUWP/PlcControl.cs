@@ -364,12 +364,12 @@ namespace RobotSideUWP
             return output;
         }
 
-        public string BatteryVoltageHandling(string input)
+        public static string BatteryVoltageHandling(string input)
         {
             double levelCeiling = 0.0;
             try
             {
-                string s1 = CommonStruct.readData;
+                string s1 = input;
                 if (s1 == "") return "";
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
