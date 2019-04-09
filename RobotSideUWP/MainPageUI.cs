@@ -160,7 +160,6 @@ namespace RobotSideUWP
             {
                 Task t = new Task(async () =>
                 {
-                    //await CommonFunctions.WriteToLog(strMessage);
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
                      {
                          Current.StatusBlock.Text = strMessage;
@@ -179,26 +178,13 @@ namespace RobotSideUWP
             }
             catch(Exception e)
             {
-
             }
         }
 
         public void NotifyUserForTesting(string strMessage)
         {
             try {
-                //Task t = new Task(async () => {
-                //    //await CommonFunctions.WriteToLog(strMessage);
-                //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
-                //    {
-                        Current.StatusBlockForTesting.Text = strMessage;
-                //        if (type == NotifyType.ErrorMessage) {
-                //            Current.StatusBlockForTesting.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
-                //        } else {
-                //            Current.StatusBlockForTesting.Foreground = new SolidColorBrush(Windows.UI.Colors.Black);
-                //        }
-                //    }));
-                //});
-                //t.Start();
+                 Current.StatusBlockForTesting.Text = strMessage;
             }
             catch (Exception e) {
 

@@ -7,15 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
-using Windows.ApplicationModel.Core;
 using Windows.ApplicationModel.ExtendedExecution;
+using Windows.ApplicationModel.Core;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
-using Windows.Devices.SerialCommunication;
 using Windows.Storage;
 using Windows.System;
 using Windows.System.Profile;
-using Windows.System.Threading;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -52,13 +50,6 @@ namespace RobotSideUWP
             else if (NoButton.IsChecked == true) { CommonStruct.cameraController = "No"; }
             if(plcControl != null) plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
-
-        private void ButtonTesting_Click(object sender, RoutedEventArgs e)
-        {
-            kHostWtahdogTicks = 0;
-            //HostWatchdogInitTimer_Tick(null, null);
-            hostWatchdogInitTimer.Start();
-        }
     }
 
     public class Scenario
@@ -68,6 +59,7 @@ namespace RobotSideUWP
 
     public sealed partial class MainPage : Page
     {
+
         public static ReadWrite readWrite = null;
         PlcControl plcControl = null;
         public static MainPage Current;
@@ -120,7 +112,6 @@ namespace RobotSideUWP
 
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
-        //public static DispatcherTimer chargeLevelTimer;
 
         public MainPage()
         {
@@ -216,7 +207,7 @@ namespace RobotSideUWP
             watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Ватчдог таймер (дни, часы, мин, сек, ms)
 
             reconnectTimer = new DispatcherTimer();
-            reconnectTimer.Tick += ReconnectTimer_Tick; ;
+            reconnectTimer.Tick += ReconnectTimer_Tick;
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
             reconnectTimer.Start();
 
@@ -244,6 +235,7 @@ namespace RobotSideUWP
                 if ((isConnected == false) && (bConnect == true)) {
                     client.Connect(clientId);
                     client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                    client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
 
                     Current.NotifyUserFromOtherThread("MQTT Reconnected ", NotifyType.StatusMessage);
                     if (OsType == "Windows.IoT") {
@@ -465,7 +457,7 @@ namespace RobotSideUWP
                                 speedRight = speedRight0 * (1 - 0.2 * (70 - alpha ) / (70 - 20)); 
                                 if ((firstEnterInGreenRight == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    plcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly(200);
                                     firstEnterInGreenRight = false;
                                 }
                                 plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
@@ -486,7 +478,7 @@ namespace RobotSideUWP
                                 speedRight = speedRight0;
                                 if ((firstEnterInGreenLeft == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    plcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly(200);
                                     firstEnterInGreenLeft = false;
                                 }
                                 else
@@ -508,7 +500,7 @@ namespace RobotSideUWP
                                 speedRight = 0.4 * speedRight0;
                                 if ((firstEnterInYellowLeft == true) && (fromStopToStart == true) && ((lastColorArea == "green") || (lastColorArea == "red")))
                                 {
-                                    plcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly(200);
                                     firstEnterInYellowLeft = false;
                                     //sArr3Before = "0";
                                 }
@@ -531,7 +523,7 @@ namespace RobotSideUWP
                                 speedLeft = speedLeft0;
                                 if ((firstEnterInRed == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
-                                    plcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly(200);
                                     firstEnterInRed = false;
                                     //sArr3Before = "0";
                                 }
@@ -554,7 +546,7 @@ namespace RobotSideUWP
                                 speedLeft = 0.4 * speedLeft0;
                                 if ((firstEnterInYellowRight == true) && (fromStopToStart == true) && ((lastColorArea == "green") || (lastColorArea == "red")))
                                 {
-                                    plcControl.WheelsStopSmoothly();
+                                    plcControl.WheelsStopSmoothly(200);
                                     firstEnterInYellowRight = false;
                                 }
                                 else
@@ -645,16 +637,17 @@ namespace RobotSideUWP
                         {
                             if ((CommonStruct.stopSmoothly == true) && (((directionLeft == forwardDirection) && (directionRight == forwardDirection)) || ((directionLeft == backwardDirection) && (directionRight == backwardDirection))))
                             {
-                            plcControl.WheelsStopSmoothly();
+                            plcControl.WheelsStopSmoothly(200);
                             sArr3Before = "0";
-                                //var __ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
-                                //    chargeLevelTimer.Start();
-                                //});
                             }
                             else
                             {
-                            plcControl.WheelsStopSmoothly();
-                            plcControl.WheelsStop();
+                            double speedRadius = CommonFunctions.SpeedRadius(arrBefore[1], arrBefore[2]);
+                            if (speedRadius >= 50) {
+                                plcControl.WheelsStopSmoothly(100);
+                            } else {
+                                plcControl.WheelsStop();
+                            }
                             sArr3Before = "0";
                             }
                         }
@@ -910,6 +903,8 @@ namespace RobotSideUWP
             WriteDefaultSettings();
             ReadSettings();
             ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
+
+
         }
 
         private void buttonSave_Click(object sender, RoutedEventArgs e)

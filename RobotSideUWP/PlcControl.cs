@@ -68,28 +68,32 @@ namespace RobotSideUWP
                 CommonStruct.numberOfTicksAfterWheelsStop = 0;
                 if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeft != directionLeft) || (CommonStruct.directionRight != directionRight)))
                 {
-                    WheelsStopSmoothly();
+                    WheelsStopSmoothly(200);
                 }
                 else
                 { 
                     double speedLeft0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[0];
                     double speedRight0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[1];
 
-                    string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
-                    string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
-                    string hexAddress = CommonStruct.wheelsAddress;
-                    string PwrRange = CommonStruct.wheelsPwrRange;
-                    string commandLeft = directionLeft + speedLeft;
-                    string commandRight = directionRight + speedRight;
-                    //CommonStruct.wheelsWasStopped = false;
-                    MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
-                    CommonStruct.lastCommandLeft = commandLeft;
-                    CommonStruct.lastCommandRight = commandRight;
-                    CommonStruct.lastSpeedLeft = _speedLeft;
-                    CommonStruct.lastSpeedRight = _speedRight;
-                    CommonStruct.directionLeft = directionLeft;
-                    CommonStruct.directionRight = directionRight;
-                    CommonStruct.stopBeforeWas = false;
+                    double speedRadius = Math.Sqrt((speedLeft0* speedLeft0) + (speedRight0* speedRight0));
+                    if (speedRadius > 1) {
+
+                        string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
+                        string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
+                        string hexAddress = CommonStruct.wheelsAddress;
+                        string PwrRange = CommonStruct.wheelsPwrRange;
+                        string commandLeft = directionLeft + speedLeft;
+                        string commandRight = directionRight + speedRight;
+                        //CommonStruct.wheelsWasStopped = false;
+                        MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
+                        CommonStruct.lastCommandLeft = commandLeft;
+                        CommonStruct.lastCommandRight = commandRight;
+                        CommonStruct.lastSpeedLeft = _speedLeft;
+                        CommonStruct.lastSpeedRight = _speedRight;
+                        CommonStruct.directionLeft = directionLeft;
+                        CommonStruct.directionRight = directionRight;
+                        CommonStruct.stopBeforeWas = false;
+                    }
                 }
                
             }
@@ -137,7 +141,7 @@ namespace RobotSideUWP
                 }
             }
 
-        public void WheelsStopSmoothly()
+        public void WheelsStopSmoothly(double interval)
             {
             try
                 {
@@ -145,11 +149,12 @@ namespace RobotSideUWP
                 double speedRight = CommonStruct.lastSpeedRight;
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
-                double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
+                double k1 = CommonStruct.k1;
                 stopTimerCounter = 0;
                 Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
                 Task t = new Task(async () => {
                     await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
+                        smoothlyStopTimer.Interval = TimeSpan.FromMilliseconds(interval);
                         smoothlyStopTimer.Start();
                     }));
                 });
@@ -169,7 +174,7 @@ namespace RobotSideUWP
                 double speedRight = CommonStruct.lastSpeedRight;
                 string directionLeft = CommonStruct.directionLeft;
                 string directionRight = CommonStruct.directionRight;
-                double k1 = CommonStruct.k1, k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
+                double k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
                 switch (stopTimerCounter) {
                     case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
                     case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;

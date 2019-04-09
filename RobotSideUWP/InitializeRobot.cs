@@ -29,10 +29,10 @@ namespace RobotSideUWP
             localSettings.Values["directBottomDistance"] = 10;
             localSettings.Values["cameraAlpha"] = null;
 
-            localSettings.Values["k1"] = 0.8;
-            localSettings.Values["k2"] = 0.6;
-            localSettings.Values["k3"] = 0.4;
-            localSettings.Values["k4"] = 0.2;
+            localSettings.Values["k1"] = 0.7;
+            localSettings.Values["k2"] = 0.4;
+            localSettings.Values["k3"] = 0.2;
+            localSettings.Values["k4"] = 0.1;
 
             localSettings.Values["minWheelsSpeedForTurning"] = 50;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
 

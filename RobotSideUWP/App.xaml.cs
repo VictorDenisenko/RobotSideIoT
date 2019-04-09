@@ -13,7 +13,6 @@ namespace RobotSideUWP
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
-            
         }
         /// <param name="e">Сведения о запросе и обработке запуска.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
