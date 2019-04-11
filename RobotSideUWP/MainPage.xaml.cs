@@ -818,7 +818,6 @@ namespace RobotSideUWP
             if (text == "") return;
             if (oldText == text) return;
 
-
             DateTime now = DateTime.Now;
             string timeNow = now.ToString();
             uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.decriptedSerial);
