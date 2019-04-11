@@ -122,6 +122,8 @@ namespace RobotSideUWP
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
 
+        static string oldText = "";
+
         public MainPage()
         {
             clientId = Guid.NewGuid().ToString();
@@ -813,12 +815,13 @@ namespace RobotSideUWP
         {
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
             Uri uri = null;
-
             if (text == "") return;
+            if (oldText == text) return;
+
+
             DateTime now = DateTime.Now;
             string timeNow = now.ToString();
             uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.decriptedSerial);
-
             try
             {
                 var authData = string.Format("{0}:{1}", "admin", "admin");
@@ -849,6 +852,7 @@ namespace RobotSideUWP
                 ipAddress = "StatusCode: " + ex.Message;
                 Current.NotifyUser("SendToServer() " + ex.Message, NotifyType.ErrorMessage);
             }
+            oldText = text;
         }
 
         #endregion Base Cycle
