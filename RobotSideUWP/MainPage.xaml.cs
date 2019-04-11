@@ -50,6 +50,15 @@ namespace RobotSideUWP
             else if (NoButton.IsChecked == true) { CommonStruct.cameraController = "No"; }
             if(plcControl != null) plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
+
+        private void ButtonTesting_Click(object sender, RoutedEventArgs e)
+        {
+            Task t = new Task(async () =>
+            {
+                await SendErrorsToServer("Test string");
+            });
+            t.Start();
+        }
     }
 
     public class Scenario
@@ -237,7 +246,7 @@ namespace RobotSideUWP
                     client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
                     client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
 
-                    Current.NotifyUserFromOtherThread("MQTT Reconnected ", NotifyType.StatusMessage);
+                    Current.NotifyUserFromOtherThreadAsync("MQTT Reconnected ", NotifyType.ErrorMessage);
                     if (OsType == "Windows.IoT") {
                         pin26.SetDriveMode(GpioPinDriveMode.Output);
                         pin26.Write(GpioPinValue.Low);
@@ -253,7 +262,7 @@ namespace RobotSideUWP
             }
             catch(Exception e1)
             {
-                Current.NotifyUserFromOtherThread("ReconnectTimer_Tick " + e1.Message, NotifyType.StatusMessage);
+                Current.NotifyUserFromOtherThreadAsync("ReconnectTimer_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -297,20 +306,19 @@ namespace RobotSideUWP
             var result = await session.RequestExtensionAsync();
             if (result == ExtendedExecutionResult.Allowed)
             {
-                Current.NotifyUserFromOtherThread("Extended execution Allowed", NotifyType.StatusMessage);
+                Current.NotifyUserFromOtherThreadAsync("Extended execution Allowed", NotifyType.StatusMessage);
             }
             else if (result == ExtendedExecutionResult.Denied)
             {
-                var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-                    Current.NotifyUserFromOtherThread("Extended execution DENIED", NotifyType.StatusMessage);
+                var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+                    Current.NotifyUserFromOtherThreadAsync("Extended execution DENIED", NotifyType.StatusMessage);
                 });
             }
             else
             {
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
-                    MainPage.Current.NotifyUserFromOtherThread("Extended execution DENIED", NotifyType.StatusMessage);
+                    Current.NotifyUserFromOtherThreadAsync("Extended execution DENIED", NotifyType.StatusMessage);
                 });
             }
         }
@@ -319,7 +327,7 @@ namespace RobotSideUWP
         {
             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
-                Current.NotifyUserFromOtherThread("Extended execution REVOKED", NotifyType.StatusMessage);
+                Current.NotifyUserFromOtherThreadAsync("Extended execution REVOKED", NotifyType.StatusMessage);
             });
             EndExtendedExecution();
         }
@@ -369,7 +377,7 @@ namespace RobotSideUWP
                         }
                         catch (Exception e)
                         {
-                            Current.NotifyUser("if ((arr[6] != null)" + e.Message, NotifyType.StatusMessage);
+                            Current.NotifyUser("if ((arr[6] != null)" + e.Message, NotifyType.ErrorMessage);
                             //CommonFunctions.WriteToLog(e.Message + "CommonStruct.speedTuningParam = Convert.ToDouble(arr[6]);");
                         }
 
@@ -574,7 +582,7 @@ namespace RobotSideUWP
                         }
                         catch (Exception e)
                         {
-                            Current.NotifyUser("if (((sArr[5] != Stop)" + e.Message + "xCoord = ", NotifyType.StatusMessage);
+                            Current.NotifyUser("if (((sArr[5] != Stop)" + e.Message + "xCoord = ", NotifyType.ErrorMessage);
                         }
 
                         double turnSpeed = 0.5 * Math.Abs(xCoord);
@@ -769,13 +777,47 @@ namespace RobotSideUWP
             });
         }
 
-        public static async Task SendVoltageLevelToServer(string chargeLevel)
+        public static async Task SendVoltageToServer(string text)
+        {
+            if (text == "") return;
+            string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
+            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
+
+            try {
+                var authData = string.Format("{0}:{1}", "admin", "admin");
+                var authHeaderValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authData));
+
+                using (HttpClient client = new HttpClient()) {
+                    client.MaxResponseContentBufferSize = 256000;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("None", authHeaderValue);
+                    HttpContent content = null;
+
+                    using (HttpResponseMessage response = await client.PutAsync(uri, content)) {
+                        if (!response.IsSuccessStatusCode) {
+                            ipAddress = "StatusCode: " + Convert.ToString(response.StatusCode);
+                        }
+                        if (response.Content != null) {
+                            string responseBodyAsText;
+                            responseBodyAsText = await response.Content.ReadAsStringAsync();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                ipAddress = "StatusCode: " + ex.Message;
+                Current.NotifyUser("SendVoltageToServer() " + ex.Message, NotifyType.ErrorMessage);
+            }
+        }
+
+        public static async Task SendErrorsToServer(string text)
         {
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
+            Uri uri = null;
 
-            //string chargeLevel = CommonStruct.voltageLevelFromRobot;
-            if (chargeLevel == "") return;
-            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + chargeLevel + "&serial=" + CommonStruct.decriptedSerial);
+            if (text == "") return;
+            DateTime now = DateTime.Now;
+            string timeNow = now.ToString();
+            uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.decriptedSerial);
 
             try
             {
@@ -788,7 +830,7 @@ namespace RobotSideUWP
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("None", authHeaderValue);
                     HttpContent content = null;
 
-                    using (HttpResponseMessage response = await client.PutAsync(uri, content))
+                    using (HttpResponseMessage response = await client.PostAsync(uri, content))
                     {
                         if (!response.IsSuccessStatusCode)
                         {
@@ -805,7 +847,7 @@ namespace RobotSideUWP
             catch (Exception ex)
             {
                 ipAddress = "StatusCode: " + ex.Message;
-                Current.NotifyUser("SendVoltageLevelToServer() " + ex.Message, NotifyType.ErrorMessage);
+                Current.NotifyUser("SendToServer() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -840,12 +882,12 @@ namespace RobotSideUWP
                     client.ConnectionClosed += Client_ConnectionClosed;
                     client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
                 } else {
-                    Current.NotifyUserFromOtherThread("Robot Serial Number is incorrect ", NotifyType.ErrorMessage);
+                    Current.NotifyUserFromOtherThreadAsync("Robot Serial Number is incorrect ", NotifyType.ErrorMessage);
                 }
             }
             catch (Exception e1)
             {
-                Current.NotifyUserFromOtherThread(e1.Message, NotifyType.StatusMessage);
+                Current.NotifyUserFromOtherThreadAsync(e1.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -853,7 +895,7 @@ namespace RobotSideUWP
         {
 
             bool isConnected = client.IsConnected;
-            Current.NotifyUserFromOtherThread("Connection Closed", NotifyType.StatusMessage);
+            Current.NotifyUserFromOtherThreadAsync("Connection Closed", NotifyType.StatusMessage);
             if (OsType == "Windows.IoT") {
                 pin26.SetDriveMode(GpioPinDriveMode.Output);
                 pin26.Write(GpioPinValue.Low);
@@ -869,7 +911,7 @@ namespace RobotSideUWP
             }
             catch(Exception e1)
             {
-                MainPage.Current.NotifyUserFromOtherThread(e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync(e1.Message, NotifyType.ErrorMessage);
             }
 
             bConnect = false;

@@ -189,7 +189,7 @@ namespace RobotSideUWP
                     }
                 return output;
                 }
-            catch (Exception )
+            catch (Exception e)
                 {
                 //MainPage.Current.NotifyUserFromOtherThread(e.Message + " Degrees", NotifyType.StatusMessage);
                 return output;
@@ -235,7 +235,7 @@ namespace RobotSideUWP
                 }
             catch (Exception e)
                 {
-                MainPage.Current.NotifyUserFromOtherThread("ZeroInFrontSet" + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ZeroInFrontSet" + e.Message, NotifyType.ErrorMessage);
                 return output;
                 }
 			}
@@ -255,12 +255,12 @@ namespace RobotSideUWP
             catch (Exception e)
                 {
                 //await CommonFunctions.WriteToLog(e.Message + " ZeroInFrontReset");
-                MainPage.Current.NotifyUserFromOtherThread("ZeroInFrontReset: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ZeroInFrontReset: " + e.Message, NotifyType.ErrorMessage);
                 return output;
                 }
 			}
 
-		public static string ZeroInFrontFromDouble(double number)
+		public static string ZeroInFrontFromDoubleAsync(double number)
 			{
             string output = "";
             try
@@ -272,12 +272,12 @@ namespace RobotSideUWP
                 }
             catch (Exception e)
                 {
-                MainPage.Current.NotifyUserFromOtherThread("ZeroInFrontFromDouble: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ZeroInFrontFromDouble: " + e.Message, NotifyType.ErrorMessage);
                 return output;
                 }
 			}
 
-		public static async Task<string> Encryption(string inputWord)// Шифрование 
+		public static string Encryption(string inputWord)// Шифрование 
 			{
 			try
 				{
@@ -323,12 +323,12 @@ namespace RobotSideUWP
 			catch (Exception e)
 				{
                 //await CommonFunctions.WriteToLog(e.Message + " Encryption");
-                MainPage.Current.NotifyUserFromOtherThread("Encryption: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Encryption: " + e.Message, NotifyType.ErrorMessage);
                 return e.Message;
 				}
 			}
 
-		public static async Task<string> Decryption(string inputWord)// Дешифрование 
+		public static string Decryption(string inputWord)// Дешифрование 
 			{
 			try
 				{
@@ -345,7 +345,7 @@ namespace RobotSideUWP
 			catch (Exception e)
 				{
                 //await CommonFunctions.WriteToLog(e.Message + " Decryption");
-                MainPage.Current.NotifyUserFromOtherThread("Decryption: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Decryption: " + e.Message, NotifyType.ErrorMessage);
                 return e.Message;
 				}
 			}
@@ -397,7 +397,7 @@ namespace RobotSideUWP
 			catch (Exception e)
 				{
                 //CommonFunctions.WriteToLog(e.Message + " CalculateCRC");
-                MainPage.Current.NotifyUserFromOtherThread("CalculateCRC: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CalculateCRC: " + e.Message, NotifyType.ErrorMessage);
                 return 0;
 				}
 			}
@@ -421,7 +421,7 @@ namespace RobotSideUWP
 			catch (Exception ex)
 				{
                 //CommonFunctions.WriteToLog(ex.Message + " CommandWithCRC");
-                MainPage.Current.NotifyUserFromOtherThread("CommandWithCRC: " + ex.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CommandWithCRC: " + ex.Message, NotifyType.ErrorMessage);
                 return "0";
 				}
 			}
@@ -440,7 +440,7 @@ namespace RobotSideUWP
             catch (Exception e)
                 {
                 //CommonFunctions.WriteToLog(e.Message + " HexToDec");
-                MainPage.Current.NotifyUserFromOtherThread("HexToDec: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("HexToDec: " + e.Message, NotifyType.ErrorMessage);
                 return res;
                 }
 			}
@@ -458,7 +458,7 @@ namespace RobotSideUWP
 			catch (Exception e1)
 				{
                 //CommonFunctions.WriteToLog(e1.Message + " IntToHex");
-                MainPage.Current.NotifyUserFromOtherThread("IntToHex: " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("IntToHex: " + e1.Message, NotifyType.ErrorMessage);
                 return e1.Message;
 				}
 			}
@@ -479,7 +479,7 @@ namespace RobotSideUWP
             }
             catch (Exception e)
             {
-                MainPage.Current.NotifyUserFromOtherThread("WriteToHardData: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WriteToHardData: " + e.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -506,7 +506,7 @@ namespace RobotSideUWP
             catch (Exception e)
             {
                 //CommonFunctions.WriteToLog(e.Message + " ReadFromHardData");
-                MainPage.Current.NotifyUserFromOtherThread("ReadFromHardData: " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromHardData: " + e.Message, NotifyType.ErrorMessage);
                 return elemntContent;
             }
         }
@@ -543,7 +543,7 @@ namespace RobotSideUWP
             catch (Exception e)
                 {
                 //CommonFunctions.WriteToLog(e.Message + " CharToDec");
-                MainPage.Current.NotifyUserFromOtherThread("CharToDec" + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CharToDec" + e.Message, NotifyType.ErrorMessage);
                 return digit;
                 }
 			}
@@ -611,7 +611,7 @@ namespace RobotSideUWP
             }
             catch (Exception e1)
             {
-                MainPage.Current.NotifyUserFromOtherThread("WriteToLog " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WriteToLog " + e1.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -708,7 +708,7 @@ namespace RobotSideUWP
             }
             catch (Exception e)
             {
-                MainPage.Current.NotifyUserFromOtherThread("Frase" + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Frase" + e.Message, NotifyType.ErrorMessage);
                 return "";
             }
         }
@@ -723,7 +723,7 @@ namespace RobotSideUWP
             }
             catch (Exception e1)
             {
-                MainPage.Current.NotifyUserFromOtherThread("ReadFromSSMLSource " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromSSMLSource " + e1.Message, NotifyType.ErrorMessage);
             }
             return elementContent;
         }

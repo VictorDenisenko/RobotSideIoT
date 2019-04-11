@@ -55,7 +55,7 @@ namespace RobotSideUWP
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("comPortInit() " + ex.Message, NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("comPortInit() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -73,7 +73,7 @@ namespace RobotSideUWP
                         var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
                             sendAfterDelayTimer.Start();
                         });
-                        MainPage.Current.NotifyUserFromOtherThread("Write() " + dataToWrite + ", deltaTicks < 30 мкс", NotifyType.ErrorMessage);
+                        MainPage.Current.NotifyUserFromOtherThreadAsync("Write() " + dataToWrite + ", deltaTicks < 30 мкс", NotifyType.ErrorMessage);
                     }
                 } else {
                     WriteNested(dataToWrite);
@@ -82,7 +82,7 @@ namespace RobotSideUWP
                 ticksSent = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
             }
             catch (Exception e) {
-                MainPage.Current.NotifyUserFromOtherThread("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Write() " + "deltaTicks < 30 мкс", NotifyType.ErrorMessage);
             }
         }
 
@@ -101,11 +101,11 @@ namespace RobotSideUWP
                         CommonStruct.permissionToSend = true;
                     }
                 } else {
-                    MainPage.Current.NotifyUserFromOtherThread("Connection to commport error ", NotifyType.ErrorMessage);
+                    MainPage.Current.NotifyUserFromOtherThreadAsync("Connection to commport error ", NotifyType.ErrorMessage);
                 }
             }
             catch (Exception ex) {
-                MainPage.Current.NotifyUserFromOtherThread("WriteNested() " + ex.Message, NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WriteNested() " + ex.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -134,7 +134,7 @@ namespace RobotSideUWP
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
             }
             try
             {
@@ -146,7 +146,7 @@ namespace RobotSideUWP
                     if (receivedStrings.Length > 10) {
                         string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings);
                         if (batteryVoltage != "") {
-                            await MainPage.SendVoltageLevelToServer(batteryVoltage + "%");
+                            await MainPage.SendVoltageToServer(batteryVoltage + "%");
                             CommonStruct.voltageLevelFromRobot = batteryVoltage;
                         }
                     }
@@ -155,11 +155,11 @@ namespace RobotSideUWP
                     if (testString.Length > 400) testString = "";
                 });
                 //MainPage.Current.NotifyUserFromOtherThreadForTesting(testString, NotifyType.ErrorMessage);
-                MainPage.Current.NotifyUserFromOtherThread("", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("", NotifyType.ErrorMessage);
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUserFromOtherThread("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
             }
            
         }

@@ -387,7 +387,7 @@ namespace RobotSideUWP
                 }
                 catch (Exception e1)
                 {
-                Current.NotifyUserFromOtherThread("SavingApplicationStates" + e1.Message + "COM port communication problem. - SessionEndingEventArgs", NotifyType.ErrorMessage);
+                Current.NotifyUserFromOtherThreadAsync("SavingApplicationStates" + e1.Message + "COM port communication problem. - SessionEndingEventArgs", NotifyType.ErrorMessage);
                 }
             }
 		}

@@ -57,7 +57,7 @@ namespace RobotSideUWP
 				{
 				CommonStruct.portOpen = false;
                 //CommonFunctions.WriteToLog(e.Message + " HostWatchDog");
-                MainPage.Current.NotifyUserFromOtherThread("HostWatchDog " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("HostWatchDog " + e.Message, NotifyType.ErrorMessage);
                 }
 			}
 
@@ -100,7 +100,7 @@ namespace RobotSideUWP
             catch (Exception e1)
             {
                 //CommonFunctions.WriteToLog(e1.Message + " Wheels");
-                MainPage.Current.NotifyUserFromOtherThread("Wheels " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Wheels " + e1.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -122,7 +122,7 @@ namespace RobotSideUWP
             catch (Exception e1)
                 {
                 //CommonFunctions.WriteToLog(e1.Message + " Wheels");
-                MainPage.Current.NotifyUserFromOtherThread("WheelsLocal" + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsLocal" + e1.Message, NotifyType.ErrorMessage);
                 }
             }
 
@@ -136,7 +136,7 @@ namespace RobotSideUWP
             }
                 catch(Exception e)
                 {
-                    MainPage.Current.NotifyUserFromOtherThread("WheelsStop" + e.Message, NotifyType.StatusMessage);
+                    MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStop" + e.Message, NotifyType.ErrorMessage);
                     CommonStruct.stopBeforeWas = true;
                 }
             }
@@ -162,7 +162,7 @@ namespace RobotSideUWP
                 }
                 catch(Exception e)
                 {
-                    MainPage.Current.NotifyUserFromOtherThread("WheelsStopSmoothly" + e.Message, NotifyType.StatusMessage);
+                    MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStopSmoothly" + e.Message, NotifyType.ErrorMessage);
                 }
             }
 
@@ -193,7 +193,7 @@ namespace RobotSideUWP
                 }
             }
             catch(Exception e1) {
-                MainPage.Current.NotifyUserFromOtherThread("SmoothlyStopTimer_Tick" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("SmoothlyStopTimer_Tick" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
             }
         }
 
@@ -208,7 +208,7 @@ namespace RobotSideUWP
                 }
             catch (Exception e1)
                 {
-                MainPage.Current.NotifyUserFromOtherThread("WheelsStopLocal" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStopLocal" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
                 }
             }
 
@@ -240,7 +240,7 @@ namespace RobotSideUWP
             }
             catch (Exception e1)
                 {
-                MainPage.Current.NotifyUserFromOtherThread("WheelsStopLocalSmoothly" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStopLocalSmoothly" + e1.Message + "WheelsStopFromMonitor", NotifyType.ErrorMessage);
                 }
             }
 
@@ -254,7 +254,7 @@ namespace RobotSideUWP
                     {
                         double speed = CameraSpeedToPWM();
                         if (speed <= 2) speed = 2;
-                        string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
+                        string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);
                         MainPage.readWrite.Write("^RO" + CommonStruct.cameraAddress + "6" + "\r");//Установка 1/6 шага
                         string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
                         MainPage.readWrite.Write(command);
@@ -262,14 +262,14 @@ namespace RobotSideUWP
                     else if (CommonStruct.cameraController == "RD31")
                     {
                         double speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                        string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
+                        string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);
                         MainPage.readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                     }
                 }
 			catch (Exception e1)
 				{
                 //CommonFunctions.WriteToLog(e1.Message + " CameraUpDown");
-                MainPage.Current.NotifyUserFromOtherThread("CameraUpDown" + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CameraUpDown" + e1.Message, NotifyType.ErrorMessage);
                 }
 			}
 
@@ -278,12 +278,11 @@ namespace RobotSideUWP
             try
             {
                 string hexAddress = CommonStruct.cameraAddress;
-                string s = "";
                 string PwrRange = CommonStruct.cameraPwrRange;
                 if (CommonStruct.cameraController == "GM51")
                 {
                     if (speed <= 2) speed = 2;
-                    string __speed = CommonFunctions.ZeroInFrontFromDouble(speed);
+                    string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);
                     MainPage.readWrite.Write("^RO" + CommonStruct.cameraAddress + "4" + "\r");//Установка 1/6 шага
                     string command = "^R1" + hexAddress + direction + __speed + "000" + PwrRange + "\r";
                     MainPage.readWrite.Write(command);
@@ -297,7 +296,7 @@ namespace RobotSideUWP
             }
             catch(Exception e)
             {
-                MainPage.Current.NotifyUserFromOtherThread("CameraUpDown(string direction, double speed) " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CameraUpDown(string direction, double speed) " + e.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -319,7 +318,7 @@ namespace RobotSideUWP
             catch (Exception e1)
             {
                 //CommonFunctions.WriteToLog(e1.Message + " CameraStop");
-                MainPage.Current.NotifyUserFromOtherThread("CameraStop: " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CameraStop: " + e1.Message, NotifyType.ErrorMessage);
             }
         }
 
@@ -359,7 +358,7 @@ namespace RobotSideUWP
             }
             catch(Exception e)
             {
-                MainPage.Current.NotifyUserFromOtherThread("WheelsSpeedTuning " + e.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsSpeedTuning " + e.Message, NotifyType.ErrorMessage);
             }
             return output;
         }
@@ -414,7 +413,7 @@ namespace RobotSideUWP
             }
             catch (Exception e2)
             {
-                MainPage.Current.NotifyUserFromOtherThread("Cannot measure battery voltage. " + e2.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Cannot measure battery voltage. " + e2.Message, NotifyType.ErrorMessage);
             }
             return levelCeiling.ToString();
         }
@@ -428,7 +427,7 @@ namespace RobotSideUWP
             }
             catch (Exception e1)
             {
-                MainPage.Current.NotifyUserFromOtherThread("TimerRobotOff_Tick " + e1.Message, NotifyType.StatusMessage);
+                MainPage.Current.NotifyUserFromOtherThreadAsync("TimerRobotOff_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
         }
 
