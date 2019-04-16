@@ -70,7 +70,7 @@ namespace RobotSideUWP
             localSettings.Values["comPortItem"] = "";
 
             localSettings.Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
-            localSettings.Values["RebootAtNight"] = true;
+            localSettings.Values["RebootAtNight"] = false;
         }
 
         private void ReadSettings()

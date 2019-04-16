@@ -248,7 +248,7 @@ namespace RobotSideUWP
                     client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
                     client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
 
-                    Current.NotifyUserFromOtherThreadAsync("MQTT Reconnected ", NotifyType.ErrorMessage);
+                    Current.NotifyUserFromOtherThreadAsync("MQTT Reconnected Successfully", NotifyType.ErrorMessage);
                     if (OsType == "Windows.IoT") {
                         pin26.SetDriveMode(GpioPinDriveMode.Output);
                         pin26.Write(GpioPinValue.Low);
@@ -417,7 +417,6 @@ namespace RobotSideUWP
                     if ((arr[5] == "0") && (arr[4] == "0"))
                     {//Управление мышкой  
                         double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
-                        if (speedRadius > 90) speedRadius = 100;
                         speedLeft0 = speedRadius;
                         speedRight0 = speedRadius;
                         alpha = CommonFunctions.Degrees(arr[1], arr[2]);//

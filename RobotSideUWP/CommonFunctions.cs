@@ -201,8 +201,7 @@ namespace RobotSideUWP
 			    double x = Convert.ToDouble(_x);
 			    double y = -Convert.ToDouble(_y);
                 double radius = (Math.Sqrt(x * x + y * y));
-            if (radius > 90) radius = 100;
-            double k = 0.01 * CommonStruct.maxWheelsSpeed;
+                double k = 0.01 * CommonStruct.maxWheelsSpeed;
                 radius = k * radius;
 			    return radius;
 			}
