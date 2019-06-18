@@ -390,15 +390,17 @@ namespace RobotSideUWP
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }
 
-                if (CommonStruct.dVoltageCorrected < 10500)
+                CommonStruct.numberOfVoltageMeasurings++;
+                if ((CommonStruct.dVoltageCorrected < 10500) && (CommonStruct.numberOfVoltageMeasurings > 10))
                 {
+                    CommonStruct.numberOfVoltageMeasurings = 11;
                     CommonStruct.dVoltageCorrected = 10500;
                     CommonStruct.numberOfTicksAfterWheelsStop = 0;
-                    //Посылаем команду "Старт таймера отключения батарей" и однвременно начинаем выгружать Виндовс 
+                    //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
                     pin6 = GpioController.GetDefault().OpenPin(6);
                     pin6.SetDriveMode(GpioPinDriveMode.Output);
                     pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                                                 //Запускаем таймер чтобы снять низкий уровень с выходв Распберри:
+                                                 //Запускаем таймер чтобы снять низкий уровень с выходов Распберри:
                     DispatcherTimer timerRobotOff;
                     timerRobotOff = new DispatcherTimer();
                     timerRobotOff.Tick += TimerRobotOff_Tick;
@@ -407,7 +409,7 @@ namespace RobotSideUWP
                 }
 
                 levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
-                if (levelCeiling >= 100) levelCeiling = 100;
+                if (levelCeiling >= 80) levelCeiling = 100;
 
                 CommonStruct.voltageLevelFromRobot = levelCeiling.ToString();
             }
