@@ -183,13 +183,17 @@ namespace RobotSideUWP
                             string hexAddress = CommonStruct.wheelsAddress;
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             break;
-                        
-                    case 5: 
-                            MainPage.Current.ChargeLevelMeasure();
-                            smoothlyStopTimer.Stop();
-                            stopTimerCounter = 0;
-                            CommonStruct.stopBeforeWas = true;
-                            break;
+                    case 5:
+                        CommonStruct.NowIsCurrentMeasuring = true;
+                        MainPage.Current.ChargeCurrentMeasure();
+                        break;
+                    case 6:
+                        CommonStruct.NowIsCurrentMeasuring = false;
+                        MainPage.Current.ChargeLevelMeasure();
+                        smoothlyStopTimer.Stop();
+                        stopTimerCounter = 0;
+                        CommonStruct.stopBeforeWas = true;
+                        break;
                 }
             }
             catch(Exception e1) {
@@ -366,62 +370,87 @@ namespace RobotSideUWP
         public static string BatteryVoltageHandling(string input)
         {
             double levelCeiling = 0.0;
+            double dInstantVoltage = 0;
+            double deltaV = 0;
             try
             {
                 string s1 = input;
-                if ((s1 == "")||(input.Length != 25)) return "";
+                if ((s1 == "") || (input.Length != 25))
+                {
+                    return "";
+                }
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
                 if ((data1 == "") || (data1 == null)) { data1 = "0"; }
                 string voltageRange = s1.Substring(10, 1);
-                string flag154 = s1.Substring(12, 1);
-                string voltageAveraged = s1.Substring(14, 5);
-                if ((voltageAveraged == "") || (voltageAveraged == null)) { voltageAveraged = "0"; }
-                double dVoltageAveraged = (Convert.ToDouble(voltageAveraged));
-
-                double deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
-                CommonStruct.dVoltageCorrected = dVoltageAveraged + deltaV;
-
-                if (CommonStruct.textBoxRealVoltageChanged == true)
+                string instantVoltage = "";
+                if (CommonStruct.NowIsCurrentMeasuring == true)
                 {
-                    deltaV = 1000 * CommonStruct.VReal - dVoltageAveraged;
-                    MainPage.Current.localSettings.Values["deltaV"] = deltaV;
-                    CommonStruct.dVoltageCorrected = dVoltageAveraged + deltaV;
-                    CommonStruct.textBoxRealVoltageChanged = false;
+                    CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
+                    CommonStruct.dchargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
                 }
-
-                CommonStruct.numberOfVoltageMeasurings++;
-                if ((CommonStruct.dVoltageCorrected < 10500) && (CommonStruct.numberOfVoltageMeasurings > 10))
+                else
                 {
-                    CommonStruct.numberOfVoltageMeasurings = 11;
-                    CommonStruct.dVoltageCorrected = 10500;
-                    CommonStruct.numberOfTicksAfterWheelsStop = 0;
-                    //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
-                    pin6 = GpioController.GetDefault().OpenPin(6);
-                    pin6.SetDriveMode(GpioPinDriveMode.Output);
-                    pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                                                 //Запускаем таймер чтобы снять низкий уровень с выходов Распберри:
-                    DispatcherTimer timerRobotOff;
-                    timerRobotOff = new DispatcherTimer();
-                    timerRobotOff.Tick += TimerRobotOff_Tick;
-                    timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
-                    timerRobotOff.Start();
+                    instantVoltage = data1.Substring(0, 4);
+                    if ((instantVoltage == "") || (instantVoltage == null)) { instantVoltage = "0"; }
+                    if (instantVoltage != "")
+                    {
+                        dInstantVoltage = (Convert.ToDouble(instantVoltage));
+                    }
+                    deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
+                    CommonStruct.dVoltageCorrected = dInstantVoltage + deltaV;
+
+                    if (CommonStruct.textBoxRealVoltageChanged == true)
+                    {
+                        deltaV = 100 * CommonStruct.VReal - dInstantVoltage;
+                        MainPage.Current.localSettings.Values["deltaV"] = deltaV;
+                        CommonStruct.dVoltageCorrected = dInstantVoltage + deltaV;
+                        CommonStruct.textBoxRealVoltageChanged = false;
+                    }
+
+                    CommonStruct.numberOfVoltageMeasurings++;
+                    if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dchargeCurrent < 20))
+                    {
+                        CommonStruct.numberOfVoltageMeasurings = 11;
+                        CommonStruct.dVoltageCorrected = 1050;
+                        CommonStruct.numberOfTicksAfterWheelsStop = 0;
+                        //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
+                        pin6 = GpioController.GetDefault().OpenPin(6);
+                        pin6.SetDriveMode(GpioPinDriveMode.Output);
+                        pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                                                     //Запускаем таймер чтобы снять низкий уровень с выходов Распберри:
+                        DispatcherTimer timerRobotOff;
+                        timerRobotOff = new DispatcherTimer();
+                        timerRobotOff.Tick += TimerRobotOff_Tick;
+                        timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
+                        timerRobotOff.Start();
+                    }
+                    if (CommonStruct.dVoltageCorrected > 1270)
+                    {
+                        CommonStruct.dVoltageCorrected = 1270;
+                    }
+                    levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1170);
+                    CommonStruct.outputValuePercentage = levelCeiling.ToString();
+
+                    if ((CommonStruct.dchargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
+                    {
+                        CommonStruct.outputValuePercentage = levelCeiling.ToString();
+                    }
+                    else
+                    {
+                        CommonStruct.outputValuePercentage = "Charging...";
+                    }
                 }
-
-                levelCeiling = Math.Ceiling((CommonStruct.dVoltageCorrected - 10500) / 23);
-                if (levelCeiling >= 80) levelCeiling = 100;
-
-                CommonStruct.voltageLevelFromRobot = levelCeiling.ToString();
             }
             catch (Exception e2)
             {
                 MainPage.Current.NotifyUserFromOtherThreadAsync("Cannot measure battery voltage. " + e2.Message, NotifyType.ErrorMessage);
             }
-            return levelCeiling.ToString();
+            return CommonStruct.outputValuePercentage;
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)
-        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумулятор естанем меньше 10500 В.
+        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумулятор естанем меньше 10,5 В.
             try
             {
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output

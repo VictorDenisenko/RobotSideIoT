@@ -114,6 +114,9 @@ namespace RobotSideUWP
 
         public static double dVoltageCorrected = 12500;
         public static string voltageLevelFromRobot = "";
+        public static string chargeCurrentFromRobot = "";
+        public static bool NowIsCurrentMeasuring;
+
         internal static bool thereAreNoIONow = true;
         public static int numberOfTicksAfterWheelsStop = 0;//Количество измерений напряжения на аккумуляторах. Необходимо для задержи измерений после остановки
         public static bool textBoxRealVoltageChanged = false;
@@ -125,6 +128,8 @@ namespace RobotSideUWP
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
         public static long numberOfVoltageMeasurings = 0;
+        public static double dchargeCurrent = 0.0;
+        public static string outputValuePercentage;
     }
 
     public struct CommonVideoStruct

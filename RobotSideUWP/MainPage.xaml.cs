@@ -59,6 +59,11 @@ namespace RobotSideUWP
             });
             t.Start();
         }
+
+        private void buttonVoltageCalibrate_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.ChargeLevelMeasure();
+        }
     }
 
     public class Scenario
@@ -176,7 +181,7 @@ namespace RobotSideUWP
             //Калибровка измерителя напряжения на аккумуляторе
             textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
             textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
-
+            
             Task.Delay(1000).Wait();
 
             ScenarioControl.ItemsSource = scenarios;
@@ -682,18 +687,50 @@ namespace RobotSideUWP
                 CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//
 
-                if (CommonStruct.voltageLevelFromRobot == "") return;
-                labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
-                levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
-                if (levelCeiling > 40) {
-                    labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
-                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
-                } else {
-                    labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Red);
-                    labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
+                if (CommonStruct.voltageLevelFromRobot == "")
+                {
+                    return;
+                }
+                else
+                {
+                    if (CommonStruct.voltageLevelFromRobot == "Charging...")
+                    {
+                        labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Yellow);
+                        labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.Green);
+                        labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot;
+                    }
+                    else
+                    {
+                        labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
+                        levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
+                        if (levelCeiling > 40)
+                        {
+                            labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
+                            labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
+                        }
+                        else
+                        {
+                            labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Red);
+                            labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.White);
+                        }
+                    }
                 }
             }
             catch(Exception e1) {
+                Current.NotifyUser("ChargeLevelTimer_TickAsync " + e1.Message, NotifyType.ErrorMessage);
+            }
+        }
+
+        public void ChargeCurrentMeasure()
+        {
+            try
+            {
+                CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                readWrite.Write(CommonStruct.dataToWrite);//
+                if (CommonStruct.chargeCurrentFromRobot == "") return;
+            }
+            catch (Exception e1)
+            {
                 Current.NotifyUser("ChargeLevelTimer_TickAsync " + e1.Message, NotifyType.ErrorMessage);
             }
         }
@@ -1085,7 +1122,8 @@ namespace RobotSideUWP
 
         private void buttonRestart_Click(object sender, RoutedEventArgs e)
         {
-            ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
+            //ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));//Перезагрузка Windows
+            CoreApplication.Exit();
         }
 
         private void ScenarioControl_SelectionChanged(object sender, SelectionChangedEventArgs e)

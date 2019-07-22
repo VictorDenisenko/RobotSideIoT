@@ -138,6 +138,7 @@
                         <StackPanel Orientation="Horizontal"  Height="40" >
                             <TextBox x:Name="textBoxRealVoltage" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="12.5" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
                             <TextBlock x:Name="textBlocRealVoltage" Margin="10,0,0,0" TextWrapping="Wrap" Text="RealVoltage" VerticalAlignment="Center"/>
+                            <Button x:Name="buttonVoltageCalibrate" Content="Calibrtate" Click="buttonVoltageCalibrate_Click"  Margin="100,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
                         </StackPanel>
@@ -193,7 +194,7 @@
         <CheckBox x:Name="checkBoxOnlyLocal" Content="OnlyLocal" Checked="checkBoxOnlyLocal_Checked" Unchecked="checkBoxOnlyLocal_Unchecked"  HorizontalAlignment="Left" Margin="580,547,0,0" VerticalAlignment="Top"/>
         <Button x:Name="AISettings" Content="AI Settings" HorizontalAlignment="Left" Margin="152,512,0,0" VerticalAlignment="Top" Click="AISettings_Click" Width="100" Height="50"/>
         <TextBox x:Name="labelChargeLevel" HorizontalAlignment="Left" Margin="750,340,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="50%" VerticalAlignment="Top" BorderThickness="0" IsReadOnly="True" Background="#FF06970C" Foreground="#FFFFFDFD" />
-        <TextBlock x:Name="labelAccumulator" HorizontalAlignment="Left" Margin="839,344,0,0" TextWrapping="Wrap" Text="Battery" VerticalAlignment="Top" />
+        <TextBlock x:Name="labelAccumulator" HorizontalAlignment="Left" Margin="859,344,0,0" TextWrapping="Wrap" Text="Battery" VerticalAlignment="Top" />
         <Button x:Name="buttonShutdown" Click="buttonShutdown_Click" Content="Shutdown" HorizontalAlignment="Left" Margin="750,512,0,0" VerticalAlignment="Top" Width="115"/>
         <Button x:Name="buttonRestart" Content="Restart" HorizontalAlignment="Left" Margin="889,512,0,0" VerticalAlignment="Top" Width="115" Click="buttonRestart_Click"/>
         <Button x:Name="buttonWiFi" Content="WiFi" HorizontalAlignment="Left" Height="50" Margin="278,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonWiFi_Click"/>
