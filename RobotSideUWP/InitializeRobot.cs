@@ -141,10 +141,8 @@ namespace RobotSideUWP
             {
                 CommonStruct.comPortItem = localSettings.Values["comPortItem"].ToString();
             }
-            
 
             CommonStruct.timeOut = Convert.ToString(localSettings.Values["TimeOut"]);
-
             CommonStruct.culture = Convert.ToString(localSettings.Values["Culture"]);
             
             if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
@@ -377,13 +375,10 @@ namespace RobotSideUWP
             localSettings.Values["speedTuningParam"] = CommonStruct.speedTuningParam;
         }
 
-       
-
         public static void SavingApplicationStates()
             {
                 try
                 {
-                
                 }
                 catch (Exception e1)
                 {

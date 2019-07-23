@@ -372,6 +372,8 @@ namespace RobotSideUWP
             double levelCeiling = 0.0;
             double dInstantVoltage = 0;
             double deltaV = 0;
+            bool isInt;
+            int res = 0;
             try
             {
                 string s1 = input;
@@ -381,22 +383,32 @@ namespace RobotSideUWP
                 }
                 string data1 = s1.Remove(0, 5);
                 data1 = data1.Remove(4);
-                if ((data1 == "") || (data1 == null)) { data1 = "0"; }
-                string voltageRange = s1.Substring(10, 1);
+                if ((data1 == "") || (data1 == null))
+                {
+                    data1 = "0";
+                    return "";
+                }
                 string instantVoltage = "";
                 if (CommonStruct.NowIsCurrentMeasuring == true)
                 {
                     CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
-                    CommonStruct.dchargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
+                    
+                    isInt = Int32.TryParse(CommonStruct.chargeCurrentFromRobot, out res);
+                    if ((CommonStruct.chargeCurrentFromRobot != "") || (isInt == true))
+                    {
+                        CommonStruct.dChargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
+                    }
                 }
                 else
                 {
                     instantVoltage = data1.Substring(0, 4);
-                    if ((instantVoltage == "") || (instantVoltage == null)) { instantVoltage = "0"; }
-                    if (instantVoltage != "")
+                    isInt = Int32.TryParse(instantVoltage, out res);
+                    if ((instantVoltage == "") || (isInt == false)  )
                     {
-                        dInstantVoltage = (Convert.ToDouble(instantVoltage));
+                        instantVoltage = "0";
+                        return "";
                     }
+                    dInstantVoltage = (Convert.ToDouble(instantVoltage));
                     deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
                     CommonStruct.dVoltageCorrected = dInstantVoltage + deltaV;
 
@@ -409,7 +421,7 @@ namespace RobotSideUWP
                     }
 
                     CommonStruct.numberOfVoltageMeasurings++;
-                    if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dchargeCurrent < 20))
+                    if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 500))
                     {
                         CommonStruct.numberOfVoltageMeasurings = 11;
                         CommonStruct.dVoltageCorrected = 1050;
@@ -418,12 +430,13 @@ namespace RobotSideUWP
                         pin6 = GpioController.GetDefault().OpenPin(6);
                         pin6.SetDriveMode(GpioPinDriveMode.Output);
                         pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                                                     //Запускаем таймер чтобы снять низкий уровень с выходов Распберри:
+                        //Запускаем таймер, чтобы снять низкий уровень с выходов Распберри:
                         DispatcherTimer timerRobotOff;
                         timerRobotOff = new DispatcherTimer();
                         timerRobotOff.Tick += TimerRobotOff_Tick;
                         timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
                         timerRobotOff.Start();
+                        MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
                     }
                     if (CommonStruct.dVoltageCorrected > 1270)
                     {
@@ -432,8 +445,8 @@ namespace RobotSideUWP
                     levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1170);
                     CommonStruct.outputValuePercentage = levelCeiling.ToString();
 
-                    if ((CommonStruct.dchargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
-                    {
+                    if ((CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
+                    {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
                         CommonStruct.outputValuePercentage = levelCeiling.ToString();
                     }
                     else

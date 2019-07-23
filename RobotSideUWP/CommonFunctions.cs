@@ -128,7 +128,7 @@ namespace RobotSideUWP
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
         public static long numberOfVoltageMeasurings = 0;
-        public static double dchargeCurrent = 0.0;
+        public static double dChargeCurrent = 0.0;
         public static string outputValuePercentage;
     }
 
