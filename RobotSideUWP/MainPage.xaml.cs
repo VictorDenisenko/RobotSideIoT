@@ -18,6 +18,7 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using System.IO.MemoryMappedFiles;
 
 namespace RobotSideUWP
 {
@@ -123,11 +124,11 @@ namespace RobotSideUWP
         string lastColorArea = "";
         int minAllowableSpeed = 15;
         string cameraIsStopped = "no";
-
         DispatcherTimer watchdogTimer;
         DispatcherTimer reconnectTimer;
-
         static string oldText = "";
+        GpioPin pin3;//Старая выгрузка Виндовс и новый Выкл-Вкл.
+        GpioPinValue val3 = GpioPinValue.Low;
 
         public MainPage()
         {
@@ -241,6 +242,25 @@ namespace RobotSideUWP
             //Task.Delay(1000).Wait();
             plcControl = new PlcControl();
             // buttonStart_Click(null, null);
+
+            
+            //pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+            GpioOpenStatus openStatus;
+            bool piStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);
+            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
+            //pin3.SetDriveMode(GpioPinDriveMode.Input);
+            pin3.ValueChanged += Pin3_ValueChanged;
+            val3 = pin3.Read();
+
+        }
+
+        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            Task t = new Task(async () =>
+            {
+                await SendVoltageToServer("BotEyes is Off");
+            });
+            t.Start();
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
@@ -1117,6 +1137,11 @@ namespace RobotSideUWP
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)
         {
+            Task t = new Task(async () =>
+            {
+                await SendVoltageToServer("BotEyes is Off");
+            });
+            t.Start();
             ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
         }
 

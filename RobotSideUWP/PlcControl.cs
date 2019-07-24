@@ -463,9 +463,14 @@ namespace RobotSideUWP
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)
-        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумулятор естанем меньше 10,5 В.
+        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумуляторе станет меньше 10,5 В.
             try
             {
+                Task t = new Task(async () =>
+                {
+                    await MainPage.SendVoltageToServer("BotEyes is Off");
+                });
+                t.Start();
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
             }

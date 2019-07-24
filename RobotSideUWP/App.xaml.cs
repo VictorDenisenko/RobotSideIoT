@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
@@ -59,7 +60,6 @@ namespace RobotSideUWP
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
-            
             //TODO: Сохранить состояние приложения и остановить все фоновые операции
             MainPage.SavingApplicationStates();
 

@@ -1,7 +1,8 @@
 ﻿{
   "dependencies": {
     "M2Mqtt": "4.3.0",
-    "Microsoft.NETCore.UniversalWindowsPlatform": "6.2.8"
+    "Microsoft.NETCore.UniversalWindowsPlatform": "6.2.8",
+    "System.IO.MemoryMappedFiles": "4.3.0"
   },
   "frameworks": {
     "uap10.0.10586": {}
