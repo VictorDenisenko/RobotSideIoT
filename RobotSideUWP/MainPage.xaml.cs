@@ -195,15 +195,7 @@ namespace RobotSideUWP
             }
 
             client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
-
-            //string address = CommonStruct.defaultWebSiteAddress;
-            //int k = address.IndexOf("//");
-            //int length = address.Length;
-            //CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
-
-            //client = new MqttClient(CommonStruct.webAddressForMQTT);
-            //client = new MqttClient("test.mosquitto.org");
-
+          
             dataFromRobot[0] = CommonStruct.decriptedSerial;
             dataFromRobot[1] = "";
             dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
@@ -220,7 +212,7 @@ namespace RobotSideUWP
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
             reconnectTimer.Start();
 
-            //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
+            //Этот таймер должен давать два тика до того, как отошлется очередная команда плавной остановки (там 200 мс) 
             hostWatchdogInitTimer = new DispatcherTimer();
             hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);//таймер для начальной установка сторожевых таймеров в модулях
             hostWatchdogInitTimer.Tick += HostWatchdogInitTimer_Tick;
@@ -232,7 +224,7 @@ namespace RobotSideUWP
             // buttonStart_Click(null, null);
 
             GpioOpenStatus openStatus;
-            bool piStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);//Вместо OpenPin, которые не рабтает в разделенном междлу программами режиме 
+            bool pinStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);//Вместо OpenPin, которые не рабтает в разделенном междлу программами режиме 
             pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
             pin3.ValueChanged += Pin3_ValueChanged;
             val3 = pin3.Read();
@@ -240,7 +232,6 @@ namespace RobotSideUWP
 
         private MqttClient MqttInitialization(string address)
         {
-            //string address = CommonStruct.defaultWebSiteAddress;
             int k = address.IndexOf("//");
             CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
             client = new MqttClient(CommonStruct.webAddressForMQTT);
