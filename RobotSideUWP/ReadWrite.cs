@@ -142,16 +142,22 @@ namespace RobotSideUWP
 
                     if (receivedStrings.Length > 10) {
                         string batteryVoltage = PlcControl.BatteryVoltageHandling(receivedStrings);
+                        double dBatteryVoltage = Convert.ToDouble(batteryVoltage);
                         if (batteryVoltage != "") {
                             if (batteryVoltage != "Charging...")
                             {
+                                CommonStruct.voltageLevelFromRobot = batteryVoltage;
                                 await MainPage.SendVoltageToServer(batteryVoltage + "%");
+                            }
+                            else if((dBatteryVoltage <=100) && (dBatteryVoltage >=1))
+                            {
+                                CommonStruct.voltageLevelFromRobot = batteryVoltage;
+                                await MainPage.SendVoltageToServer(batteryVoltage);
                             }
                             else
                             {
-                                await MainPage.SendVoltageToServer(batteryVoltage);
+                                CommonStruct.voltageLevelFromRobot = "";
                             }
-                            CommonStruct.voltageLevelFromRobot = batteryVoltage;
                         }
                     }
                     testString = testString + "   " + receivedStrings;
