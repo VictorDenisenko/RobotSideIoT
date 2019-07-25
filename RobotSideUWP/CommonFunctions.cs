@@ -132,6 +132,23 @@ namespace RobotSideUWP
         public static string outputValuePercentage;
     }
 
+    public struct CommonVideoStruct
+    {
+        static public double squareWidth = 0.0;
+        static public double squareHeight = 0.0;
+        static public double squareX = 0.0;
+        static public double squareY = 0.0;
+        static public int faceNumber = 0;//Количество лиц
+        static public int indexOfBiggestFace = 0;
+    }
+
+        enum MonitorState
+        {
+        ON = -1,
+        OFF = 2,
+        STANDBY = 1
+        }
+
 	class CommonFunctions
 		{
         private const int MOVE = 0x0001;

@@ -436,6 +436,7 @@ namespace RobotSideUWP
                         double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
                         speedLeft0 = speedRadius;
                         speedRight0 = speedRadius;
+                        alpha = CommonFunctions.Degrees(arr[1], arr[2]);//
 
                     if ((arr[3] == "Start") && (mem2 == "Stop"))
                         {
