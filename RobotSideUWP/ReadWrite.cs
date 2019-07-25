@@ -18,7 +18,6 @@ namespace RobotSideUWP
         DispatcherTimer sendAfterDelayTimer;
         long ticksSent = 0;
         string _dataToWrite = "";
-        
 
         public ReadWrite()
         {
@@ -63,7 +62,6 @@ namespace RobotSideUWP
         {
             _dataToWrite = dataToWrite;
             try {
-                //timeNow = DateTime.Now;
                 var ticksNow = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
 
                 long deltaTicks = (ticksNow - ticksSent) / 10000;
@@ -78,7 +76,6 @@ namespace RobotSideUWP
                 } else {
                     WriteNested(dataToWrite);
                 }
-                //timeSent = DateTime.Now;
                 ticksSent = DateTime.Now.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
             }
             catch (Exception e) {
@@ -168,8 +165,6 @@ namespace RobotSideUWP
             {
                 MainPage.Current.NotifyUserFromOtherThreadAsync("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
             }
-           
         }
-
     }
 }

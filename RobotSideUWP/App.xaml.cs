@@ -62,7 +62,6 @@ namespace RobotSideUWP
             var deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Сохранить состояние приложения и остановить все фоновые операции
             MainPage.SavingApplicationStates();
-
             deferral.Complete();
         }
 

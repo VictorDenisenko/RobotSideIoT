@@ -161,9 +161,6 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <None Include="Service References\ServiceReference1\Service11.disco" />
-    <Content Include="TextSSMLSource.xml">
-      <SubType>Designer</SubType>
-    </Content>
     <None Include="Service References\ServiceReference1\Reference.svcmap">
       <Generator>WCF Proxy Generator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
