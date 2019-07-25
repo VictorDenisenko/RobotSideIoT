@@ -51,15 +51,6 @@ namespace RobotSideUWP
             if(plcControl != null) plcControl.HostWatchDog(CommonStruct.cameraAddress, "set");
         }
 
-        private void ButtonTesting_Click(object sender, RoutedEventArgs e)
-        {
-            Task t = new Task(async () =>
-            {
-                await SendErrorsToServer("Test string");
-            });
-            t.Start();
-        }
-
         private void buttonVoltageCalibrate_Click(object sender, RoutedEventArgs e)
         {
             //TextBoxRealVoltage_TextChanged(null, null);

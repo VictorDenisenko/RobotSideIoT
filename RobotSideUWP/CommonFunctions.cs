@@ -141,12 +141,19 @@ namespace RobotSideUWP
 
 		public static double SpeedRadius(string _x, string _y)
 			{//Вычисляется радиус вектора к точке, указанной мышкой, с учетом заданной макс. скорости слайдером 
-			    double x = Convert.ToDouble(_x);
-			    double y = -Convert.ToDouble(_y);
-                double radius = (Math.Sqrt(x * x + y * y));
-                double k = 0.01 * CommonStruct.maxWheelsSpeed;
-                radius = k * radius;
-			    return radius;
+            try
+                {
+                    double x = Convert.ToDouble(_x);
+                    double y = -Convert.ToDouble(_y);
+                    double radius = (Math.Sqrt(x * x + y * y));
+                    double k = 0.01 * CommonStruct.maxWheelsSpeed;
+                    radius = k * radius;
+                    return radius;
+                }
+                catch(Exception e)
+                {
+                return 0;
+                }
 			}
 
         public static double Degrees(string _x, string _y)
