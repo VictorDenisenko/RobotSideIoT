@@ -139,28 +139,21 @@ namespace RobotSideUWP
 
         public static string elementContent = null;
 
-		public static double SpeedRadius(string _x, string _y)
-			{//Вычисляется радиус вектора к точке, указанной мышкой, с учетом заданной макс. скорости слайдером 
-            try
-                {
-                    double x = Convert.ToDouble(_x);
-                    double y = -Convert.ToDouble(_y);
-                    double radius = (Math.Sqrt(x * x + y * y));
-                    double k = 0.01 * CommonStruct.maxWheelsSpeed;
-                    radius = k * radius;
-                    return radius;
-                }
-                catch(Exception e)
-                {
-                return 0;
-                }
-			}
+        public static string DeviceIDName(string deviceID)
+        {
+            string deviceIDName = "";
+            int startIndex = deviceID.IndexOf("+");
+            int indexOfPlus = deviceID.IndexOf("+", startIndex + 1);
+            string tempVariable1 = deviceID.Remove(0, indexOfPlus + 1);
+            int indexOfGrid = tempVariable1.IndexOf("#");
+            deviceIDName = tempVariable1.Remove(indexOfGrid);
+            return deviceIDName;
+        }
 
         public static double Degrees(string _x, string _y)
-        {//Примечание: для системы координат с осью y, направленной вниз. Инвертировать в самой программе не получится, т.е. там string. угол на выходе меняется от 0 до 360 град.
+			{//Примечание: для системы координат с осью y, направленной вниз. Инвертировать в самой программе не получится, т.е. там string. угол на выходе меняется от 0 до 360 град.
             double output = 0;
-            try
-            {
+            try {
                 double x = Convert.ToDouble(_x);
                 double y = -Convert.ToDouble(_y);
                 double radius = Math.Sqrt(x * x + y * y);
@@ -168,31 +161,41 @@ namespace RobotSideUWP
                 if (radius == 0) { radius = 1; }
                 alpha = (180 / Math.PI) * Math.Asin(y / radius);
                 if (x >= 0 && y >= 0)
-                {
+                    {
                     output = alpha;
-                }
+                    }
                 else if (x >= 0 && y < 0)
-                {
+                    {
                     output = (360 + alpha);
-                }
+                    }
                 else if (x < 0 && y >= 0)
-                {
+                    {
                     output = 180 - alpha;
-                }
+                    }
                 else if (x < 0 && y < 0)
-                {
+                    {
                     output = 180 - alpha;
-                }
+                    }
                 return output;
-            }
+                }
             catch (Exception e)
-            {
+                {
                 //MainPage.Current.NotifyUserFromOtherThread(e.Message + " Degrees", NotifyType.StatusMessage);
                 return output;
-            }
-        }
+                }
+			}
 
-        public static string ZeroInFrontSet(string number)
+		public static double SpeedRadius(string _x, string _y)
+			{//Вычисляется радиус вектора к точке, указанной мышкой, с учетом заданной макс. скорости слайдером 
+			    double x = Convert.ToDouble(_x);
+			    double y = -Convert.ToDouble(_y);
+                double radius = (Math.Sqrt(x * x + y * y));
+                double k = 0.01 * CommonStruct.maxWheelsSpeed;
+                radius = k * radius;
+			    return radius;
+			}
+		
+		public static string ZeroInFrontSet(string number)
 			{//Подставляет нули впереди числа до получени ятрех знаков
             string output = "";
             try
@@ -335,6 +338,204 @@ namespace RobotSideUWP
 				}
 			}
 
+		public static uint CalculateCRC(string filePath)
+			{
+			try
+				{
+				FileStream stream = File.OpenRead(filePath);
+				const int buffer_size = 1024;
+				const uint POLYNOMIAL = 0xEDB88320;
+				uint result = 0xFFFFFFFF;
+				uint Crc32;
+				byte[] buffer = new byte[buffer_size];
+				uint[] table_CRC32 = new uint[256];
+
+				unchecked
+					{// Инициалиазация таблицы
+					for (int i = 0; i < 256; i++)
+						{
+						Crc32 = (uint)i;
+						for (int j = 8; j > 0; j--)
+							{
+							if ((Crc32 & 1) == 1)
+								Crc32 = (Crc32 >> 1) ^ POLYNOMIAL;
+							else
+								Crc32 >>= 1;
+							}
+						table_CRC32[i] = Crc32;
+						}
+					// Чтение из буфера
+					int count = stream.Read(buffer, 0, buffer_size);
+					// Вычисление CRC
+					while (count > 0)
+						{
+						for (int i = 0; i < count; i++)
+							{
+							result = ((result) >> 8)
+								^ table_CRC32[(buffer[i])
+								^ ((result) & 0x000000FF)];
+							}
+						count = stream.Read(buffer, 0, buffer_size);
+						}
+					}
+				stream.Flush();
+				stream.Dispose();
+                return ~result;
+				}
+			catch (Exception e)
+				{
+                //CommonFunctions.WriteToLog(e.Message + " CalculateCRC");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CalculateCRC: " + e.Message, NotifyType.ErrorMessage);
+                return 0;
+				}
+			}
+	
+		public static string CommandWithCRC(string commandWithOutCRC)
+			{
+			try{
+				string commandWithCRC = "";
+				Encoding ascii = Encoding.ASCII;
+				Byte[] encodedBytes = ascii.GetBytes(commandWithOutCRC);//Получим десятичный формат
+				int summDec = 0;
+				for (int i = 0; i < encodedBytes.Length; i++)
+					{
+					summDec = summDec + encodedBytes[i];
+					}
+				string hexT1 = IntToHex(summDec);
+				string hex = hexT1.Substring(hexT1.Length - 2);
+				commandWithCRC = commandWithOutCRC + hex;
+				return commandWithCRC;
+			}
+			catch (Exception ex)
+				{
+                //CommonFunctions.WriteToLog(ex.Message + " CommandWithCRC");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CommandWithCRC: " + ex.Message, NotifyType.ErrorMessage);
+                return "0";
+				}
+			}
+
+		static public int HexToDec(string hex)
+			{
+            int res = 0;
+            try
+                {
+                char[] c = hex.ToCharArray();
+                int d0 = CharToDec(c[1]);
+                int d1 = CharToDec(c[0]);
+                res = (16 * d1 + d0);
+                return res;
+                }
+            catch (Exception e)
+                {
+                //CommonFunctions.WriteToLog(e.Message + " HexToDec");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("HexToDec: " + e.Message, NotifyType.ErrorMessage);
+                return res;
+                }
+			}
+
+		public static string IntToHex(int intAddress)
+			{ 
+			try
+				{
+				string hexAddressT1 = "0";
+				byte[] byteArr = BitConverter.GetBytes(intAddress);
+				hexAddressT1 = BitConverter.ToString(byteArr);
+				string hexAddress = hexAddressT1[3].ToString() + hexAddressT1[4].ToString() + hexAddressT1[0].ToString() + hexAddressT1[1].ToString();
+				return hexAddress;
+				}
+			catch (Exception e1)
+				{
+                //CommonFunctions.WriteToLog(e1.Message + " IntToHex");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("IntToHex: " + e1.Message, NotifyType.ErrorMessage);
+                return e1.Message;
+				}
+			}
+
+        public static async Task WriteToHardData(string elementName, string elementContent)
+        {
+            try
+            {
+                StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
+                StorageFile sFile = await storageFolder.GetFileAsync("hardData.xml");
+                string iniFullPath = sFile.Path;
+                XDocument xdoc = XDocument.Load(iniFullPath);
+                XElement xElement = xdoc.Element("Settings");
+                XElement xElement2 = xElement.Element(elementName);
+                xElement2.ReplaceNodes(elementContent);
+                string xmlDocument = xdoc.Document.ToString();
+                await FileIO.WriteTextAsync(sFile, xmlDocument);
+            }
+            catch (Exception e)
+            {
+                MainPage.Current.NotifyUserFromOtherThreadAsync("WriteToHardData: " + e.Message, NotifyType.ErrorMessage);
+            }
+        }
+
+        public static async Task<string> ReadFromHardData(string element1Name)
+        {
+            string elemntContent = null;
+            try
+            {
+                XDocument xdoc = null;
+                StorageFolder storageFolder = ApplicationData.Current.LocalFolder;//Путь  папке LocalFolder. Там лежат данные после инсталляции
+                StorageFolder installedLocation = Package.Current.InstalledLocation;
+                StorageFile fileLocal = await storageFolder.GetFileAsync("hardData1.xml");
+                string innerFileName = fileLocal.Path;
+                var task = Task.Run(() =>
+                {
+                    xdoc = XDocument.Load(innerFileName);
+                    XElement xElement = xdoc.Element("Settings");
+                    XElement xElement2 = xElement.Element(element1Name);
+                    elementContent = xElement2.Value;
+                });
+                task.Wait();
+                return elementContent;
+            }
+            catch (Exception e)
+            {
+                //CommonFunctions.WriteToLog(e.Message + " ReadFromHardData");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromHardData: " + e.Message, NotifyType.ErrorMessage);
+                return elemntContent;
+            }
+        }
+
+        static private int CharToDec(char c0)
+			{
+            int digit = 0;
+            try
+                {
+                string s0 = c0.ToString();
+                if (Char.IsDigit(c0))
+                    {
+                    digit = Convert.ToInt32(s0);
+                    }
+                else if (Char.IsLetter(c0))
+                    {
+                    switch (c0)
+                        {
+                        case 'A': digit = 10; break;
+                        case 'B': digit = 11; break;
+                        case 'C': digit = 12; break;
+                        case 'D': digit = 13; break;
+                        case 'E': digit = 14; break;
+                        case 'F': digit = 15; break;
+                        default: break;
+                        }
+                    }
+                else
+                    {
+                    digit = -1;
+                    }
+                return digit;
+                }
+            catch (Exception e)
+                {
+                //CommonFunctions.WriteToLog(e.Message + " CharToDec");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("CharToDec" + e.Message, NotifyType.ErrorMessage);
+                return digit;
+                }
+			}
+
         public static async Task WriteToLog(string message)
         {
             try
@@ -475,6 +676,44 @@ namespace RobotSideUWP
             catch (Exception )
             {
             }
+        }
+
+        public static string Frase(string fileKeyword)
+        {//Подставляет нули впереди числа до получени ятрех знаков
+            try
+            {
+                switch (fileKeyword)
+                {
+                    case "Привет":
+                        CommonStruct.SSMLFilePath = "TextSSMLSource.xml";
+                        break;
+                    case "Ушел":
+                        CommonStruct.SSMLFilePath = "TextSSMLSource1.xml";
+                        break;
+                    
+                }
+                return CommonStruct.SSMLFilePath;
+            }
+            catch (Exception e)
+            {
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Frase" + e.Message, NotifyType.ErrorMessage);
+                return "";
+            }
+        }
+
+
+        public static string ReadFromSSMLSource()
+        {
+            string elementContent = null;
+            try
+            {
+                elementContent = File.ReadAllText(CommonStruct.SSMLFilePath);
+            }
+            catch (Exception e1)
+            {
+                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromSSMLSource " + e1.Message, NotifyType.ErrorMessage);
+            }
+            return elementContent;
         }
     }
 }
