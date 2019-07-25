@@ -148,8 +148,44 @@ namespace RobotSideUWP
                 radius = k * radius;
 			    return radius;
 			}
-		
-		public static string ZeroInFrontSet(string number)
+
+        public static double Degrees(string _x, string _y)
+        {//Примечание: для системы координат с осью y, направленной вниз. Инвертировать в самой программе не получится, т.е. там string. угол на выходе меняется от 0 до 360 град.
+            double output = 0;
+            try
+            {
+                double x = Convert.ToDouble(_x);
+                double y = -Convert.ToDouble(_y);
+                double radius = Math.Sqrt(x * x + y * y);
+                double alpha;
+                if (radius == 0) { radius = 1; }
+                alpha = (180 / Math.PI) * Math.Asin(y / radius);
+                if (x >= 0 && y >= 0)
+                {
+                    output = alpha;
+                }
+                else if (x >= 0 && y < 0)
+                {
+                    output = (360 + alpha);
+                }
+                else if (x < 0 && y >= 0)
+                {
+                    output = 180 - alpha;
+                }
+                else if (x < 0 && y < 0)
+                {
+                    output = 180 - alpha;
+                }
+                return output;
+            }
+            catch (Exception e)
+            {
+                //MainPage.Current.NotifyUserFromOtherThread(e.Message + " Degrees", NotifyType.StatusMessage);
+                return output;
+            }
+        }
+
+        public static string ZeroInFrontSet(string number)
 			{//Подставляет нули впереди числа до получени ятрех знаков
             string output = "";
             try
