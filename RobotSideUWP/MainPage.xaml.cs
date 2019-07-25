@@ -7,8 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using uPLibrary.Networking.M2Mqtt;
 using uPLibrary.Networking.M2Mqtt.Messages;
-using Windows.ApplicationModel.ExtendedExecution;
 using Windows.ApplicationModel.Core;
+using Windows.ApplicationModel.ExtendedExecution;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Storage;
@@ -18,7 +18,6 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
-using System.IO.MemoryMappedFiles;
 
 namespace RobotSideUWP
 {
@@ -99,7 +98,6 @@ namespace RobotSideUWP
         private string[] arrBefore = new string[16];
         string clientId = "";
 
-        string address = CommonStruct.defaultWebSiteAddress;
         MqttClient client = null;
         /// /////////////
         string sArr3Before = "";
@@ -204,12 +202,14 @@ namespace RobotSideUWP
                 buttonExit.Visibility = Visibility.Collapsed;
             }
 
-            string address = CommonStruct.defaultWebSiteAddress;
-            int k = address.IndexOf("//");
-            int length = address.Length;
-            CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
+            client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
 
-            client = new MqttClient(CommonStruct.webAddressForMQTT);
+            //string address = CommonStruct.defaultWebSiteAddress;
+            //int k = address.IndexOf("//");
+            //int length = address.Length;
+            //CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
+
+            //client = new MqttClient(CommonStruct.webAddressForMQTT);
             //client = new MqttClient("test.mosquitto.org");
 
             dataFromRobot[0] = CommonStruct.decriptedSerial;
@@ -228,10 +228,6 @@ namespace RobotSideUWP
             reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
             reconnectTimer.Start();
 
-            //chargeLevelTimer = new DispatcherTimer();
-            //chargeLevelTimer.Tick += ChargeLevelTimer_TickAsync;
-            //chargeLevelTimer.Interval = new TimeSpan(0, 0, 0, 0, 10); //Таймер для запуска измерений через 100мс после первой команды остановки (дни, часы, мин, сек, ms)
-                                                                      
             //Этот тамйер должен давть два тика до того, как отошлется очередная команд аплавно йостановки (там 200 мс) 
             hostWatchdogInitTimer = new DispatcherTimer();
             hostWatchdogInitTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);//таймер для начальной установка сторожевых таймеров в модулях
@@ -243,15 +239,20 @@ namespace RobotSideUWP
             plcControl = new PlcControl();
             // buttonStart_Click(null, null);
 
-            
-            //pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
             GpioOpenStatus openStatus;
-            bool piStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);
+            bool piStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);//Вместо OpenPin, которые не рабтает в разделенном междлу программами режиме 
             pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
-            //pin3.SetDriveMode(GpioPinDriveMode.Input);
             pin3.ValueChanged += Pin3_ValueChanged;
             val3 = pin3.Read();
+        }
 
+        private MqttClient MqttInitialization(string address)
+        {
+            //string address = CommonStruct.defaultWebSiteAddress;
+            int k = address.IndexOf("//");
+            CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
+            client = new MqttClient(CommonStruct.webAddressForMQTT);
+            return client;
         }
 
         private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
@@ -372,7 +373,6 @@ namespace RobotSideUWP
          private void Polling(string[] arr)
         {
             #region Base Cycle
-            //dataFromRobot[2] = CommonStruct.voltageLevelFromRobot;
                 if (arr != null)
                 {
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -444,7 +444,6 @@ namespace RobotSideUWP
                         double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
                         speedLeft0 = speedRadius;
                         speedRight0 = speedRadius;
-                        alpha = CommonFunctions.Degrees(arr[1], arr[2]);//
 
                         if ((arr[3] == "Start") && (mem2 == "Stop"))
                         {
@@ -465,8 +464,6 @@ namespace RobotSideUWP
                             counterFromStopToStart = 0;
                         }
                         mem2 = arr[3];
-
-                    //Current.NotifyUserFromOtherThread(CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
 
                     if ((arr[3] == "Start") || (speedRadius > 1))
                         {//Управление мышкой  
@@ -536,7 +533,6 @@ namespace RobotSideUWP
                                 {
                                     plcControl.WheelsStopSmoothly(200);
                                     firstEnterInYellowLeft = false;
-                                    //sArr3Before = "0";
                                 }
                                 else
                                 {
@@ -559,7 +555,6 @@ namespace RobotSideUWP
                                 {
                                     plcControl.WheelsStopSmoothly(200);
                                     firstEnterInRed = false;
-                                    //sArr3Before = "0";
                                 }
                                 else
                                 {
@@ -1004,8 +999,6 @@ namespace RobotSideUWP
             WriteDefaultSettings();
             ReadSettings();
             ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
-
-
         }
 
         private void buttonSave_Click(object sender, RoutedEventArgs e)
@@ -1128,11 +1121,6 @@ namespace RobotSideUWP
                 CommonStruct.DistanceToZero = Convert.ToDouble(textBlockDistanceToZero.Text);
                 localSettings.Values["distanceToZero"] = CommonStruct.DistanceToZero;
             }
-        }
-
-        private void buttonTest_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)

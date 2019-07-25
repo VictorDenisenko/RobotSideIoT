@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using Windows.ApplicationModel;
 
 namespace RobotSideUWP
 {
@@ -15,7 +14,6 @@ namespace RobotSideUWP
     {
         private bool buttonEventIs = false;
         private object[] addresses = new string[9];
-        //static ReadWrite readWrite = null;
 
         public void InitializeUI()
         {
@@ -137,6 +135,9 @@ namespace RobotSideUWP
             addresses[0] = comboBoxWebSiteAddress.SelectedValue.ToString();
             localSettings.Values["defaultWebSiteAddress"] = addresses[0];
             CommonStruct.defaultWebSiteAddress = (string)localSettings.Values["defaultWebSiteAddress"];
+
+            client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
+
             buttonStart_Click(null, null);
         }
 
@@ -205,7 +206,6 @@ namespace RobotSideUWP
                  Current.StatusBlockForTesting.Text = strMessage;
             }
             catch (Exception e) {
-
             }
         }
 

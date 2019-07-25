@@ -328,19 +328,11 @@ namespace RobotSideUWP
             buttonAbout.IsEnabled = isEnabled;
             if (isEnabled == true) { CommonStruct.allControlIsEnabled = true; }
             else { CommonStruct.allControlIsEnabled = false; }
-            //textBoxRobotName.IsEnabled = isEnabled;
             buttonSettings.IsEnabled = isEnabled;
-            //labelServerAddress.IsEnabled = isEnabled;
             trackBarWheelsSpeed.IsEnabled = isEnabled;
             trackBarCameraSpeed.IsEnabled = isEnabled;
             trackBarWheelsSpeedTuning.IsEnabled = isEnabled;
-            //textBox1.IsEnabled = isEnabled;
-            //labelComPorts.IsEnabled = isEnabled;
-            //labelWheelsSpeed.IsEnabled = isEnabled;
-            //labelCameraSpeedTesting.IsEnabled = isEnabled;
-            //labelSpeedTuning.IsEnabled = isEnabled;
             checkBoxOnlyLocal.IsEnabled = isEnabled;
-            //labelAccumulator.IsEnabled = isEnabled;
             AISettings.IsEnabled = isEnabled;
             checkBoxOnlyLocal.IsEnabled = isEnabled;
             buttonShutdown.IsEnabled = isEnabled;
