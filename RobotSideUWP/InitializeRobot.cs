@@ -21,7 +21,7 @@ namespace RobotSideUWP
             localSettings.Values["WheelsPwrRange"] = 4;
             localSettings.Values["PWMStoppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
             localSettings.Values["MaxWheelsSpeed"] = 100;
-            localSettings.Values["cameraController"] = "No";
+            localSettings.Values["cameraController"] = "RD31";
             localSettings.Values["CameraSpeed"] = 100;
             localSettings.Values["CameraFastSpeed"] = 6;//Если ШД гудит и не крутится, надо увеличить это число, т.е. уменьшить скорость 
             localSettings.Values["stepNumberForCalibration"] = 15;
