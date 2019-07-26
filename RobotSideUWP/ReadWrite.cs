@@ -122,16 +122,24 @@ namespace RobotSideUWP
                 while ((receivedSimbol != "\r") && (k < 35))
                 {
                     loadAsyncTask = dataReaderObject.LoadAsync(ReadBufferLength).AsTask();
-                    bytesRead = await loadAsyncTask;
-                    receivedSimbol = dataReaderObject.ReadString(1);
-                    receivedStrings += receivedSimbol;
-                    k++;
+                    if (loadAsyncTask != null)
+                    {
+                        bytesRead = await loadAsyncTask;
+                        receivedSimbol = dataReaderObject.ReadString(1);
+                        receivedStrings += receivedSimbol;
+                        k++;
+                    }
+                    else
+                    {
+                        return;
+                    }
                     //MainPage.Current.NotifyUserFromOtherThread(receivedStrings + "  ", NotifyType.ErrorMessage);
                 }
             }
             catch (Exception ex)
             {
                 MainPage.Current.NotifyUserFromOtherThreadAsync("ReadAsync() " + ex.Message, NotifyType.ErrorMessage);
+                return;
             }
             try
             {
@@ -164,7 +172,6 @@ namespace RobotSideUWP
                     MainPage.Current.NotifyUserForTesting(testString);
                     if (testString.Length > 400) testString = "";
                 });
-                //MainPage.Current.NotifyUserFromOtherThreadForTesting(testString, NotifyType.ErrorMessage);
                 MainPage.Current.NotifyUserFromOtherThreadAsync("", NotifyType.ErrorMessage);
             }
             catch (Exception ex)

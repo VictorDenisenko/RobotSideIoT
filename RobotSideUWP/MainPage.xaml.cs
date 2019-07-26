@@ -725,7 +725,8 @@ namespace RobotSideUWP
             try
             {
                 CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                readWrite.Write(CommonStruct.dataToWrite);//
+                //readWrite.Write(CommonStruct.dataToWrite);//
+
                 if (CommonStruct.chargeCurrentFromRobot == "") return;
             }
             catch (Exception e1)
@@ -821,7 +822,8 @@ namespace RobotSideUWP
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
 
             try {
-                var authData = string.Format("{0}:{1}", "admin", "admin");
+                //var authData = string.Format("{0}:{1}", "admin", "admin");
+                var authData = string.Format("{0}:{1}", "", "");//Password don't needed for both websites
                 var authHeaderValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authData));
 
                 using (HttpClient client = new HttpClient()) {
@@ -858,7 +860,8 @@ namespace RobotSideUWP
             uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.decriptedSerial);
             try
             {
-                var authData = string.Format("{0}:{1}", "admin", "admin");
+                var authData = string.Format("{0}:{1}", "", ""); //Password don't needed for both websites
+                //var authData = string.Format("{0}:{1}", "Administrator", "Qqa4xJ@fE$u8VS");
                 var authHeaderValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authData));
 
                 using (HttpClient client = new HttpClient())
