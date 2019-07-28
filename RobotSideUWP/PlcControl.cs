@@ -184,11 +184,11 @@ namespace RobotSideUWP
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             break;
                     case 5:
-                        CommonStruct.NowIsCurrentMeasuring = true;
-                        MainPage.Current.ChargeCurrentMeasure();
+                        //CommonStruct.NowIsCurrentMeasuring = true;
+                        //MainPage.Current.ChargeCurrentMeasure();
                         break;
                     case 6:
-                        CommonStruct.NowIsCurrentMeasuring = false;
+                        //CommonStruct.NowIsCurrentMeasuring = false;
                         MainPage.Current.ChargeLevelMeasure();
                         smoothlyStopTimer.Stop();
                         stopTimerCounter = 0;
@@ -370,89 +370,83 @@ namespace RobotSideUWP
         public static string BatteryVoltageHandling(string input)
         {
             double levelCeiling = 0.0;
-            double dInstantVoltage = 0;
+            double dAveragedVoltage = 0;
             double deltaV = 0;
             bool isInt;
             int res = 0;
             try
             {
                 string s1 = input;
-                if ((s1 == "") || (input.Length != 25))
+                string exclimation = s1.Substring(0, 1);
+                if (((s1 == "") || (input.Length != 25)) && (exclimation != "!"))
                 {
                     return "";
                 }
                 string data1 = s1.Remove(0, 5);
-                data1 = data1.Remove(4);
-                if ((data1 == "") || (data1 == null))
+                string data2 = data1.Remove(4);
+                if ((data2 == "") || (data2 == null))
                 {
-                    data1 = "0";
+                    data2 = "0";
                     return "";
                 }
-                string instantVoltage = "";
-                if (CommonStruct.NowIsCurrentMeasuring == true)
+                string averagedVoltage = s1.Substring(14, 4);
+                CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
+                isInt = Int32.TryParse(CommonStruct.chargeCurrentFromRobot, out res);
+                if (isInt == true)
                 {
-                    CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
-                    
-                    isInt = Int32.TryParse(CommonStruct.chargeCurrentFromRobot, out res);
-                    if ((CommonStruct.chargeCurrentFromRobot != "") || (isInt == true))
-                    {
-                        CommonStruct.dChargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
-                    }
+                    CommonStruct.dChargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
+                }
+                
+                isInt = Int32.TryParse(averagedVoltage, out res);
+                if ((averagedVoltage == "") || (isInt == false)  )
+                {
+                    averagedVoltage = "0";
+                    return "";
+                }
+                dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
+                deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
+                CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
+
+                if (CommonStruct.textBoxRealVoltageChanged == true)
+                {
+                    deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
+                    MainPage.Current.localSettings.Values["deltaV"] = deltaV;
+                    CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
+                    CommonStruct.textBoxRealVoltageChanged = false;
+                }
+
+                CommonStruct.numberOfVoltageMeasurings++;
+                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 500))
+                {
+                    CommonStruct.numberOfVoltageMeasurings = 11;
+                    CommonStruct.dVoltageCorrected = 1050;
+                    CommonStruct.numberOfTicksAfterWheelsStop = 0;
+                    //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
+                    pin6 = GpioController.GetDefault().OpenPin(6);
+                    pin6.SetDriveMode(GpioPinDriveMode.Output);
+                    pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                    //Запускаем таймер, чтобы снять низкий уровень с выходов Распберри:
+                    DispatcherTimer timerRobotOff;
+                    timerRobotOff = new DispatcherTimer();
+                    timerRobotOff.Tick += TimerRobotOff_Tick;
+                    timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
+                    timerRobotOff.Start();
+                    MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
+                }
+                if (CommonStruct.dVoltageCorrected > 1270)
+                {
+                    CommonStruct.dVoltageCorrected = 1270;
+                }
+                levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1170);
+                CommonStruct.outputValuePercentage = levelCeiling.ToString();
+
+                if ((CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
+                {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
+                    CommonStruct.outputValuePercentage = levelCeiling.ToString();
                 }
                 else
                 {
-                    instantVoltage = data1.Substring(0, 4);
-                    isInt = Int32.TryParse(instantVoltage, out res);
-                    if ((instantVoltage == "") || (isInt == false)  )
-                    {
-                        instantVoltage = "0";
-                        return "";
-                    }
-                    dInstantVoltage = (Convert.ToDouble(instantVoltage));
-                    deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
-                    CommonStruct.dVoltageCorrected = dInstantVoltage + deltaV;
-
-                    if (CommonStruct.textBoxRealVoltageChanged == true)
-                    {
-                        deltaV = 100 * CommonStruct.VReal - dInstantVoltage;
-                        MainPage.Current.localSettings.Values["deltaV"] = deltaV;
-                        CommonStruct.dVoltageCorrected = dInstantVoltage + deltaV;
-                        CommonStruct.textBoxRealVoltageChanged = false;
-                    }
-
-                    CommonStruct.numberOfVoltageMeasurings++;
-                    if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 500))
-                    {
-                        CommonStruct.numberOfVoltageMeasurings = 11;
-                        CommonStruct.dVoltageCorrected = 1050;
-                        CommonStruct.numberOfTicksAfterWheelsStop = 0;
-                        //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
-                        pin6 = GpioController.GetDefault().OpenPin(6);
-                        pin6.SetDriveMode(GpioPinDriveMode.Output);
-                        pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                        //Запускаем таймер, чтобы снять низкий уровень с выходов Распберри:
-                        DispatcherTimer timerRobotOff;
-                        timerRobotOff = new DispatcherTimer();
-                        timerRobotOff.Tick += TimerRobotOff_Tick;
-                        timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
-                        timerRobotOff.Start();
-                        MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
-                    }
-                    if (CommonStruct.dVoltageCorrected > 1270)
-                    {
-                        CommonStruct.dVoltageCorrected = 1270;
-                    }
-                    levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1170);
-                    CommonStruct.outputValuePercentage = levelCeiling.ToString();
-
-                    if ((CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
-                    {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
-                        CommonStruct.outputValuePercentage = levelCeiling.ToString();
-                    }
-                    else
-                    {
-                        CommonStruct.outputValuePercentage = "Charging...";
-                    }
+                    CommonStruct.outputValuePercentage = "Charging...";
                 }
             }
             catch (Exception e2)

@@ -223,11 +223,6 @@ namespace RobotSideUWP
             plcControl = new PlcControl();
             // buttonStart_Click(null, null);
 
-            GpioOpenStatus openStatus;
-            bool pinStatus = GpioController.GetDefault().TryOpenPin(3, GpioSharingMode.SharedReadOnly, out pin3, out openStatus);//Вместо OpenPin, которые не рабтает в разделенном междлу программами режиме 
-            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
-            pin3.ValueChanged += Pin3_ValueChanged;
-            val3 = pin3.Read();
         }
 
         private MqttClient MqttInitialization(string address)
@@ -236,15 +231,6 @@ namespace RobotSideUWP
             CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
             client = new MqttClient(CommonStruct.webAddressForMQTT);
             return client;
-        }
-
-        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
-            Task t = new Task(async () =>
-            {
-                await SendVoltageToServer("BotEyes is Off");
-            });
-            t.Start();
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
@@ -683,7 +669,7 @@ namespace RobotSideUWP
         {
             double levelCeiling = 0.0;
             try {
-                CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//
 
                 if (CommonStruct.voltageLevelFromRobot == "")

@@ -270,7 +270,7 @@ namespace RobotSideUWP
             try {//использую четыре тика, чтобы корректно записать и считать ответ на установку сторожевого таймера
                 switch (kHostWtahdogTicks) {
                     case 1:
-                        CommonStruct.dataToWrite = "^A1" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
+                        CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                         readWrite.Write(CommonStruct.dataToWrite);//
                         break;
                     case 2:
