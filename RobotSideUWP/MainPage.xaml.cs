@@ -19,6 +19,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using System.Diagnostics;
+using System.Threading;
 
 namespace RobotSideUWP
 {
@@ -259,8 +260,9 @@ namespace RobotSideUWP
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
                     pin5.Write(GpioPinValue.Low);
-                    CoreApplication.Exit();
-                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                    new Timer(Launch, null, 2000, Timeout.Infinite);
+                    //CoreApplication.Exit();
+                    //ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
                 }
                 else
                 {
@@ -272,6 +274,12 @@ namespace RobotSideUWP
                 CoreApplication.Exit();
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
+        }
+
+        private void Launch(object state)
+        {
+            CoreApplication.Exit();
+            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
