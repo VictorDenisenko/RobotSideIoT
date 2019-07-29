@@ -119,6 +119,7 @@ namespace RobotSideUWP
         static string oldText = "";
         GpioPin pin3;//Старая выгрузка Виндовс и новый Выкл-Вкл.
         GpioPinValue val3 = GpioPinValue.Low;
+        GpioPin pin5;//Выкл - подача сигнала на таймер выключения питания
 
         public MainPage()
         {
@@ -229,6 +230,10 @@ namespace RobotSideUWP
             pin3.ValueChanged += Pin3_ValueChanged;
             val3 = pin3.Read();
 
+            pin5 = GpioController.GetDefault().OpenPin(5);
+            pin5.SetDriveMode(GpioPinDriveMode.Output);
+            pin5.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+
         }
 
         private MqttClient MqttInitialization(string address)
@@ -241,11 +246,26 @@ namespace RobotSideUWP
 
         private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {
+            try
+            {
             Task t = new Task(async () =>
             {
                 await SendVoltageToServer("BotEyes is Off");
             });
             t.Start();
+
+                if (args.Edge == GpioPinEdge.RisingEdge)
+                {
+                    pin5.Write(GpioPinValue.Low);
+                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
+                }
+                else
+                {
+                    pin5.Write(GpioPinValue.High);//Запуск таймера отключения питания
+                }
+            }
+            catch (Exception e)
+            { }
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
