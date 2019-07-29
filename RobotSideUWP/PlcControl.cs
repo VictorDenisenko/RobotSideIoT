@@ -469,6 +469,7 @@ namespace RobotSideUWP
                 Task t = new Task(async () =>
                 {
                     await MainPage.SendVoltageToServer("BotEyes is Off");
+                    CommonStruct.permissionToSendToWebServer = false;
                 });
                 t.Start();
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output

@@ -159,13 +159,13 @@ namespace RobotSideUWP
                             dBatteryVoltage = Convert.ToDouble(batteryVoltage);
                         }
 
-                        if (batteryVoltage != "") {
-                            if (batteryVoltage == "Charging...")
+                        if ((batteryVoltage != "") && (CommonStruct.permissionToSendToWebServer = true)) {
+                            if ((batteryVoltage == "Charging...") && (CommonStruct.permissionToSendToWebServer == true))
                             {
                                 CommonStruct.voltageLevelFromRobot = batteryVoltage;
                                 await MainPage.SendVoltageToServer(batteryVoltage);
                             }
-                            else if((dBatteryVoltage <=100) && (dBatteryVoltage >=1))
+                            else if((dBatteryVoltage <=100) && (dBatteryVoltage >=1) && (CommonStruct.permissionToSendToWebServer == true))
                             {
                                 CommonStruct.voltageLevelFromRobot = batteryVoltage;
                                 await MainPage.SendVoltageToServer(batteryVoltage + "%");

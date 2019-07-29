@@ -251,13 +251,14 @@ namespace RobotSideUWP
             Task t = new Task(async () =>
             {
                 await SendVoltageToServer("BotEyes is Off");
+                CommonStruct.permissionToSendToWebServer = false;
             });
             t.Start();
 
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
                     pin5.Write(GpioPinValue.Low);
-                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
+                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(1));
                 }
                 else
                 {
@@ -1136,6 +1137,7 @@ namespace RobotSideUWP
             Task t = new Task(async () =>
             {
                 await SendVoltageToServer("BotEyes is Off");
+                CommonStruct.permissionToSendToWebServer = false;
             });
             t.Start();
             ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));

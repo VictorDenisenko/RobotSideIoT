@@ -124,6 +124,8 @@ namespace RobotSideUWP
         public static double deltaV = 0.0;
         public static int numberOfStops = 0;
         public static long startTimeOfStop { get; set; }
+        public static bool permissionToSendToWebServer = true;
+
         public static string outputString = "";
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
