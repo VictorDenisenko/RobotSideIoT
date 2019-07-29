@@ -263,6 +263,7 @@ namespace RobotSideUWP
             setTimeToRestartPicker.Time = initTime;
             setTimeToRestartPicker.AllowDrop = true;
 
+            CommonStruct.permissionToSendToWebServer = true;
         }
 
         private void HostWatchdogInitTimer_Tick(object sender, object e) {

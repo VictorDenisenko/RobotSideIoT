@@ -18,6 +18,7 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using System.Diagnostics;
 
 namespace RobotSideUWP
 {
@@ -248,17 +249,18 @@ namespace RobotSideUWP
         {
             try
             {
-            Task t = new Task(async () =>
-            {
-                await SendVoltageToServer("BotEyes is Off");
-                CommonStruct.permissionToSendToWebServer = false;
-            });
-            t.Start();
+                Task t = new Task(async () =>
+                {
+                    CommonStruct.permissionToSendToWebServer = false;
+                    await SendVoltageToServer("BotEyes is Off");
+                });
+                t.Start();
 
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
                     pin5.Write(GpioPinValue.Low);
-                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(1));
+                    CoreApplication.Exit();
+                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
                 }
                 else
                 {
@@ -266,7 +268,10 @@ namespace RobotSideUWP
                 }
             }
             catch (Exception e)
-            { }
+            {
+                CoreApplication.Exit();
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+            }
         }
 
         private void ReconnectTimer_Tick(object sender, object e)

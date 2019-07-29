@@ -124,7 +124,7 @@ namespace RobotSideUWP
         public static double deltaV = 0.0;
         public static int numberOfStops = 0;
         public static long startTimeOfStop { get; set; }
-        public static bool permissionToSendToWebServer = true;
+        public static bool permissionToSendToWebServer { get; set; }
 
         public static string outputString = "";
 
