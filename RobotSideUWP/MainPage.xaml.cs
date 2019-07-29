@@ -223,6 +223,12 @@ namespace RobotSideUWP
             plcControl = new PlcControl();
             // buttonStart_Click(null, null);
 
+            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на кторый опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
+            pin3.SetDriveMode(GpioPinDriveMode.Input);
+            pin3.ValueChanged += Pin3_ValueChanged;
+            val3 = pin3.Read();
+
         }
 
         private MqttClient MqttInitialization(string address)
@@ -231,6 +237,15 @@ namespace RobotSideUWP
             CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
             client = new MqttClient(CommonStruct.webAddressForMQTT);
             return client;
+        }
+
+        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            Task t = new Task(async () =>
+            {
+                await SendVoltageToServer("BotEyes is Off");
+            });
+            t.Start();
         }
 
         private void ReconnectTimer_Tick(object sender, object e)

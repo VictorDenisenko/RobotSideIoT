@@ -389,7 +389,13 @@ namespace RobotSideUWP
                     data2 = "0";
                     return "";
                 }
+
                 string averagedVoltage = s1.Substring(14, 4);
+                string x = averagedVoltage.Substring(0, 1);
+                if (averagedVoltage.Substring(0,1) != "1")
+                {
+                    averagedVoltage = averagedVoltage.Substring(0,3);
+                }
                 CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
                 isInt = Int32.TryParse(CommonStruct.chargeCurrentFromRobot, out res);
                 if (isInt == true)
@@ -433,14 +439,14 @@ namespace RobotSideUWP
                     timerRobotOff.Start();
                     MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
                 }
-                if (CommonStruct.dVoltageCorrected > 1270)
+                if (CommonStruct.dVoltageCorrected > 1250)
                 {
-                    CommonStruct.dVoltageCorrected = 1270;
+                    CommonStruct.dVoltageCorrected = 1250;
                 }
-                levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1170);
+                levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
                 CommonStruct.outputValuePercentage = levelCeiling.ToString();
 
-                if ((CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 0))
+                if ((CommonStruct.dChargeCurrent < 30) && (CommonStruct.dVoltageCorrected > 0))
                 {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
                     CommonStruct.outputValuePercentage = levelCeiling.ToString();
                 }
