@@ -18,7 +18,6 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
-using System.Diagnostics;
 using System.Threading;
 
 namespace RobotSideUWP
@@ -259,27 +258,45 @@ namespace RobotSideUWP
 
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
-                    pin5.Write(GpioPinValue.Low);
-                    new Timer(Launch, null, 2000, Timeout.Infinite);
+                    pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+                    Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);
                     //CoreApplication.Exit();
                     //ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
                 }
                 else
                 {
-                    pin5.Write(GpioPinValue.High);//Запуск таймера отключения питания
+                    //pin5.Write(GpioPinValue.High);//Запуск таймера отключения питания
+                    pin5.Write(GpioPinValue.Low);//Запуск таймера отключения питания
                 }
             }
             catch (Exception e)
             {
+                MainPage.Current.NotifyUser("Shutdown problem " + e.Message, NotifyType.ErrorMessage);
                 CoreApplication.Exit();
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
         }
 
-        private void Launch(object state)
+        private void ShutDownLaunch(object state)
         {
-            CoreApplication.Exit();
-            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+            try
+            {
+                Task t = new Task(async () =>
+                {
+                    CommonStruct.permissionToSendToWebServer = false;
+                    await SendVoltageToServer("BotEyes is Off");
+                });
+                t.Start();
+
+                CoreApplication.Exit();
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+            }
+            catch(Exception e2)
+            {
+                MainPage.Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
+                CoreApplication.Exit();
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+            }
         }
 
         private void ReconnectTimer_Tick(object sender, object e)
