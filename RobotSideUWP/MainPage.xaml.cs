@@ -226,7 +226,7 @@ namespace RobotSideUWP
             // buttonStart_Click(null, null);
 
             pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на кторый опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
-            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);
+            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 10);
             pin3.SetDriveMode(GpioPinDriveMode.Input);
             pin3.ValueChanged += Pin3_ValueChanged;
             val3 = pin3.Read();
@@ -260,13 +260,8 @@ namespace RobotSideUWP
                 {
                     pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                     Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);
-                    //CoreApplication.Exit();
-                    //ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
-                }
-                else
-                {
-                    //pin5.Write(GpioPinValue.High);//Запуск таймера отключения питания
-                    pin5.Write(GpioPinValue.Low);//Запуск таймера отключения питания
+                    CoreApplication.Exit();
+                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
                 }
             }
             catch (Exception e)
@@ -872,11 +867,16 @@ namespace RobotSideUWP
             if (text == "") return;
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
+            if (CommonStruct.decriptedSerial == "")
+            {
+                Current.NotifyUser("SendVoltageToServer(): Serial is not defined.", NotifyType.ErrorMessage);
+                return;
+            }
 
             try {
                 //var authData = string.Format("{0}:{1}", "admin", "admin");
                 var authData = string.Format("{0}:{1}", "", "");//Password don't needed for both websites
-                var authHeaderValue = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(authData));
+                var authHeaderValue = Convert.ToBase64String(Encoding.UTF8.GetBytes(authData));
 
                 using (HttpClient client = new HttpClient()) {
                     client.MaxResponseContentBufferSize = 256000;
