@@ -163,6 +163,7 @@ namespace RobotSideUWP
             Current = this;
 
             InitializeRobot();
+            CommonStruct.decriptedSerial = Convert.ToString(localSettings.Values["Serial"]);
 
             //Таймер для перезагрузки (рестарта) Windows
             setTimeToRestartPicker.TimeChanged += SetTimeToRestar_TimeChanged;
@@ -197,7 +198,8 @@ namespace RobotSideUWP
             }
 
             client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
-          
+
+            CommonStruct.decriptedSerial = textBoxRobotSerial.Text;
             dataFromRobot[0] = CommonStruct.decriptedSerial;
             dataFromRobot[1] = "";
             dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
@@ -249,19 +251,27 @@ namespace RobotSideUWP
         {
             try
             {
-                Task t = new Task(async () =>
-                {
-                    CommonStruct.permissionToSendToWebServer = false;
-                    await SendVoltageToServer("BotEyes is Off");
-                });
-                t.Start();
+                //Task t = new Task(async () =>
+                //{
+                //    CommonStruct.permissionToSendToWebServer = false;
+                //    await SendVoltageToServer("BotEyes is Off");
+                //});
+                //t.Start();
+                //t.Wait(1000);
 
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
+                    Task t = new Task(async () =>
+                    {
+                        CommonStruct.permissionToSendToWebServer = false;
+                        await SendVoltageToServer("BotEyes is Off");
+                    });
+                    t.Start();
+
                     pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                     Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);
-                    CoreApplication.Exit();
-                    ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
+                    //CoreApplication.Exit();
+                    //ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
                 }
             }
             catch (Exception e)
@@ -865,6 +875,7 @@ namespace RobotSideUWP
         public static async Task SendVoltageToServer(string text)
         {
             if (text == "") return;
+            
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
             if (CommonStruct.decriptedSerial == "")
@@ -951,7 +962,7 @@ namespace RobotSideUWP
         private void buttonStart_Click(object sender, RoutedEventArgs e)
         {
             RequestExtendedExecution();
-
+            
             AllControlIsEnabled(false);
             LeftGroup.Visibility = Visibility.Visible;
             bConnect = true;
@@ -1036,6 +1047,7 @@ namespace RobotSideUWP
         private void buttonSetDefault_Click(object sender, RoutedEventArgs e)
         {
             WriteDefaultSettings();
+            localSettings.Values["Serial"] = textBoxRobotSerial.Text;
             ReadSettings();
             ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
         }

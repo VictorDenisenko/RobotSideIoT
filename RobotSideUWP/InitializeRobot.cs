@@ -36,7 +36,7 @@ namespace RobotSideUWP
 
             localSettings.Values["minWheelsSpeedForTurning"] = 50;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
 
-            localSettings.Values["defaultWebSiteAddress"] = "http://boteyes.com";
+            localSettings.Values["defaultWebSiteAddress"] = "https://boteyes.com";
             localSettings.Values["webSiteAddress1"] = "http://boteyes.com";
             localSettings.Values["webSiteAddress2"] = "https://boteyes.com";
             localSettings.Values["webSiteAddress3"] = "http://boteyes.ru";
@@ -149,7 +149,6 @@ namespace RobotSideUWP
             if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
             else { ButtonLanguageEng_Click(null, null);}
 
-            CommonStruct.serial = Convert.ToString(localSettings.Values["Serial"]);
             CommonStruct.decriptedSerial = Convert.ToString(localSettings.Values["Serial"]);//Именно этот используется везде дальше (пока) 
             textBoxRobotSerial.Text = CommonStruct.decriptedSerial;
             
