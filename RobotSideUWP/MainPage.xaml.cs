@@ -264,7 +264,7 @@ namespace RobotSideUWP
                     try
                     {
                         httpResponse = await httpClient.GetAsync(uri);
-                        if (httpResponse.IsSuccessStatusCode)
+                        if ((httpResponse.IsSuccessStatusCode) && (CommonStruct.decriptedSerial != ""))
                         {
                             Task t = new Task(async () =>
                             {
@@ -885,7 +885,6 @@ namespace RobotSideUWP
                 watchdogTimer.Stop();
             });
         }
-
         
         public static async Task SendVoltageToServer(string text)
         {
