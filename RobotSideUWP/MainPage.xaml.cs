@@ -19,6 +19,9 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using System.Threading;
+using Windows.Networking.Connectivity;
+using Windows.Devices.WiFi;
+
 
 namespace RobotSideUWP
 {
@@ -230,7 +233,7 @@ namespace RobotSideUWP
             pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на кторый опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
             pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 10);
             pin3.SetDriveMode(GpioPinDriveMode.Input);
-            pin3.ValueChanged += Pin3_ValueChanged;
+            pin3.ValueChanged += Pin3_ValueChangedAsync;
             val3 = pin3.Read();
 
             pin5 = GpioController.GetDefault().OpenPin(5);
@@ -247,43 +250,56 @@ namespace RobotSideUWP
             return client;
         }
 
-        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        private async void Pin3_ValueChangedAsync(GpioPin sender, GpioPinValueChangedEventArgs args)
         {
             try
             {
-                //Task t = new Task(async () =>
-                //{
-                //    CommonStruct.permissionToSendToWebServer = false;
-                //    await SendVoltageToServer("BotEyes is Off");
-                //});
-                //t.Start();
-                //t.Wait(1000);
-
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
-                    Task t = new Task(async () =>
+                    Windows.Web.Http.HttpResponseMessage httpResponse = new Windows.Web.Http.HttpResponseMessage();
+                    Windows.Web.Http.HttpClient httpClient = new Windows.Web.Http.HttpClient();
+                    //string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
+                    string ipAddress = CommonStruct.defaultWebSiteAddress;
+                    Uri uri = new Uri(ipAddress);
+                    try
                     {
-                        CommonStruct.permissionToSendToWebServer = false;
-                        await SendVoltageToServer("BotEyes is Off");
-                    });
-                    t.Start();
+                        httpResponse = await httpClient.GetAsync(uri);
+                        if (httpResponse.IsSuccessStatusCode)
+                        {
+                            Task t = new Task(async () =>
+                            {
+                                CommonStruct.permissionToSendToWebServer = false;
+                                await SendVoltageToServer("BotEyes is Off");
+                            });
+                            t.Start();
+                            Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);//Таймер нельзя, т.к. 
+                        }
+                        else
+                        {
+                            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+                            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                        return;
+                    }
 
-                    pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                    Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);
-                    //CoreApplication.Exit();
-                    //ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Тут всегда ноль. Задержка работает только для перезагрузки.
                 }
             }
             catch (Exception e)
             {
                 MainPage.Current.NotifyUser("Shutdown problem " + e.Message, NotifyType.ErrorMessage);
-                CoreApplication.Exit();
+                pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
         }
 
         private void ShutDownLaunch(object state)
         {
+            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
             try
             {
                 Task t = new Task(async () =>
@@ -292,14 +308,12 @@ namespace RobotSideUWP
                     await SendVoltageToServer("BotEyes is Off");
                 });
                 t.Start();
-
-                CoreApplication.Exit();
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
             catch(Exception e2)
             {
                 MainPage.Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
-                CoreApplication.Exit();
+                pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
         }
@@ -867,15 +881,15 @@ namespace RobotSideUWP
             arrBefore[15] = "0";
             Polling(sArr);
             var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-            {
+        {
                 watchdogTimer.Stop();
             });
         }
 
+        
         public static async Task SendVoltageToServer(string text)
         {
             if (text == "") return;
-            
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
             Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
             if (CommonStruct.decriptedSerial == "")

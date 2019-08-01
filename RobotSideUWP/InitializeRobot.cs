@@ -71,7 +71,7 @@ namespace RobotSideUWP
 
             localSettings.Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
             localSettings.Values["RebootAtNight"] = false;
-            localSettings.Values["VReal"] = 12.7;
+            localSettings.Values["VReal"] = 12.75;
         }
 
         private void ReadSettings()

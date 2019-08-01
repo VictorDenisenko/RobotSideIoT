@@ -120,7 +120,7 @@ namespace RobotSideUWP
         internal static bool thereAreNoIONow = true;
         public static int numberOfTicksAfterWheelsStop = 0;//Количество измерений напряжения на аккумуляторах. Необходимо для задержи измерений после остановки
         public static bool textBoxRealVoltageChanged = false;
-        internal static double VReal = 12.7;
+        internal static double VReal = 12.75;
         public static double deltaV = 0.0;
         public static int numberOfStops = 0;
         public static long startTimeOfStop { get; set; }
