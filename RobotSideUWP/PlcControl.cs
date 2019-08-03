@@ -422,8 +422,8 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;
-                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 500))
-                {
+                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 800))
+                {//Отключение аккумуляторов
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     CommonStruct.dVoltageCorrected = 1050;
                     CommonStruct.numberOfTicksAfterWheelsStop = 0;
