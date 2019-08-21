@@ -37,14 +37,14 @@ namespace RobotSideUWP
             localSettings.Values["minWheelsSpeedForTurning"] = 50;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
 
             localSettings.Values["defaultWebSiteAddress"] = "https://boteyes.com";
-            localSettings.Values["webSiteAddress1"] = "http://boteyes.com";
-            localSettings.Values["webSiteAddress2"] = "https://boteyes.com";
-            localSettings.Values["webSiteAddress3"] = "http://boteyes.ru";
-            localSettings.Values["webSiteAddress4"] = "https://boteyes.ru";
-            localSettings.Values["webSiteAddress5"] = "http://robotaxino.com";
-            localSettings.Values["webSiteAddress6"] = "https://robotaxino.com";
-            localSettings.Values["webSiteAddress7"] = "http://localhost";
-            localSettings.Values["webSiteAddress8"] = "https://localhost";
+            localSettings.Values["webSiteAddress1"] = "https://boteyes.com";
+            localSettings.Values["webSiteAddress2"] = "https://boteyes.ru";
+            localSettings.Values["webSiteAddress3"] = "https://robotaxino.com";
+            localSettings.Values["webSiteAddress4"] = "http://localhost";
+            localSettings.Values["webSiteAddress5"] = "https://localhost";
+            localSettings.Values["webSiteAddress6"] = "";
+            localSettings.Values["webSiteAddress7"] = "";
+            localSettings.Values["webSiteAddress8"] = "";
 
             localSettings.Values["Point10"] = 0;
             localSettings.Values["Point20"] = 0;

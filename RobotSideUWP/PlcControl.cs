@@ -422,8 +422,8 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;
-                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 10) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 800))
-                {//Отключение аккумуляторов
+                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 4) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 800))
+                {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     CommonStruct.dVoltageCorrected = 1050;
                     CommonStruct.numberOfTicksAfterWheelsStop = 0;
@@ -466,17 +466,19 @@ namespace RobotSideUWP
         {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумуляторе станет меньше 10,5 В.
             try
             {
+                pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
                 Task t = new Task(async () =>
                 {
                     await MainPage.SendVoltageToServer("BotEyes is Off");
                     CommonStruct.permissionToSendToWebServer = false;
                 });
                 t.Start();
-                pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
             }
             catch (Exception e1)
             {
+                pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
                 MainPage.Current.NotifyUserFromOtherThreadAsync("TimerRobotOff_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
         }
