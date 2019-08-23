@@ -19,9 +19,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using System.Threading;
-using Windows.Networking.Connectivity;
-using Windows.Devices.WiFi;
-
 
 namespace RobotSideUWP
 {

@@ -16,12 +16,25 @@ namespace RobotSideUWP
         static TimeSpan delay = TimeSpan.FromMilliseconds(200);
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
+        public DispatcherTimer batteryMeasuringTimer;
 
         public PlcControl()
         {
             smoothlyStopTimer = new DispatcherTimer();
             smoothlyStopTimer.Tick += SmoothlyStopTimer_Tick;
-            smoothlyStopTimer.Interval = new TimeSpan(0, 0, 0, 0, 200); //Таймер для плавной сотановки (дни, часы, мин, сек, ms)
+            smoothlyStopTimer.Interval = new TimeSpan(0, 0, 0, 0, 200); //Таймер для плавной остановки (дни, часы, мин, сек, ms)
+
+            batteryMeasuringTimer = new DispatcherTimer();
+            batteryMeasuringTimer.Tick += BatteryMeasuringTimer_Tick;
+            batteryMeasuringTimer.Interval = new TimeSpan(0, 1, 0, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+        }
+
+        private void BatteryMeasuringTimer_Tick(object sender, object e)
+        {
+            if(stopTimerCounter == 0)
+            {
+                MainPage.Current.ChargeLevelMeasure();
+            }
         }
 
         public static int CameraSpeedToPWM()
