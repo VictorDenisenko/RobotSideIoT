@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Devices.Gpio;
 using Windows.System;
-using Windows.UI.Xaml;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using Windows.ApplicationModel.Core;
 using Windows.UI.Core;
+using Windows.UI.Xaml;
 
 namespace RobotSideUWP
 {
@@ -26,7 +24,8 @@ namespace RobotSideUWP
 
             batteryMeasuringTimer = new DispatcherTimer();
             batteryMeasuringTimer.Tick += BatteryMeasuringTimer_Tick;
-            batteryMeasuringTimer.Interval = new TimeSpan(0, 1, 0, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 30, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+            batteryMeasuringTimer.Start();
         }
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
@@ -435,7 +434,7 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;
-                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 4) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 800))
+                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     CommonStruct.dVoltageCorrected = 1050;
