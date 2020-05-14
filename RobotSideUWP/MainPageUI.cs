@@ -416,7 +416,7 @@ namespace RobotSideUWP
             labelWheels.Text = "Wheels";
             labelCamera.Text = "Camera";
             labelKeysStop.Text = "Keys";
-            labelMonitor.Text = "Correction";
+            labelMonitor.Text = "";
             buttonStart.Content = "Start";
             buttonStop.Content = "Stop";
             buttonExit.Content = "Exit";
@@ -425,13 +425,9 @@ namespace RobotSideUWP
             labelServerAddress.Text = "Https web address";
             CommonStruct.NotifyPressStop = "If you want the settings to be accessible, press the button 'Stop'";
 
-            buttonGoUpFast.Content = "GoUpFast";
-            buttonGoDirect.Content = "GoDirect";
-            buttonGoDownFast.Content = "DownFast";
-            //labelRobotName.Text = "Robot Name:";
             labelAccumulator.Text = "Charge level";
-            checkSmoothlyStop.Content = "Smoothly Stop";
-            labelKeysKontrol.Text = "Keys";
+            checkSmoothlyStop.Content = "Smooth Stop";
+            labelKeysKontrol.Text = "";
             buttonStopWheels.Content = "Wheels Stop";
             localContainer.Containers["settings"].Values["Culture"] = "en-US";
             labelSpeedTuning.Text = "Speed Tuning";
@@ -440,11 +436,9 @@ namespace RobotSideUWP
             buttonSave.Content = "Save";
             buttonSetDefault.Content = "Restore Defaults";
             buttonSettings.Content = "Settings";
-            AISettings.Content = "AI Settings";
             checkBoxOnlyLocal.Content = "OnlyLocal";
             buttonShutdown.Content = "Shutdown";
             buttonRestart.Content = "buttonRestart";
-            checkRebootAtNight.Content = "Reboot at night";
         }
 
         private void ButtonLanguageRu_Click(object sender, RoutedEventArgs e)
@@ -463,7 +457,7 @@ namespace RobotSideUWP
             labelWheels.Text = "Колеса";
             labelCamera.Text = "Камера";
             labelKeysStop.Text = "Клавиши";
-            labelMonitor.Text = "Поправка";
+            labelMonitor.Text = "";
             buttonStart.Content = "Пуск";
             buttonStop.Content = "Стоп";
             buttonExit.Content = "Закрыть";
@@ -471,12 +465,9 @@ namespace RobotSideUWP
             buttonAbout.Content = "О нас";
             labelServerAddress.Text = "http адрес вебсервера";
             CommonStruct.NotifyPressStop = "Чтобы настройки стали доступны, нажмите кнопку 'Стоп'";
-            buttonGoUpFast.Content = "ВверхБыстро";
-            buttonGoDirect.Content = "Прямо";
-            buttonGoDownFast.Content = "ВнизБыстро";
             labelAccumulator.Text = "Заряд аккумулятора";
             checkSmoothlyStop.Content = "Плавный стоп";
-            labelKeysKontrol.Text = "Клавиши";
+            labelKeysKontrol.Text = "";
             buttonStopWheels.Content = "Стоп (колеса)";
             localContainer.Containers["settings"].Values["Culture"] = "ru-RU";
             labelSpeedTuning.Text = "Подстройка";

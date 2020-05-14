@@ -41,7 +41,7 @@ namespace RobotSideUWP
 
         private void buttonAbout_Click(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.NotifyUser("RealLab!, https://boteyes.com ", NotifyType.ErrorMessage);
+            Current.NotifyUser("RealLab! , see https://boteyes.com ", NotifyType.StatusMessage);
         }
 
         private void RD31Button_Checked(object sender, RoutedEventArgs e)
@@ -55,7 +55,7 @@ namespace RobotSideUWP
         private void buttonVoltageCalibrate_Click(object sender, RoutedEventArgs e)
         {
             //TextBoxRealVoltage_TextChanged(null, null);
-            MainPage.Current.ChargeLevelMeasure();
+            Current.ChargeLevelMeasure();
         }
     }
 
@@ -75,15 +75,8 @@ namespace RobotSideUWP
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
 
         private ObservableCollection<DeviceInformation> listOfDevices;
-        public DeviceInformation choosenDevice;
         private ExtendedExecutionSession session = null;
         GpioPin pin26;//Зеленый светодиод
-        string OsType = AnalyticsInfo.VersionInfo.DeviceFamily;
-
-        DispatcherTimer timerCheckToRestart;
-        int timeToRestartHours = 0;
-        int timeToRestartMinutes = 0;
-        DateTime now;
 
         private string[] sArr = new string[16] { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" };
         private string[] arrInitial = new string[16] { "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0" };
@@ -127,9 +120,7 @@ namespace RobotSideUWP
             clientId = Guid.NewGuid().ToString();
             InitializeComponent();
             listOfDevices = new ObservableCollection<DeviceInformation>();
-            //localSettings = ApplicationData.Current.LocalSettings;
 
-            ///////////////////////////
             localContainer = ApplicationData.Current.LocalSettings;
             //localContainer.DeleteContainer("settings");
             if (localContainer.Containers.ContainsKey("settings"))
@@ -142,60 +133,19 @@ namespace RobotSideUWP
                 WriteDefaultSettings();
                 ReadAllSettings();
             }
-            //Функция для записи в контейнер новых значений. Записывать и считывать надо только новые пермеенные, назначенные опльзоателем. Если оне менял, то и записывать не надо.
-
-            //Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
-            Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
-
-            /////////////////////////////
-
-
-
-            //object testObject = localSettings.Values["defaultWebSiteAddress"];
-            //if (testObject == null)
-            //{
-            //    WriteDefaultSettings();
-            //    ReadAllSettings();
-            //}
-            //else
-            //{
-            //    ReadAllSettings();
-            //}
-            //object testObject1 = localSettings.Values["angleInBreakPoint"];
-            //if (testObject1 == null)
-            //{
-            //    localSettings.Values["angleInBreakPoint"] = 170;
-            //    localSettings.Values["distanceToZero"] = 145;
-            //}
-
-            //object testObject2 = localSettings.Values["cameraController"];
-            //if (testObject2 == null)
-            //{
-            //    localSettings.Values["cameraController"] = "No";
-            //    CommonStruct.cameraController = "No";
-            //}
-            //else
-            //{
-            //    CommonStruct.cameraController = Convert.ToString(testObject2);
-            //}
 
             InitializeUI();
             Current = this;
 
             InitializeRobot();
 
-            //Таймер для перезагрузки (рестарта) Windows
-            setTimeToRestartPicker.TimeChanged += SetTimeToRestar_TimeChanged;
-            timerCheckToRestart = new DispatcherTimer();
-            timerCheckToRestart.Tick += TimerCheckToRestart_Tick;
-            timerCheckToRestart.Interval = new TimeSpan(0, 30, 0); //Интервал проверки времени перезагрузки Windows (часы, мин, сек)
-            timerCheckToRestart.Start();
-
             //Калибровка измерителя напряжения на аккумуляторе
             textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
             textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
-            
-            Task.Delay(1000).Wait();
+
+            textBoxRobotSerial.TextChanged += TextBoxRobotSerial_TextChanged;
+
+            Task.Delay(1000).Wait();//Да, проверил, именно в этом месте программа останавливает свое выполнение на 1 сек
 
             ScenarioControl.ItemsSource = scenarios;
             if (Window.Current.Bounds.Width < 640)
@@ -207,19 +157,17 @@ namespace RobotSideUWP
                 ScenarioControl.SelectedIndex = 0;
             }
 
-            if (OsType == "Windows.IoT")
-            {
-                pin26 = GpioController.GetDefault().OpenPin(26);
-                pin26.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
+            pin26 = GpioController.GetDefault().OpenPin(26);
+            pin26.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
 
-                checkBoxOnlyLocal.Visibility = Visibility.Collapsed;
-                buttonExit.Visibility = Visibility.Collapsed;
-            }
+            //checkBoxOnlyLocal.Visibility = Visibility.Collapsed;
+            //buttonExit.Visibility = Visibility.Collapsed;
+
 
             client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
 
-            CommonStruct.decriptedSerial = textBoxRobotSerial.Text;
-            dataFromRobot[0] = CommonStruct.decriptedSerial;
+            CommonStruct.robotSerial = textBoxRobotSerial.Text;
+            dataFromRobot[0] = CommonStruct.robotSerial;
             dataFromRobot[1] = "";
             dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
             directionLeft = backwardDirection; //направление вращения левого колеса
@@ -246,16 +194,22 @@ namespace RobotSideUWP
             plcControl = new PlcControl();
             // buttonStart_Click(null, null);
 
-            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на кторый опдается сигнал от кнопки включения-выключения. При нажати на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
-            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 10);
+            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//Поменял с 10 мс на 100 мс
             pin3.SetDriveMode(GpioPinDriveMode.Input);
             pin3.ValueChanged += Pin3_ValueChangedAsync;
             val3 = pin3.Read();
 
-            pin5 = GpioController.GetDefault().OpenPin(5);
+            pin5 = GpioController.GetDefault().OpenPin(5);//Аппаратный таймер выключения робота (Севера) запускается
             pin5.SetDriveMode(GpioPinDriveMode.Output);
             pin5.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
 
+        }
+
+        private void TextBoxRobotSerial_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
+            CommonStruct.robotSerial = textBoxRobotSerial.Text;
         }
 
         private MqttClient MqttInitialization(string address)
@@ -267,7 +221,7 @@ namespace RobotSideUWP
         }
 
         private async void Pin3_ValueChangedAsync(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
+        {//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
             try
             {
                 if (args.Edge == GpioPinEdge.RisingEdge)
@@ -280,7 +234,7 @@ namespace RobotSideUWP
                     try
                     {
                         httpResponse = await httpClient.GetAsync(uri);
-                        if ((httpResponse.IsSuccessStatusCode) && (CommonStruct.decriptedSerial != ""))
+                        if ((httpResponse.IsSuccessStatusCode) && (CommonStruct.robotSerial != ""))
                         {
                             Task t = new Task(async () =>
                             {
@@ -315,7 +269,7 @@ namespace RobotSideUWP
 
         private void ShutDownLaunch(object state)
         {
-            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается (нулем выключает)
             try
             {
                 Task t = new Task(async () =>
@@ -328,7 +282,7 @@ namespace RobotSideUWP
             }
             catch(Exception e2)
             {
-                MainPage.Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
+                Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
                 pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
@@ -341,19 +295,15 @@ namespace RobotSideUWP
                 bool isConnected = client.IsConnected;
                 if ((isConnected == false) && (bConnect == true)) {
                     client.Connect(clientId);
-                    client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                    client.Subscribe(new string[] { CommonStruct.robotSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
                     client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
 
                     Current.NotifyUserFromOtherThreadAsync("MQTT Reconnected Successfully", NotifyType.ErrorMessage);
-                    if (OsType == "Windows.IoT") {
-                        pin26.SetDriveMode(GpioPinDriveMode.Output);
-                        pin26.Write(GpioPinValue.Low);
-                    }
+                    pin26.SetDriveMode(GpioPinDriveMode.Output);//pin26 - Зеленый светодиод
+                    pin26.Write(GpioPinValue.Low);
                 } else {
-                    if (OsType == "Windows.IoT") {
-                        pin26.SetDriveMode(GpioPinDriveMode.Output);
-                        pin26.Write(GpioPinValue.High);
-                    }
+                    pin26.SetDriveMode(GpioPinDriveMode.Output);
+                    pin26.Write(GpioPinValue.High);
                 }
 
                 if (readWrite.serialPort == null) readWrite.comPortInit();
@@ -370,28 +320,6 @@ namespace RobotSideUWP
                 CommonStruct.VReal = Convert.ToDouble(textBoxRealVoltage.Text);
                 CommonStruct.textBoxRealVoltageChanged = true;
                 localContainer.Containers["settings"].Values["VReal"] = CommonStruct.VReal.ToString();
-            }
-        }
-
-        private void SetTimeToRestar_TimeChanged(object sender, TimePickerValueChangedEventArgs e)
-        {
-            timeToRestartHours = setTimeToRestartPicker.Time.Hours;
-            timeToRestartMinutes = setTimeToRestartPicker.Time.Minutes;
-            localContainer.Containers["settings"].Values["initTime"] = 60 * timeToRestartHours + timeToRestartMinutes;
-            CommonStruct.initTime = 60 * timeToRestartHours + timeToRestartMinutes;
-        }
-
-        private void TimerCheckToRestart_Tick(object sender, object e)
-        {
-            now = DateTime.Now;
-            int timeNow = 60 * now.Hour + now.Minute;
-            int setTime = 60 * timeToRestartHours + timeToRestartMinutes;
-            if ((timeNow > setTime) && (timeNow < setTime + 30))
-            {
-                if (checkRebootAtNight.IsChecked == true)
-                {
-                    ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
-                }
             }
         }
 
@@ -452,27 +380,7 @@ namespace RobotSideUWP
                         textBoxWheelsStop.Text = arr[3];//wheelsStop
                         textBoxCameraAngle.Text = arr[4];//сameraData
                         textBoxKeys.Text = arr[5];//Управление клавишами
-                        textBoxWheelsCorrection.Text = arr[6];//Поправка для колес - движение прямо
-                        textBoxSmileName.Text = arr[7];//Smile Name
-                        textBoxSmileName.Text = arr[8];//Нелинейная коррекция есть = true
                     });
-
-                    if ((arr[6] != null) && (arr[6] != "Corr") && (arr[6] != "0") && (arr[6] != ""))
-                    {//Передача параметра подстройки скоростей колес из браузера в робот
-                        try
-                        {
-                            CommonStruct.speedTuningParam = Convert.ToDouble(arr[6]);
-                        }
-                        catch (Exception e)
-                        {
-                            Current.NotifyUser("if ((arr[6] != null)" + e.Message, NotifyType.ErrorMessage);
-                            //CommonFunctions.WriteToLog(e.Message + "CommonStruct.speedTuningParam = Convert.ToDouble(arr[6]);");
-                        }
-
-                        dataFromRobot[6] = CommonStruct.speedTuningParam.ToString();
-                        textBoxWheelsSpeedTuning.Text = CommonStruct.speedTuningParam.ToString();
-                        trackBarWheelsSpeedTuning.Value = Convert.ToInt32(CommonStruct.speedTuningParam);
-                    }
 
                     string direction = "0";
                     switch (arr[4]) {//Управление камерой
@@ -746,21 +654,16 @@ namespace RobotSideUWP
                 }
                 else
                 {
-                    if (OsType == "Windows.IoT")
-                    {
-                        pin26.Write(GpioPinValue.Low);
-                    }
+                    pin26.Write(GpioPinValue.Low);
                 }
-            if (OsType == "Windows.IoT")
-            {//Чтобы зеленый не остался гореть, когда нет данных. 
+            //Чтобы зеленый не остался гореть, когда нет данных. 
                 pin26.Write(GpioPinValue.Low);
-            }
         }
 
         public void ChargeLevelMeasure()
         {
-            double levelCeiling = 0.0;
-            try {
+            try
+            {
                 CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
                 readWrite.Write(CommonStruct.dataToWrite);//
 
@@ -779,7 +682,7 @@ namespace RobotSideUWP
                     else
                     {
                         labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
-                        levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
+                        double levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
                         if (levelCeiling > 40)
                         {
                             labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Green);
@@ -828,7 +731,7 @@ namespace RobotSideUWP
             s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
             separator[0] = ','; sArr = s.Split(separator, 16);
 
-            if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.decriptedSerial)) {
+            if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.robotSerial)) {
                 __Client_MqttMsgPublishReceivedAsync(sender, e);
             }
         }
@@ -897,8 +800,8 @@ namespace RobotSideUWP
         {
             if (text == "") return;
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
-            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.decriptedSerial);
-            if (CommonStruct.decriptedSerial == "")
+            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.robotSerial);
+            if (CommonStruct.robotSerial == "")
             {
                 Current.NotifyUser("SendVoltageToServer(): Serial is not defined.", NotifyType.ErrorMessage);
                 return;
@@ -940,7 +843,7 @@ namespace RobotSideUWP
 
             DateTime now = DateTime.Now;
             string timeNow = now.ToString();
-            uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.decriptedSerial);
+            uri = new Uri(ipAddress + "/errorfromrobot?timeNow=" + timeNow + "&data=" + text + "&serial=" + CommonStruct.robotSerial);
             try
             {
                 var authData = string.Format("{0}:{1}", "", ""); //Password don't needed for both websites
@@ -1000,9 +903,9 @@ namespace RobotSideUWP
            
             try
             {
-                if (CommonStruct.decriptedSerial.Length == 24) {
+                if (CommonStruct.robotSerial.Length == 24) {
                     client.Connect(clientId);//Может S/N вместо этого взять?
-                    client.Subscribe(new string[] { CommonStruct.decriptedSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
+                    client.Subscribe(new string[] { CommonStruct.robotSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
                     client.ConnectionClosed += Client_ConnectionClosed;
                     client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
                 } else {
@@ -1017,13 +920,10 @@ namespace RobotSideUWP
 
         private void Client_ConnectionClosed(object sender, EventArgs e)
         {
-
             bool isConnected = client.IsConnected;
             Current.NotifyUserFromOtherThreadAsync("Connection Closed", NotifyType.StatusMessage);
-            if (OsType == "Windows.IoT") {
-                pin26.SetDriveMode(GpioPinDriveMode.Output);
-                pin26.Write(GpioPinValue.Low);
-            }
+            pin26.SetDriveMode(GpioPinDriveMode.Output);
+            pin26.Write(GpioPinValue.Low);
         }
 
         private void buttonStop_Click(object sender, RoutedEventArgs e)
@@ -1035,7 +935,7 @@ namespace RobotSideUWP
             }
             catch(Exception e1)
             {
-                MainPage.Current.NotifyUserFromOtherThreadAsync(e1.Message, NotifyType.ErrorMessage);
+                Current.NotifyUserFromOtherThreadAsync(e1.Message, NotifyType.ErrorMessage);
             }
 
             bConnect = false;
@@ -1057,10 +957,21 @@ namespace RobotSideUWP
         private void buttonSettings_Click(object sender, RoutedEventArgs e)
         {
             if (!PopupSettings.IsOpen) { PopupSettings.IsOpen = true; }
+            object obj = localContainer.Containers["settings"].Values["Serial"];
+            if (obj != null)
+            {
+                textBoxRobotSerial.Text = obj.ToString();
+            }
+            else
+            {
+                textBoxRobotSerial.Text = "";
+            }
         }
 
         private void buttonCloseSettings_Click(object sender, RoutedEventArgs e)
         {
+            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
+            CommonStruct.robotSerial = textBoxRobotSerial.Text;
             if (PopupSettings.IsOpen) { PopupSettings.IsOpen = false; }
         }
 
@@ -1075,43 +986,19 @@ namespace RobotSideUWP
         private void buttonSave_Click(object sender, RoutedEventArgs e)
         {
             localContainer.Containers["settings"].Values["cameraController"] = CommonStruct.cameraController;
-            localContainer.Containers["settings"].Values["PWMStoppingSpeed"] = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
-            CommonStruct.PWMStoppingSpeed = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
+            localContainer.Containers["settings"].Values["PWMSteppingSpeed"] = Convert.ToInt16(textBoxPWMSteppingSpeed.Text);
+            CommonStruct.PWMSteppingSpeed = Convert.ToInt16(textBoxPWMSteppingSpeed.Text);
             localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"] = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
             CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
             localContainer.Containers["settings"].Values["speedTuningParam"] = Convert.ToDouble(textBoxSpeedTuningParam.Text);
             CommonStruct.speedTuningParam = Convert.ToDouble(textBoxSpeedTuningParam.Text);
+            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
+            CommonStruct.robotSerial = textBoxRobotSerial.Text;
         }
 
         private void buttonExit_Click(object sender, RoutedEventArgs e)
         {
             App.Current.Exit();
-        }
-
-        private void buttonRobotSerialPopup_Click(object sender, RoutedEventArgs e)
-        {
-            if (!PopupRobotSerial.IsOpen) { PopupRobotSerial.IsOpen = true; }
-            object obj = localContainer.Containers["settings"].Values["Serial"];
-            if (obj != null)
-            {
-                textBoxRobotSerial.Text = obj.ToString();
-            }
-            else
-            {
-                textBoxRobotSerial.Text = "";
-            }
-        }
-
-        private void buttonRobotSerialCloseAndSave_Click(object sender, RoutedEventArgs e)
-        {
-            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
-            CommonStruct.decriptedSerial = textBoxRobotSerial.Text;
-            if (PopupRobotSerial.IsOpen) { PopupRobotSerial.IsOpen = false; }
-        }
-
-        private void buttonRobotSerialCloseNoSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (PopupRobotSerial.IsOpen) { PopupRobotSerial.IsOpen = false; }
         }
 
         #endregion Buttons
@@ -1133,21 +1020,6 @@ namespace RobotSideUWP
                 localContainer.Containers["settings"].Values["onlyLocal"] = false;
                 CommonStruct.checkBoxOnlyLocal = false;
             }
-        }
-
-        private void AISettings_Click(object sender, RoutedEventArgs e)
-        {
-            if (!AIPopup.IsOpen) { AIPopup.IsOpen = true; }
-        }
-
-        private void buttonLocalizationAngleSaveAndClose_Click(object sender, RoutedEventArgs e)
-        {
-            if (AIPopup.IsOpen) { AIPopup.IsOpen = false; }
-        }
-
-        private void buttonLocalizationAngleCloseNoSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (AIPopup.IsOpen) { AIPopup.IsOpen = false; }
         }
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)

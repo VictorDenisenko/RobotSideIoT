@@ -11,7 +11,7 @@ namespace RobotSideUWP
 {
         public struct CommonStruct
 		{//Сюда записываются данные в формате с нулями перед числами (ZeroInFront Format)
-		static public string decriptedSerial { get; set; }
+		static public string robotSerial { get; set; }
 		public static string x1 = "";
 		public static string x2 = "";
         public static double cameraSpeed = 100;
@@ -19,7 +19,7 @@ namespace RobotSideUWP
         public static string cameraAddress = "0003";
         public static string interval = "1.4";
 		public static bool portOpen { get; set; }
-        public static int PWMStoppingSpeed = 220;
+        public static int PWMSteppingSpeed = 220;
         public static double maxWheelsSpeed = 100;//Макс. скорость, задаваемая слайдером макс. скорости, в процентах. 
         public static int smoothStopTime = 1000;
         public static string wheelsPwrRange = "4";

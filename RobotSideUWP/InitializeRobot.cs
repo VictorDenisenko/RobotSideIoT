@@ -18,7 +18,7 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["SmoothStopTime"] = 1000;
             localContainer.Containers["settings"].Values["StopSmoothly"] = true;
             localContainer.Containers["settings"].Values["WheelsPwrRange"] = 4;
-            localContainer.Containers["settings"].Values["PWMStoppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
+            localContainer.Containers["settings"].Values["PWMSteppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
             localContainer.Containers["settings"].Values["MaxWheelsSpeed"] = 100;
             localContainer.Containers["settings"].Values["cameraController"] = "RD31";
             localContainer.Containers["settings"].Values["CameraSpeed"] = 100;
@@ -55,14 +55,14 @@ namespace RobotSideUWP
             CommonStruct.smoothStopTime = Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
             CommonStruct.stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
             CommonStruct.wheelsPwrRange = Convert.ToString(localContainer.Containers["settings"].Values["WheelsPwrRange"]);
-            CommonStruct.PWMStoppingSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["PWMStoppingSpeed"]);
-            textBoxPWMStoppingSpeed.Text = CommonStruct.PWMStoppingSpeed.ToString();
+            CommonStruct.PWMSteppingSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["PWMSteppingSpeed"]);
+            textBoxPWMSteppingSpeed.Text = CommonStruct.PWMSteppingSpeed.ToString();
             CommonStruct.maxWheelsSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
             CommonStruct.cameraController = Convert.ToString(localContainer.Containers["settings"].Values["cameraController"]);
             
             CommonStruct.cameraSpeed = Convert.ToDouble(localContainer.Containers["settings"].Values["CameraSpeed"]);
 
-            CommonStruct.decriptedSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
+            CommonStruct.robotSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
 
             CommonStruct.k1 = Convert.ToDouble(localContainer.Containers["settings"].Values["k1"]);
             CommonStruct.k2 = Convert.ToDouble(localContainer.Containers["settings"].Values["k2"]);
@@ -100,7 +100,7 @@ namespace RobotSideUWP
             if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
             else { ButtonLanguageEng_Click(null, null);}
 
-            textBoxRobotSerial.Text = CommonStruct.decriptedSerial;
+            textBoxRobotSerial.Text = CommonStruct.robotSerial;
             
             checkBoxOnlyLocal.IsChecked = Convert.ToBoolean(localContainer.Containers["settings"].Values["onlyLocal"]);
             if (checkBoxOnlyLocal.IsChecked == true) { CommonStruct.checkBoxOnlyLocal = true; }
@@ -177,28 +177,7 @@ namespace RobotSideUWP
             else { checkSmoothlyStop.IsChecked = false; }
             CommonStruct.stopSmoothly = stopSmoothly;
 
-            bool rebootAtNight = Convert.ToBoolean(localContainer.Containers["settings"].Values["RebootAtNight"]);
-            if (rebootAtNight == true) { checkRebootAtNight.IsChecked = true; }
-            else { checkRebootAtNight.IsChecked = false; }
-
             AllControlIsEnabled(false);
-
-           //Код инициализации для перезагрузки Windows ночью
-            //object testObject3 = localContainer.Containers["settings"].Values["initTime"];
-            //if (!testObject3.GetType().Equals(typeof(int)))
-            //{
-            //    localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс;
-            //    CommonStruct.initTime = 240; //Время перезагрузки Виндовс;
-            //}
-            //else
-            //{
-            //    CommonStruct.initTime = (int)testObject3;
-            //}
-            int intHours = (int)Math.Round(CommonStruct.initTime / 60.0);
-            int intMinutes = CommonStruct.initTime - 60 * intHours;
-            TimeSpan initTime = new TimeSpan(intHours, intMinutes, 0); //(часы, мин, сек);
-            setTimeToRestartPicker.Time = initTime;
-            setTimeToRestartPicker.AllowDrop = true;
 
             CommonStruct.permissionToSendToWebServer = true;
         }
@@ -259,9 +238,6 @@ namespace RobotSideUWP
             buttonStopWheels.IsEnabled = isEnabled;
             buttonCameraUp.IsEnabled = isEnabled;
             buttonCameraDown.IsEnabled = isEnabled;
-            buttonGoUpFast.IsEnabled = isEnabled;
-            buttonGoDirect.IsEnabled = isEnabled;
-            buttonGoDownFast.IsEnabled = isEnabled;
             buttonLanguageEng.IsEnabled = isEnabled;
             buttonLanguageRu.IsEnabled = isEnabled;
             buttonAbout.IsEnabled = isEnabled;
@@ -272,13 +248,10 @@ namespace RobotSideUWP
             trackBarCameraSpeed.IsEnabled = isEnabled;
             trackBarWheelsSpeedTuning.IsEnabled = isEnabled;
             checkBoxOnlyLocal.IsEnabled = isEnabled;
-            AISettings.IsEnabled = isEnabled;
-            checkBoxOnlyLocal.IsEnabled = isEnabled;
             buttonShutdown.IsEnabled = isEnabled;
             buttonRestart.IsEnabled = isEnabled;
             buttonExit.IsEnabled = isEnabled;
             buttonWiFi.IsEnabled = isEnabled;
-            checkRebootAtNight.IsEnabled = isEnabled;
         }
 
         private void TrackBarWheelsSpeed_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)

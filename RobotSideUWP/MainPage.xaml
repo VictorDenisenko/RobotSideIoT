@@ -22,7 +22,7 @@
                 <CompositeTransform/>
             </ComboBox.RenderTransform>
         </ComboBox>
-        
+
         <TextBlock x:Name="labelWheelsSpeed" HorizontalAlignment="Left" Margin="110,206,0,0" TextWrapping="Wrap" Text="Wheels Speed" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
         <Slider x:Name="trackBarWheelsSpeed" HorizontalAlignment="Left" Margin="26,221,0,0" VerticalAlignment="Top" Width="261" Height="45" RenderTransformOrigin="0.5,0.5"/>
         <TextBox x:Name="textBoxWheelsSpeed" HorizontalAlignment="Left" Margin="301,220,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="40" Height="29" RenderTransformOrigin="0.5,0.5" BorderThickness="1"/>
@@ -32,8 +32,7 @@
         <TextBlock x:Name="labelSpeedTuning" HorizontalAlignment="Left" Margin="110,335,0,0" TextWrapping="Wrap" Text="Wheels Tuning" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
         <Slider x:Name="trackBarWheelsSpeedTuning"  HorizontalAlignment="Left" Margin="26,349,0,0" VerticalAlignment="Top" Width="261" Height="45" RenderTransformOrigin="0.5,0.5" ManipulationMode="Scale"/>
         <TextBox x:Name="textBoxWheelsSpeedTuning" HorizontalAlignment="Left" Margin="301,352,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="40" Height="29" RenderTransformOrigin="0.5,0.5" ManipulationMode="Scale" BorderThickness="1"/>
-        <CheckBox x:Name="checkRebootAtNight" Content="Reboot at night" IsChecked="True" HorizontalAlignment="Left" Margin="405,517,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
-        <CheckBox x:Name="checkSmoothlyStop" Content="Stop Smoothly" IsChecked="True" HorizontalAlignment="Left" Margin="405,547,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
+        <CheckBox x:Name="checkSmoothlyStop" Content="Stop Smoothly" IsChecked="True" Margin="405,537,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5"/>
         <TextBlock x:Name="labelServerAddress" HorizontalAlignment="Left" Margin="142,24,0,0" TextWrapping="Wrap" Text="Website Address" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" />
         <TextBlock x:Name="textBox1" HorizontalAlignment="Left" Margin="515,24,0,0" TextWrapping="Wrap" Text="Local Control" VerticalAlignment="Top" TextAlignment="Center" />
 
@@ -50,11 +49,8 @@
         </Button>
         <Button x:Name="buttonGoBackward" Content="Go Backward" HorizontalAlignment="Left" Margin="492,245,0,0" VerticalAlignment="Top" Height="71" Width="133"/>
         <Button x:Name="buttonStopWheels" Content="Stop Wheels" HorizontalAlignment="Left" Margin="492,137,0,0" VerticalAlignment="Top" Height="99" Width="133"/>
-        <Button x:Name="buttonCameraUp" Content="Camera Up" HorizontalAlignment="Left" Margin="405,338,0,0" VerticalAlignment="Top" Height="79" Width="133"/>
-        <Button x:Name="buttonCameraDown" Content="Camera Down" HorizontalAlignment="Left" Margin="405,429,0,0" VerticalAlignment="Top" Height="83" Width="133"/>
-        <Button x:Name="buttonGoUpFast" Content="GoUpFast" HorizontalAlignment="Left" Margin="580,340,0,0" VerticalAlignment="Top"  Width="133" Height="50"/>
-        <Button x:Name="buttonGoDirect" Content="GoDirect" HorizontalAlignment="Left" Margin="580,401,0,0" VerticalAlignment="Top"  Width="133" Height="50"/>
-        <Button x:Name="buttonGoDownFast" Content="GoDownFast" HorizontalAlignment="Left" Margin="580,462,0,0" VerticalAlignment="Top" Width="133" Height="50"/>
+        <Button x:Name="buttonCameraUp" Content="Camera Up" Margin="405,338,0,0" VerticalAlignment="Top" Height="79" Width="305"/>
+        <Button x:Name="buttonCameraDown" Content="Camera Down" Margin="405,429,0,0" VerticalAlignment="Top" Height="83" Width="305"/>
         <Grid Margin="731,0,0,0">
             <Border x:Name="RightGroup" HorizontalAlignment="Left" Height="696" VerticalAlignment="Top" Width="293" Background="#FFCFEAFB" IsDoubleTapEnabled="False" IsHoldingEnabled="False" IsRightTapEnabled="False" IsTapEnabled="False"/>
         </Grid>
@@ -71,23 +67,23 @@
         <TextBlock x:Name="labelCamera" HorizontalAlignment="Left" Margin="864,152,0,0" TextWrapping="Wrap" Text="Camera" VerticalAlignment="Top"/>
 
         <TextBox x:Name="textBoxKeys" HorizontalAlignment="Left" Margin="750,176,0,0" TextWrapping="Wrap" Text=" " VerticalAlignment="Top" Height="31" Width="100" BorderThickness="1,1,1,0" IsReadOnly="True"/>
-        <TextBlock x:Name="labelKeysStop" HorizontalAlignment="Left" Margin="864,181,0,0" TextWrapping="Wrap" Text="Keya Yes" VerticalAlignment="Top"/>
+        <TextBlock x:Name="labelKeysStop" HorizontalAlignment="Left" Margin="864,181,0,0" TextWrapping="Wrap" Text="Key" VerticalAlignment="Top"/>
 
         <TextBox x:Name="textBoxWheelsCorrection" HorizontalAlignment="Left" Margin="750,206,0,0" TextWrapping="Wrap" Text=" " VerticalAlignment="Top" Height="31" Width="100" BorderThickness="1,1,1,0" IsReadOnly="True"/>
-        <TextBlock x:Name="labelMonitor" HorizontalAlignment="Left" Margin="864,212,0,0" TextWrapping="Wrap" Text="Correction" VerticalAlignment="Top"/>
+        <TextBlock x:Name="labelMonitor" HorizontalAlignment="Left" Margin="864,212,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
 
-        <TextBox x:Name="textBoxSmileName" HorizontalAlignment="Left" Margin="750,236,0,0" TextWrapping="Wrap" Text=" " VerticalAlignment="Top" Height="31" Width="100" BorderThickness="1,1,1,0" IsReadOnly="True"/>
-        <TextBlock x:Name="labelSmileName" HorizontalAlignment="Left" Margin="864,242,0,0" TextWrapping="Wrap" Text="Smile" VerticalAlignment="Top"/>
+        <TextBox x:Name="textBoxSmileName" HorizontalAlignment="Left" Margin="750,236,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Height="31" Width="100" BorderThickness="1,1,1,0" IsReadOnly="True"/>
+        <TextBlock x:Name="labelSmileName" HorizontalAlignment="Left" Margin="864,242,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
 
         <TextBox x:Name="textBoxKeysControl" HorizontalAlignment="Left" Margin="750,266,0,0" TextWrapping="Wrap" Text=" " VerticalAlignment="Top" Height="31" Width="100" BorderThickness="1" IsReadOnly="True"/>
-        <TextBlock x:Name="labelKeysKontrol" HorizontalAlignment="Left" Margin="864,272,0,0" TextWrapping="Wrap" Text="Keys Control" VerticalAlignment="Top"/>
+        <TextBlock x:Name="labelKeysKontrol" HorizontalAlignment="Left" Margin="864,272,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top"/>
         <Button x:Name="buttonStart" Click="buttonStart_Click"  Content="Start" HorizontalAlignment="Left" Margin="750,401,0,0" VerticalAlignment="Top" Height="78" Width="115" FontWeight="Bold"/>
         <Button x:Name="buttonStop" Click="buttonStop_Click" Content="Stop" HorizontalAlignment="Left" Margin="889,401,0,0" VerticalAlignment="Top" Height="78" Width="115" BorderThickness="0" FontWeight="Bold"/>
         <Button x:Name="buttonLanguageEng" Content="English"  HorizontalAlignment="Left" Margin="26,429,0,0" VerticalAlignment="Top" Height="50" Width="100"/>
         <MediaElement x:Name="media" HorizontalAlignment="Left" Height="100" Margin="250,333,0,0" VerticalAlignment="Top" Width="100"/>
         <Button x:Name="buttonLanguageRu" Content="Русский" HorizontalAlignment="Left" Margin="152,429,0,0" VerticalAlignment="Top" Height="50" Width="100"/>
         <Button x:Name="buttonExit" Content="Exit" HorizontalAlignment="Left" Margin="889,578,0,0" VerticalAlignment="Top" Height="50" Width="115" Click="buttonExit_Click"/>
-        <Button x:Name="buttonAbout" Content="About" HorizontalAlignment="Left" Margin="278,429,0,0" VerticalAlignment="Top" Height="50" Width="100" Click="buttonAbout_Click"/>
+        <Button x:Name="buttonAbout" Content="About" Margin="751,579,0,0" VerticalAlignment="Top" Height="50" Width="114" Click="buttonAbout_Click"/>
         <TextBlock x:Name="labelChooseLanguage" HorizontalAlignment="Left" Margin="65,398,0,0" TextWrapping="Wrap" Text="Choose Language" VerticalAlignment="Top" TextAlignment="Center"/>
         <!--<TextBlock x:Name="StatusBlock" HorizontalAlignment="Left" Margin="26,596,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />-->
         <TextBlock x:Name="StatusBlock" HorizontalAlignment="Left" Margin="26,635,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />
@@ -102,22 +98,13 @@
                     <Button x:Name="buttonCloseSettings" Content="Close" Click="buttonCloseSettings_Click" Margin="10,0,0,0" Width="150"/>
                     <Button x:Name="buttonSave" Content="Save" Click="buttonSave_Click" Margin="10,0,0,0" Width="150"/>
                     <Button x:Name="buttonSetDefault" Content="Restore Defaults" Click="buttonSetDefault_Click"  Margin="10,0,0,0" Width="150"/>
-                    <Button x:Name="buttonRobotSerialSave" Content="Serial" Click="buttonRobotSerialPopup_Click"  Margin="10,0,0,0" Width="150"/>
                 </StackPanel>
                 <TextBlock x:Name="textBlockSettings" FontSize="24.667" HorizontalAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Text="Настройки робота" VerticalAlignment="Top"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Height="490" Margin="0,64,-1,0" VerticalAlignment="Top" Width="731">
                     <StackPanel Orientation="Vertical" Height="490" Margin="0,0,366,0" Width="365">
                         <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxPWMStoppingSpeed" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="220" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlockPWMStoppingSpeed" Margin="10,0,0,0" TextWrapping="Wrap" Text="PWMStoppingSpeed" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxDirectTopDistance" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlockDirectTopDistance" Margin="10,0,0,0" TextWrapping="Wrap" Text="DirectTopDistance" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxDirectBottomDistance" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="10" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlockDirectBottomDistance" Margin="10,0,0,0" TextWrapping="Wrap" Text="DirectBottomDistance" VerticalAlignment="Center"/>
+                            <TextBox x:Name="textBoxPWMSteppingSpeed" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="220" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
+                            <TextBlock x:Name="textBlockPWMSteppingSpeeddirec" Margin="10,0,0,0" TextWrapping="Wrap" Text="PWMSteppingSpeed" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
                             <TextBox x:Name="textBoxMinWheelsSpeedForTurning" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="50" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
@@ -134,38 +121,19 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
                         </StackPanel>
-                        <TimePicker x:Name="setTimeToRestartPicker" Margin="10,-25,0,0"  MaxWidth="20" MinuteIncrement="30" ClockIdentifier="24HourClock" Header="Time to restart Windows (Eastern Time, US and Canada)"  HorizontalAlignment="Left" VerticalAlignment="Top" />
                         <RadioButton x:Name="RD31Button" Margin="10,0,0,0" Checked="RD31Button_Checked"  GroupName="CameraControllerGroup" Content="RD31" />
                         <RadioButton x:Name="GM51Button" Margin="10,0,0,0" Checked="RD31Button_Checked"  GroupName="CameraControllerGroup" Content="GM51" />
                         <RadioButton x:Name="NoButton" Margin="10,0,0,0" Checked="RD31Button_Checked"  GroupName="CameraControllerGroup" Content="No" />
+                        <StackPanel Orientation="Vertical"  Height="140">
+                            <TextBlock x:Name="textBlockRobotSerial" Margin="50,20,0,0" TextWrapping="Wrap" Text="Robot Serial Number" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                            <TextBox x:Name="textBoxRobotSerial" HorizontalAlignment="Left" Margin="10,5,0,19" TextWrapping="Wrap" VerticalAlignment="Top" Width="250"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Grid>
         </Popup>
-        <Popup x:Name="PopupRobotSerial" VerticalOffset="76" HorizontalOffset="10" Margin="0,0,392,0"   >
-            <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Margin="-10,-76,-392,0" Height="696" Width="731">
-                <StackPanel Orientation="Horizontal" Margin="0,559,0,0" >
-                    <TextBox x:Name="textBoxRobotSerial" HorizontalAlignment="Left" Margin="20,19,0,19" TextWrapping="Wrap" VerticalAlignment="Center" Width="250"/>
-                    <Button x:Name="buttonRobotSerialCloseAndSave" Content="SaveAndClose" Click="buttonRobotSerialCloseAndSave_Click"  Margin="100,0,0,0"/>
-                    <Button x:Name="buttonRobotSerialCloseNoSave" Content="CloseNoSave" Click="buttonRobotSerialCloseNoSave_Click"  Margin="100,0,0,0"/>
-                </StackPanel>
-            </Grid>
-        </Popup>
-        <Popup x:Name="AIPopup" VerticalOffset="76" HorizontalOffset="10" Margin="0,0,392,0"   >
-            <Grid Background="{ThemeResource CalendarViewOutOfScopeBackground}" Margin="-10,-76,-392,0" Height="696" Width="731" >
-                <StackPanel Orientation="Horizontal" Margin="0,559,0,0" >
-                    <TextBlock x:Name="LocalizationAngle" HorizontalAlignment="Left" Margin="20,19,0,19" TextWrapping="Wrap" VerticalAlignment="Center" Width="250"/>
-                    <Button x:Name="buttonLocalizationAngleSaveAndClose" Content="Save And Close" Margin="50,0,0,0" Click="buttonLocalizationAngleSaveAndClose_Click" />
-                    <Button x:Name="buttonLocalizationAngleCloseNoSave" Content="Close No Save" Margin="50,19,0,19" Click="buttonLocalizationAngleCloseNoSave_Click"/>
-                </StackPanel>
-                <TextBlock x:Name="textBoxLocalizationAngle" HorizontalAlignment="Left" Margin="45, 36,0,0" TextWrapping="Wrap" Text="Localization Angle" VerticalAlignment="Top" Width="228"/>
+       
 
-                <TextBlock  x:Name="textBlockAngleFromICaption"  HorizontalAlignment="Left" Margin="350,35,0,0"  TextWrapping="Wrap" Text="FromIC" VerticalAlignment="Top"/>
-                <TextBlock  x:Name="textBlockAngleCorrectedCaption"  HorizontalAlignment="Left" Margin="450,35,0,0"  TextWrapping="Wrap" Text="Corrected" VerticalAlignment="Top"/>
-
-                <TextBlock  x:Name="textBlockDistanceToZeroCaption"  HorizontalAlignment="Left" Margin="245,120,0,0"  TextWrapping="Wrap" Text="Расстояние до нуля" VerticalAlignment="Top"/>
-            </Grid>
-        </Popup>
         <Popup x:Name="PopupWiFi" Grid.RowSpan="2">
             <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="696" Width="731" >
                 <Border x:Name="SettingsBorder1" BorderThickness="0" HorizontalAlignment="Left" Height="696" VerticalAlignment="Top" Width="731" Background="#FFC5E9F3" Margin="0,0,0,0"/>
@@ -176,13 +144,12 @@
                 <TextBlock x:Name="StatusBlock1" HorizontalAlignment="Left" Margin="26,596,0,0"  VerticalAlignment="Top" TextWrapping="Wrap" Text="StatusBlock" FontWeight="Bold" />
             </Grid>
         </Popup>
-        <CheckBox x:Name="checkBoxOnlyLocal" Content="OnlyLocal" Checked="checkBoxOnlyLocal_Checked" Unchecked="checkBoxOnlyLocal_Unchecked"  HorizontalAlignment="Left" Margin="580,547,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="AISettings" Content="AI Settings" HorizontalAlignment="Left" Margin="152,512,0,0" VerticalAlignment="Top" Click="AISettings_Click" Width="100" Height="50"/>
+        <CheckBox x:Name="checkBoxOnlyLocal" Content="OnlyLocal" Checked="checkBoxOnlyLocal_Checked" Unchecked="checkBoxOnlyLocal_Unchecked" Margin="590,537,0,0" VerticalAlignment="Top"/>
         <TextBox x:Name="labelChargeLevel" HorizontalAlignment="Left" Margin="750,340,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="50%" VerticalAlignment="Top" BorderThickness="0" IsReadOnly="True" Background="#FF06970C" Foreground="#FFFFFDFD" />
         <TextBlock x:Name="labelAccumulator" HorizontalAlignment="Left" Margin="859,344,0,0" TextWrapping="Wrap" Text="Battery" VerticalAlignment="Top" />
         <Button x:Name="buttonShutdown" Click="buttonShutdown_Click" Content="Shutdown" HorizontalAlignment="Left" Margin="750,512,0,0" VerticalAlignment="Top" Width="115"/>
         <Button x:Name="buttonRestart" Content="Restart" HorizontalAlignment="Left" Margin="889,512,0,0" VerticalAlignment="Top" Width="115" Click="buttonRestart_Click"/>
-        <Button x:Name="buttonWiFi" Content="WiFi" HorizontalAlignment="Left" Height="50" Margin="278,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonWiFi_Click"/>
+        <Button x:Name="buttonWiFi" Content="WiFi" Height="50" Margin="152,512,0,0" VerticalAlignment="Top" Width="100" Click="buttonWiFi_Click"/>
 
         <TextBlock x:Name="labelVersion" HorizontalAlignment="Left" Margin="750,654,0,0" TextWrapping="Wrap" Text="Version" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" TextAlignment="Center" FontSize="10" />
     </Grid>
