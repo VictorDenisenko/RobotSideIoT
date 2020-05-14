@@ -11,7 +11,6 @@ namespace RobotSideUWP
     class PlcControl
 		{
         static GpioPin pin6;//Выход для отключения питания 
-        static TimeSpan delay = TimeSpan.FromMilliseconds(200);
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
         public DispatcherTimer batteryMeasuringTimer;
@@ -77,7 +76,6 @@ namespace RobotSideUWP
         {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
             try
             {
-                CommonStruct.numberOfTicksAfterWheelsStop = 0;
                 if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeft != directionLeft) || (CommonStruct.directionRight != directionRight)))
                 {
                     WheelsStopSmoothly(200);
@@ -98,8 +96,6 @@ namespace RobotSideUWP
                         string commandRight = directionRight + speedRight;
                         //CommonStruct.wheelsWasStopped = false;
                         MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
-                        CommonStruct.lastCommandLeft = commandLeft;
-                        CommonStruct.lastCommandRight = commandRight;
                         CommonStruct.lastSpeedLeft = _speedLeft;
                         CommonStruct.lastSpeedRight = _speedRight;
                         CommonStruct.directionLeft = directionLeft;
@@ -348,16 +344,8 @@ namespace RobotSideUWP
                 double delta = 0.0;
                 double deltaAdditive = Convert.ToDouble(CommonStruct.speedTuningParam);
                 double speed = Math.Max(speedLeft, speedRight);
-
-                if (CommonStruct.wheelsNonlinearTuningIs == false)
-                {
-                    delta = deltaAdditive;
-                }
-                else
-                {
-                    delta = CommonFunctions.WheelsNonlinearTuning(speed) + deltaAdditive;
-                }
-
+                delta = deltaAdditive;
+                
                 if (delta <= 0)
                 {
                     outputLeft = speedLeft - Math.Abs(delta);
@@ -438,7 +426,6 @@ namespace RobotSideUWP
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     CommonStruct.dVoltageCorrected = 1050;
-                    CommonStruct.numberOfTicksAfterWheelsStop = 0;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
                     pin6 = GpioController.GetDefault().OpenPin(6);
                     pin6.SetDriveMode(GpioPinDriveMode.Output);

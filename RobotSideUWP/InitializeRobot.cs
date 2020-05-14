@@ -22,11 +22,6 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["MaxWheelsSpeed"] = 100;
             localContainer.Containers["settings"].Values["cameraController"] = "RD31";
             localContainer.Containers["settings"].Values["CameraSpeed"] = 100;
-            localContainer.Containers["settings"].Values["CameraFastSpeed"] = 6;//Если ШД гудит и не крутится, надо увеличить это число, т.е. уменьшить скорость 
-            localContainer.Containers["settings"].Values["stepNumberForCalibration"] = 15;
-            localContainer.Containers["settings"].Values["directTopDistance"] = 5;
-            localContainer.Containers["settings"].Values["directBottomDistance"] = 10;
-            localContainer.Containers["settings"].Values["cameraAlpha"] = null;
 
             localContainer.Containers["settings"].Values["k1"] = 0.7;
             localContainer.Containers["settings"].Values["k2"] = 0.4;
@@ -48,11 +43,8 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["speedTuningParam"] = 0;
 
             localContainer.Containers["settings"].Values["Interval"] = 1.4;//HWDT в сек.
-            localContainer.Containers["settings"].Values["TimeOut"] = 5000;
             localContainer.Containers["settings"].Values["Culture"] = "en-US";
             localContainer.Containers["settings"].Values["onlyLocal"] = false;
-
-            localContainer.Containers["settings"].Values["comPortItem"] = "";
 
             localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
             localContainer.Containers["settings"].Values["VReal"] = 12.75;
@@ -70,19 +62,7 @@ namespace RobotSideUWP
             
             CommonStruct.cameraSpeed = Convert.ToDouble(localContainer.Containers["settings"].Values["CameraSpeed"]);
 
-            CommonStruct.cameraFastSpeed = CommonFunctions.ZeroInFrontSet(Convert.ToString(localContainer.Containers["settings"].Values["CameraFastSpeed"]));
-            textBoxCameraFastSpeed.Text = Convert.ToInt16(CommonStruct.cameraFastSpeed).ToString();
-            CommonStruct.stepNumberForCalibration = Convert.ToString(localContainer.Containers["settings"].Values["stepNumberForCalibration"]);
-            textBoxStepNumberForCalibration.Text = CommonStruct.stepNumberForCalibration.ToString();
-            CommonStruct.directTopDistance = Convert.ToInt16(localContainer.Containers["settings"].Values["directTopDistance"]);
-            textBoxDirectTopDistance.Text = CommonStruct.directTopDistance.ToString();
-            CommonStruct.directBottomDistance = Convert.ToInt16(localContainer.Containers["settings"].Values["directBottomDistance"]);
-            textBoxDirectBottomDistance.Text = CommonStruct.directBottomDistance.ToString();
             CommonStruct.decriptedSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
-
-            string cameraAlpha = Convert.ToString(localContainer.Containers["settings"].Values["cameraAlpha"]);
-            if (cameraAlpha == "") cameraAlpha = "0";
-            CommonStruct.cameraAlpha = Convert.ToInt32(cameraAlpha);
 
             CommonStruct.k1 = Convert.ToDouble(localContainer.Containers["settings"].Values["k1"]);
             CommonStruct.k2 = Convert.ToDouble(localContainer.Containers["settings"].Values["k2"]);
@@ -102,8 +82,6 @@ namespace RobotSideUWP
             CommonStruct.webSiteAddress7 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress7"]);
             CommonStruct.webSiteAddress8 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress8"]);
 
-            CommonStruct.refPoints[0] = 0.0;
-
             CommonStruct.speedTuningParam = Convert.ToDouble(localContainer.Containers["settings"].Values["speedTuningParam"]);
             textBoxSpeedTuningParam.Text = CommonStruct.speedTuningParam.ToString();
             
@@ -117,17 +95,6 @@ namespace RobotSideUWP
             interval1 = Math.Ceiling(10 * interval1);
             CommonStruct.interval = CommonFunctions.ZeroInFrontSet(interval1.ToString());
 
-            object obj = localContainer.Containers["settings"].Values["comPortItem"];
-            if (obj == null)
-            {
-                localContainer.Containers["settings"].Values["comPortItem"] = "Choose another port";
-            }
-            else
-            {
-                CommonStruct.comPortItem = localContainer.Containers["settings"].Values["comPortItem"].ToString();
-            }
-
-            CommonStruct.timeOut = Convert.ToString(localContainer.Containers["settings"].Values["TimeOut"]);
             CommonStruct.culture = Convert.ToString(localContainer.Containers["settings"].Values["Culture"]);
             
             if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
@@ -182,8 +149,6 @@ namespace RobotSideUWP
             if (CommonStruct.culture == "ru-RU") { this.ButtonLanguageRu_Click(null, null); }
 			else { ButtonLanguageEng_Click(null, null); }
             
-            CommonStruct.connectionNumber = 0;
-            CommonStruct.top_bottom_distance = (Convert.ToInt32(CommonStruct.directTopDistance) + Convert.ToInt32(CommonStruct.directBottomDistance)).ToString();
 
             CultureInfo culture = CultureInfo.CurrentCulture;
             string decimalSeparator = culture.NumberFormat.NumberDecimalSeparator;

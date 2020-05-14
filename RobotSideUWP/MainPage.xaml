@@ -112,14 +112,6 @@
                             <TextBlock x:Name="textBlockPWMStoppingSpeed" Margin="10,0,0,0" TextWrapping="Wrap" Text="PWMStoppingSpeed" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxCameraFastSpeed" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="6" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlockCameraFastSpeed" Margin="10,0,0,0" TextWrapping="Wrap" Text="CameraFastSpeed" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxStepNumberForCalibration" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="15" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
-                            <TextBlock x:Name="textBlockStepNumberForCalibration" Margin="10,0,0,0" TextWrapping="Wrap" Text="StepNumberForCalibration" VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal"  Height="40" >
                             <TextBox x:Name="textBoxDirectTopDistance" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
                             <TextBlock x:Name="textBlockDirectTopDistance" Margin="10,0,0,0" TextWrapping="Wrap" Text="DirectTopDistance" VerticalAlignment="Center"/>
                         </StackPanel>

@@ -12,32 +12,21 @@ namespace RobotSideUWP
         public struct CommonStruct
 		{//Сюда записываются данные в формате с нулями перед числами (ZeroInFront Format)
 		static public string decriptedSerial { get; set; }
-        static public string timeOut = "5000";
 		public static string x1 = "";
 		public static string x2 = "";
         public static double cameraSpeed = 100;
         public static string wheelsAddress = "0002";
         public static string cameraAddress = "0003";
         public static string interval = "1.4";
-		public static string portName { get; set; }
-		public static string bodRate { get; set; }
 		public static bool portOpen { get; set; }
         public static int PWMStoppingSpeed = 220;
         public static double maxWheelsSpeed = 100;//Макс. скорость, задаваемая слайдером макс. скорости, в процентах. 
-		public static string lastCommandRight { get; set; }
-		public static string lastCommandLeft { get; set; }
         public static int smoothStopTime = 1000;
         public static string wheelsPwrRange = "4";
         public static string cameraPwrRange = "3";
-		public static int connectionNumber { get; set; }
         public static string defaultWebSiteAddress = "https://boteyes.com";
         public static string webAddressForMQTT { get; set; }
-        public static string stepNumberForCalibration = "15";
-        public static int directTopDistance = 5;
-        public static int directBottomDistance = 10;
-        public static string top_bottom_distance { get; set; }
-        public static int cameraAlpha = 0;
-        public static string PowerControl { get; set; }
+
         public static double lastSpeedLeft { get; set; }
         public static double lastSpeedRight { get; set; }
         public static string directionLeft = "0";
@@ -50,28 +39,11 @@ namespace RobotSideUWP
         public static double speedTuningParam = 0.0;
 
         public static int minWheelsSpeedForTurning = 50;
-        public static string smileFilePath { get; set; }
-
-        public static string downloadsPath { get; set; }
-        public static string pictureAndMoviesPath { get; set; }
-
-        public static string updateCheckMessageCompleted = "";
-        public static string updateCheckMessageNotNeed = "";
-        public static string downloadProgressText1 = "";
-        public static string downloadProgressText2 = "";
-        public static string buttonOpenFileFolder = "";
-        public static bool exitProgramm = false;
         public static bool stopSmoothly = true;
 
         public static double speedLeftLocal = 0.0;
         public static double speedRightLocal = 0.0;
 
-        public static bool rightClick = false;
-
-        public static double[] refPoints = new double[11];
-
-        public static bool wheelsNonlinearTuningIs = true;
-        public static string cameraFastSpeed = "006";
         public static string culture = "Eng";
 
         static public string dataToWrite { get; set; }
@@ -90,18 +62,7 @@ namespace RobotSideUWP
 
         static public string NotifyPressStop = "";
 
-        static public string comPortItem = "";
-        static public int comPortIndex = 0;
-
-        static public string textToRead { get; set; }
-        static public string SSMLFilePath { get; set; }
-        public static double AngleInBreakPoint { get; internal set; }
-        public static double DistanceToZero { get; internal set; }
-
-        public static double localizationPoint;
         internal static bool checkBoxOnlyLocal = false;
-        //public static double[] anglesFromIC = new double[16];
-        public static string[] deviceIDNames = new string[10];
         internal static string cameraController = "RD31";
 
         public static bool wheelsWasStopped = true;
@@ -112,16 +73,10 @@ namespace RobotSideUWP
         public static string chargeCurrentFromRobot = "";
         public static bool NowIsCurrentMeasuring;
 
-        internal static bool thereAreNoIONow = true;
-        public static int numberOfTicksAfterWheelsStop = 0;//Количество измерений напряжения на аккумуляторах. Необходимо для задержи измерений после остановки
         public static bool textBoxRealVoltageChanged = false;
         internal static double VReal = 12.75;
         public static double deltaV = 0.0;
-        public static int numberOfStops = 0;
-        public static long startTimeOfStop { get; set; }
         public static bool permissionToSendToWebServer { get; set; }
-
-        public static string outputString = "";
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
         public static long numberOfVoltageMeasurings = 0;
@@ -129,41 +84,11 @@ namespace RobotSideUWP
         public static string outputValuePercentage;
     }
 
-    public struct CommonVideoStruct
-    {
-        static public double squareWidth = 0.0;
-        static public double squareHeight = 0.0;
-        static public double squareX = 0.0;
-        static public double squareY = 0.0;
-        static public int faceNumber = 0;//Количество лиц
-        static public int indexOfBiggestFace = 0;
-    }
-
-        enum MonitorState
-        {
-        ON = -1,
-        OFF = 2,
-        STANDBY = 1
-        }
-
 	class CommonFunctions
 		{
-        private const int MOVE = 0x0001;
-        private const int HWND_BROADCAST = 0xffff;
-
+        
         public static string elementContent = null;
-
-        public static string DeviceIDName(string deviceID)
-        {
-            string deviceIDName = "";
-            int startIndex = deviceID.IndexOf("+");
-            int indexOfPlus = deviceID.IndexOf("+", startIndex + 1);
-            string tempVariable1 = deviceID.Remove(0, indexOfPlus + 1);
-            int indexOfGrid = tempVariable1.IndexOf("#");
-            deviceIDName = tempVariable1.Remove(indexOfGrid);
-            return deviceIDName;
-        }
-
+        
         public static double Degrees(string _x, string _y)
 			{//Примечание: для системы координат с осью y, направленной вниз. Инвертировать в самой программе не получится, т.е. там string. угол на выходе меняется от 0 до 360 град.
             double output = 0;
@@ -279,277 +204,6 @@ namespace RobotSideUWP
                 }
 			}
 
-		public static string Encryption(string inputWord)// Шифрование 
-			{
-			try
-				{
-				string codedWord = null;
-				int n = inputWord.Length;
-				string[] arrayPassword = new string[n];
-				char[] chr = new char[n];
-				chr = inputWord.ToCharArray();
-
-				for (int i = 0; i < n; i++)
-					{
-					arrayPassword[i] = chr[i].ToString();
-					}
-				int m = 10 * n; //Длина выходного слова.
-				Random rnd = new Random(0);
-				byte[] byteTemplate = new byte[m];
-				string stringTemplate;
-
-				rnd.NextBytes(byteTemplate);
-				int intNumber;
-				ASCIIEncoding ascii = new ASCIIEncoding();
-
-				for (int i = 0; i < m; i++)
-					{
-					intNumber = rnd.Next(48, 122);
-					while ((intNumber == 58) || (intNumber == 59) || (intNumber == 60) || (intNumber == 61) || (intNumber == 62) || (intNumber == 92) || (intNumber == 94) || (intNumber == 96))
-						{
-						intNumber = rnd.Next(97, 122);
-						}
-					byteTemplate[i] = (byte)intNumber;
-					}
-				stringTemplate = ascii.GetString(byteTemplate);
-				int k = stringTemplate.Length;
-				codedWord = stringTemplate;
-				k = codedWord.Length;
-				for (int i = 0; i < n; i++)
-					{
-					codedWord = codedWord.Insert(10 * i, arrayPassword[i]);
-					k = codedWord.Length;
-					}
-				return codedWord;
-				}
-			catch (Exception e)
-				{
-                //await CommonFunctions.WriteToLog(e.Message + " Encryption");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("Encryption: " + e.Message, NotifyType.ErrorMessage);
-                return e.Message;
-				}
-			}
-
-		public static string Decryption(string inputWord)// Дешифрование
-			{
-			try
-				{
-				string decryptedWord = null;
-				int n = (inputWord.Length - 10) / 10 + 1;
-				string[] decodedWordArray = new string[n];
-				for (int i = 0; i < n; i++)
-					{
-					decodedWordArray[i] = inputWord.Substring(10 * i, 1);
-					}
-				decryptedWord = string.Concat(decodedWordArray);
-				return decryptedWord;
-				}
-			catch (Exception e)
-				{
-                //await CommonFunctions.WriteToLog(e.Message + " Decryption");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("Decryption: " + e.Message, NotifyType.ErrorMessage);
-                return e.Message;
-				}
-			}
-
-		public static uint CalculateCRC(string filePath)
-			{
-			try
-				{
-				FileStream stream = File.OpenRead(filePath);
-				const int buffer_size = 1024;
-				const uint POLYNOMIAL = 0xEDB88320;
-				uint result = 0xFFFFFFFF;
-				uint Crc32;
-				byte[] buffer = new byte[buffer_size];
-				uint[] table_CRC32 = new uint[256];
-
-				unchecked
-					{// Инициалиазация таблицы
-					for (int i = 0; i < 256; i++)
-						{
-						Crc32 = (uint)i;
-						for (int j = 8; j > 0; j--)
-							{
-							if ((Crc32 & 1) == 1)
-								Crc32 = (Crc32 >> 1) ^ POLYNOMIAL;
-							else
-								Crc32 >>= 1;
-							}
-						table_CRC32[i] = Crc32;
-						}
-					// Чтение из буфера
-					int count = stream.Read(buffer, 0, buffer_size);
-					// Вычисление CRC
-					while (count > 0)
-						{
-						for (int i = 0; i < count; i++)
-							{
-							result = ((result) >> 8)
-								^ table_CRC32[(buffer[i])
-								^ ((result) & 0x000000FF)];
-							}
-						count = stream.Read(buffer, 0, buffer_size);
-						}
-					}
-				stream.Flush();
-				stream.Dispose();
-                return ~result;
-				}
-			catch (Exception e)
-				{
-                //CommonFunctions.WriteToLog(e.Message + " CalculateCRC");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("CalculateCRC: " + e.Message, NotifyType.ErrorMessage);
-                return 0;
-				}
-			}
-	
-		public static string CommandWithCRC(string commandWithOutCRC)
-			{
-			try{
-				string commandWithCRC = "";
-				Encoding ascii = Encoding.ASCII;
-				Byte[] encodedBytes = ascii.GetBytes(commandWithOutCRC);//Получим десятичный формат
-				int summDec = 0;
-				for (int i = 0; i < encodedBytes.Length; i++)
-					{
-					summDec = summDec + encodedBytes[i];
-					}
-				string hexT1 = IntToHex(summDec);
-				string hex = hexT1.Substring(hexT1.Length - 2);
-				commandWithCRC = commandWithOutCRC + hex;
-				return commandWithCRC;
-			}
-			catch (Exception ex)
-				{
-                //CommonFunctions.WriteToLog(ex.Message + " CommandWithCRC");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("CommandWithCRC: " + ex.Message, NotifyType.ErrorMessage);
-                return "0";
-				}
-			}
-
-		static public int HexToDec(string hex)
-			{
-            int res = 0;
-            try
-                {
-                char[] c = hex.ToCharArray();
-                int d0 = CharToDec(c[1]);
-                int d1 = CharToDec(c[0]);
-                res = (16 * d1 + d0);
-                return res;
-                }
-            catch (Exception e)
-                {
-                //CommonFunctions.WriteToLog(e.Message + " HexToDec");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("HexToDec: " + e.Message, NotifyType.ErrorMessage);
-                return res;
-                }
-			}
-
-		public static string IntToHex(int intAddress)
-			{ 
-			try
-				{
-				string hexAddressT1 = "0";
-				byte[] byteArr = BitConverter.GetBytes(intAddress);
-				hexAddressT1 = BitConverter.ToString(byteArr);
-				string hexAddress = hexAddressT1[3].ToString() + hexAddressT1[4].ToString() + hexAddressT1[0].ToString() + hexAddressT1[1].ToString();
-				return hexAddress;
-				}
-			catch (Exception e1)
-				{
-                //CommonFunctions.WriteToLog(e1.Message + " IntToHex");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("IntToHex: " + e1.Message, NotifyType.ErrorMessage);
-                return e1.Message;
-				}
-			}
-
-        public static async Task WriteToHardData(string elementName, string elementContent)
-        {
-            try
-            {
-                StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
-                StorageFile sFile = await storageFolder.GetFileAsync("hardData.xml");
-                string iniFullPath = sFile.Path;
-                XDocument xdoc = XDocument.Load(iniFullPath);
-                XElement xElement = xdoc.Element("Settings");
-                XElement xElement2 = xElement.Element(elementName);
-                xElement2.ReplaceNodes(elementContent);
-                string xmlDocument = xdoc.Document.ToString();
-                await FileIO.WriteTextAsync(sFile, xmlDocument);
-            }
-            catch (Exception e)
-            {
-                MainPage.Current.NotifyUserFromOtherThreadAsync("WriteToHardData: " + e.Message, NotifyType.ErrorMessage);
-            }
-        }
-
-        public static async Task<string> ReadFromHardData(string element1Name)
-        {
-            string elemntContent = null;
-            try
-            {
-                XDocument xdoc = null;
-                StorageFolder storageFolder = ApplicationData.Current.LocalFolder;//Путь  папке LocalFolder. Там лежат данные после инсталляции
-                StorageFolder installedLocation = Package.Current.InstalledLocation;
-                StorageFile fileLocal = await storageFolder.GetFileAsync("hardData1.xml");
-                string innerFileName = fileLocal.Path;
-                var task = Task.Run(() =>
-                {
-                    xdoc = XDocument.Load(innerFileName);
-                    XElement xElement = xdoc.Element("Settings");
-                    XElement xElement2 = xElement.Element(element1Name);
-                    elementContent = xElement2.Value;
-                });
-                task.Wait();
-                return elementContent;
-            }
-            catch (Exception e)
-            {
-                //CommonFunctions.WriteToLog(e.Message + " ReadFromHardData");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromHardData: " + e.Message, NotifyType.ErrorMessage);
-                return elemntContent;
-            }
-        }
-
-        static private int CharToDec(char c0)
-			{
-            int digit = 0;
-            try
-                {
-                string s0 = c0.ToString();
-                if (Char.IsDigit(c0))
-                    {
-                    digit = Convert.ToInt32(s0);
-                    }
-                else if (Char.IsLetter(c0))
-                    {
-                    switch (c0)
-                        {
-                        case 'A': digit = 10; break;
-                        case 'B': digit = 11; break;
-                        case 'C': digit = 12; break;
-                        case 'D': digit = 13; break;
-                        case 'E': digit = 14; break;
-                        case 'F': digit = 15; break;
-                        default: break;
-                        }
-                    }
-                else
-                    {
-                    digit = -1;
-                    }
-                return digit;
-                }
-            catch (Exception e)
-                {
-                //CommonFunctions.WriteToLog(e.Message + " CharToDec");
-                MainPage.Current.NotifyUserFromOtherThreadAsync("CharToDec" + e.Message, NotifyType.ErrorMessage);
-                return digit;
-                }
-			}
-
         public static async Task WriteToLog(string message)
         {
             try
@@ -630,104 +284,6 @@ namespace RobotSideUWP
             }
             y = Math.Round(y, MidpointRounding.AwayFromZero);
             return y;
-        }
-
-        public static double WheelsSpeedToPWM_1(double x)
-            {
-            double y = 0.0;
-            if ((x >= 0) && (x < 50))
-                {
-                y = 250 - ((250 - 100.0) / 50.0) * (x - 0.0);
-                }
-            else if ((x >= 50) && (x < 60))
-                {
-                y = 100 - ((100 - 50) / 10.0) * (x - 50);
-                }
-            else if ((x >= 60) && (x < 70))
-                {
-                y = 50 - ((50 - 20) / 10.0) * (x - 60);
-                }
-            else if ((x >= 70) && (x < 80))
-                {
-                y = 20 - ((20 - 10) / 10.0) * (x - 70);
-                }
-            else if ((x >= 80) && (x < 90))
-                {
-                y = 10 - ((10 - 5) / 10.0) * (x - 80);
-                }
-            else if ((x >= 90) && (x <= 100))
-                {
-                y = 5 - ((5 - 1) / 10.0) * (x - 90);
-                }
-            else
-                {
-                y = 255;
-                }
-            y = Math.Round(y, MidpointRounding.AwayFromZero);
-            return y;
-            }
-
-        public static double WheelsNonlinearTuning(double x)
-            {
-            double y = 0.0;
-            for (int i = 0; i < 10; i++)
-                {
-                if ((x > 10 * i) && (x <= 10 * (i + 1)))
-                    {
-                    y = CommonStruct.refPoints[i] + ((CommonStruct.refPoints[i + 1] - CommonStruct.refPoints[i]) / 10.0) * (x - 10.0 * i);
-                    }
-                }
-            return y;
-            }
-
-        public static void Paths()
-        {
-            try
-            {
-                string currentDirectory = Directory.GetCurrentDirectory();
-                CommonStruct.SSMLFilePath = "TextSSMLSource.xml";
-            }
-            catch (Exception )
-            {
-            }
-        }
-
-        public static string Frase(string fileKeyword)
-        {//Подставляет нули впереди числа до получени ятрех знаков
-            try
-            {
-                switch (fileKeyword)
-                {
-                    case "Привет":
-                        CommonStruct.SSMLFilePath = "TextSSMLSource.xml";
-                        break;
-                    case "Ушел":
-                        CommonStruct.SSMLFilePath = "TextSSMLSource1.xml";
-                        break;
-                    
-                }
-                return CommonStruct.SSMLFilePath;
-            }
-            catch (Exception e)
-            {
-                MainPage.Current.NotifyUserFromOtherThreadAsync("Frase" + e.Message, NotifyType.ErrorMessage);
-                return "";
-            }
-        }
-
-
-        public static string ReadFromSSMLSource()
-        {
-            string elementContent = null;
-            try
-            {
-                elementContent = File.ReadAllText(CommonStruct.SSMLFilePath);
-            }
-            catch (Exception e1)
-            {
-                MainPage.Current.NotifyUserFromOtherThreadAsync("ReadFromSSMLSource " + e1.Message, NotifyType.ErrorMessage);
-            }
-            return elementContent;
         }
     }
 }

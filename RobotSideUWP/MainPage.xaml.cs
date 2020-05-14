@@ -73,9 +73,6 @@ namespace RobotSideUWP
         private string forwardDirection = "0";
         private string backwardDirection = "1";
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
-        //public ApplicationDataContainer localSettings = null;
-
-        
 
         private ObservableCollection<DeviceInformation> listOfDevices;
         public DeviceInformation choosenDevice;
@@ -459,15 +456,6 @@ namespace RobotSideUWP
                         textBoxSmileName.Text = arr[7];//Smile Name
                         textBoxSmileName.Text = arr[8];//Нелинейная коррекция есть = true
                     });
-
-                    if (arr[8] == "false")
-                    {
-                        CommonStruct.wheelsNonlinearTuningIs = false;
-                    }
-                    else if (arr[8] == "true")
-                    {
-                        CommonStruct.wheelsNonlinearTuningIs = true;
-                    }
 
                     if ((arr[6] != null) && (arr[6] != "Corr") && (arr[6] != "0") && (arr[6] != ""))
                     {//Передача параметра подстройки скоростей колес из браузера в робот
@@ -1089,14 +1077,6 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["cameraController"] = CommonStruct.cameraController;
             localContainer.Containers["settings"].Values["PWMStoppingSpeed"] = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
             CommonStruct.PWMStoppingSpeed = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
-            localContainer.Containers["settings"].Values["CameraFastSpeed"] = textBoxCameraFastSpeed.Text;
-            CommonStruct.cameraFastSpeed = textBoxCameraFastSpeed.Text;
-            localContainer.Containers["settings"].Values["stepNumberForCalibration"] = textBoxStepNumberForCalibration.Text;
-            CommonStruct.stepNumberForCalibration = textBoxStepNumberForCalibration.Text;
-            localContainer.Containers["settings"].Values["directTopDistance"] = Convert.ToInt16(textBoxDirectTopDistance.Text);
-            CommonStruct.directTopDistance = Convert.ToInt16(textBoxDirectTopDistance.Text);
-            localContainer.Containers["settings"].Values["directBottomDistance"] = Convert.ToInt16(textBoxDirectBottomDistance.Text);
-            CommonStruct.directBottomDistance = Convert.ToInt16(textBoxDirectBottomDistance.Text);
             localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"] = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
             CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
             localContainer.Containers["settings"].Values["speedTuningParam"] = Convert.ToDouble(textBoxSpeedTuningParam.Text);

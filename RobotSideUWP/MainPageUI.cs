@@ -35,24 +35,18 @@ namespace RobotSideUWP
 
             buttonGoForward.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoForward_PointerDown), true);
             buttonGoForward.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonGoForward_PointerUp), true);
-            //buttonGoForward.AddHandler(PointerExitedEvent, new PointerEventHandler(buttonGoForward_PointerExit), true);
 
             buttonGoLeft.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoLeft_PointerDown), true);
             buttonGoLeft.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonGoLeft_PointerUp), true);
-            //buttonGoLeft.AddHandler(PointerExitedEvent, new PointerEventHandler(buttonGoLeft_PointerExit), true);
 
             buttonGoBackward.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoBackward_PointerDown), true);
             buttonGoBackward.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonGoBackward_PointerUp), true);
-            //buttonGoBackward.AddHandler(PointerExitedEvent, new PointerEventHandler(buttonGoBackward_PointerExit), true);
 
             buttonGoRight.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonGoRight_PointerDown), true);
             buttonGoRight.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonGoRight_PointerUp), true);
-            //buttonGoRight.AddHandler(PointerExitedEvent, new PointerEventHandler(buttonGoRight_PointerExit), true);
 
             buttonStopWheels.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonStopWheels_PointerDown), true);
             buttonStopWheels.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonStopWheels_PointerUp), true);
-            //buttonStopWheels.AddHandler(PointerExitedEvent, new PointerEventHandler(buttonStopWheels_PointerExit), true);
-
 
             buttonCameraUp.AddHandler(PointerPressedEvent, new PointerEventHandler(buttonCameraUp_PointerDown), true);
             buttonCameraUp.AddHandler(PointerReleasedEvent, new PointerEventHandler(buttonCameraUp_PointerUp), true);
@@ -104,12 +98,10 @@ namespace RobotSideUWP
             if (CommonStruct.allControlIsEnabled == false)
             {
                 Current.NotifyUser(CommonStruct.NotifyPressStop, NotifyType.StatusMessage);
-                
             }
             else
             {
                 Current.NotifyUser(" ", NotifyType.StatusMessage);
-                
             }
         }
 
@@ -264,7 +256,6 @@ namespace RobotSideUWP
            plcControl.WheelsStopLocal();
         }
         
-
         private void buttonGoBackward_PointerDown(object sender, PointerRoutedEventArgs e)
         {
             string directionLeft = backwardDirection;
@@ -433,18 +424,13 @@ namespace RobotSideUWP
             buttonAbout.Content = "About";
             labelServerAddress.Text = "Https web address";
             CommonStruct.NotifyPressStop = "If you want the settings to be accessible, press the button 'Stop'";
-            labelSmileName.Text = "Smile";
+
             buttonGoUpFast.Content = "GoUpFast";
             buttonGoDirect.Content = "GoDirect";
             buttonGoDownFast.Content = "DownFast";
             //labelRobotName.Text = "Robot Name:";
-            CommonStruct.updateCheckMessageCompleted = "New version has beed downloaded to path ";
-            CommonStruct.updateCheckMessageNotNeed = "You use the last version of product.";
-            CommonStruct.downloadProgressText1 = "Downloading in progress. Downloaded ";
-            CommonStruct.downloadProgressText2 = " from total ";
             labelAccumulator.Text = "Charge level";
             checkSmoothlyStop.Content = "Smoothly Stop";
-            CommonStruct.buttonOpenFileFolder = "Open Folder";
             labelKeysKontrol.Text = "Keys";
             buttonStopWheels.Content = "Wheels Stop";
             localContainer.Containers["settings"].Values["Culture"] = "en-US";
@@ -485,18 +471,11 @@ namespace RobotSideUWP
             buttonAbout.Content = "О нас";
             labelServerAddress.Text = "http адрес вебсервера";
             CommonStruct.NotifyPressStop = "Чтобы настройки стали доступны, нажмите кнопку 'Стоп'";
-            labelSmileName.Text = "Смайл";
             buttonGoUpFast.Content = "ВверхБыстро";
             buttonGoDirect.Content = "Прямо";
             buttonGoDownFast.Content = "ВнизБыстро";
-            //labelRobotName.Text = "Имя робота:";
-            CommonStruct.updateCheckMessageCompleted = "Новая версия загружена в ";
-            CommonStruct.updateCheckMessageNotNeed = "Вы используете последнюю версию продукта.";
-            CommonStruct.downloadProgressText1 = "Загрузка файла. Загружено ";
-            CommonStruct.downloadProgressText2 = " из ";
             labelAccumulator.Text = "Заряд аккумулятора";
             checkSmoothlyStop.Content = "Плавный стоп";
-            CommonStruct.buttonOpenFileFolder = "Открыть папку";
             labelKeysKontrol.Text = "Клавиши";
             buttonStopWheels.Content = "Стоп (колеса)";
             localContainer.Containers["settings"].Values["Culture"] = "ru-RU";
@@ -506,18 +485,10 @@ namespace RobotSideUWP
             buttonSave.Content = "Сохранить";
             buttonSetDefault.Content = "По умолчанию";
             buttonSettings.Content = "Настройки";
-            AISettings.Content = "ИИ";
             checkBoxOnlyLocal.Content = "Локально";
             buttonShutdown.Content = "Выкл.";
             buttonRestart.Content = "Перезагрузка";
-            checkRebootAtNight.Content = "Перезагрузить ночью";
         }
-
-        private void LabelRobotName_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            //localContainer.Containers["settings"].Values["RobotName"] = textBoxRobotName.Text;
-        }
-
     }
 
  public enum NotifyType
