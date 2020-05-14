@@ -15,115 +15,99 @@ namespace RobotSideUWP
 
         private void WriteDefaultSettings()
         {
-            localSettings.Values["Reconnect"] = true;
-            localSettings.Values["SmoothStopTime"] = 1000; 
-            localSettings.Values["StopSmoothly"] = true;
-            localSettings.Values["WheelsPwrRange"] = 4;
-            localSettings.Values["PWMStoppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
-            localSettings.Values["MaxWheelsSpeed"] = 100;
-            localSettings.Values["cameraController"] = "RD31";
-            localSettings.Values["CameraSpeed"] = 100;
-            localSettings.Values["CameraFastSpeed"] = 6;//Если ШД гудит и не крутится, надо увеличить это число, т.е. уменьшить скорость 
-            localSettings.Values["stepNumberForCalibration"] = 15;
-            localSettings.Values["directTopDistance"] = 5;
-            localSettings.Values["directBottomDistance"] = 10;
-            localSettings.Values["cameraAlpha"] = null;
+            localContainer.Containers["settings"].Values["SmoothStopTime"] = 1000;
+            localContainer.Containers["settings"].Values["StopSmoothly"] = true;
+            localContainer.Containers["settings"].Values["WheelsPwrRange"] = 4;
+            localContainer.Containers["settings"].Values["PWMStoppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
+            localContainer.Containers["settings"].Values["MaxWheelsSpeed"] = 100;
+            localContainer.Containers["settings"].Values["cameraController"] = "RD31";
+            localContainer.Containers["settings"].Values["CameraSpeed"] = 100;
+            localContainer.Containers["settings"].Values["CameraFastSpeed"] = 6;//Если ШД гудит и не крутится, надо увеличить это число, т.е. уменьшить скорость 
+            localContainer.Containers["settings"].Values["stepNumberForCalibration"] = 15;
+            localContainer.Containers["settings"].Values["directTopDistance"] = 5;
+            localContainer.Containers["settings"].Values["directBottomDistance"] = 10;
+            localContainer.Containers["settings"].Values["cameraAlpha"] = null;
 
-            localSettings.Values["k1"] = 0.7;
-            localSettings.Values["k2"] = 0.4;
-            localSettings.Values["k3"] = 0.2;
-            localSettings.Values["k4"] = 0.1;
+            localContainer.Containers["settings"].Values["k1"] = 0.7;
+            localContainer.Containers["settings"].Values["k2"] = 0.4;
+            localContainer.Containers["settings"].Values["k3"] = 0.2;
+            localContainer.Containers["settings"].Values["k4"] = 0.1;
 
-            localSettings.Values["minWheelsSpeedForTurning"] = 50;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
+            localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"] = 50;//В процентах (%) - скорость, ниже которой не может двигаться колесо, которое замедляется при плавном повороте
 
-            localSettings.Values["defaultWebSiteAddress"] = "https://boteyes.com";
-            localSettings.Values["webSiteAddress1"] = "https://boteyes.com";
-            localSettings.Values["webSiteAddress2"] = "https://boteyes.ru";
-            localSettings.Values["webSiteAddress3"] = "https://robotaxino.com";
-            localSettings.Values["webSiteAddress4"] = "http://localhost";
-            localSettings.Values["webSiteAddress5"] = "https://localhost";
-            localSettings.Values["webSiteAddress6"] = "";
-            localSettings.Values["webSiteAddress7"] = "";
-            localSettings.Values["webSiteAddress8"] = "";
+            localContainer.Containers["settings"].Values["defaultWebSiteAddress"] = "https://boteyes.com";
+            localContainer.Containers["settings"].Values["webSiteAddress1"] = "https://boteyes.com";
+            localContainer.Containers["settings"].Values["webSiteAddress2"] = "https://boteyes.ru";
+            localContainer.Containers["settings"].Values["webSiteAddress3"] = "https://robotaxino.com";
+            localContainer.Containers["settings"].Values["webSiteAddress4"] = "http://localhost";
+            localContainer.Containers["settings"].Values["webSiteAddress5"] = "https://localhost";
+            localContainer.Containers["settings"].Values["webSiteAddress6"] = "";
+            localContainer.Containers["settings"].Values["webSiteAddress7"] = "";
+            localContainer.Containers["settings"].Values["webSiteAddress8"] = "";
 
-            localSettings.Values["Point10"] = 0;
-            localSettings.Values["Point20"] = 0;
-            localSettings.Values["Point30"] = 0;
-            localSettings.Values["Point40"] = 0;
-            localSettings.Values["Point50"] = 0;
-            localSettings.Values["Point60"] = 0;
-            localSettings.Values["Point70"] = 0;
-            localSettings.Values["Point80"] = 0;
-            localSettings.Values["Point90"] = 0;
-            localSettings.Values["Point100"] = 0;
+            localContainer.Containers["settings"].Values["speedTuningParam"] = 0;
 
-            localSettings.Values["speedTuningParam"] = 0;
+            localContainer.Containers["settings"].Values["Interval"] = 1.4;//HWDT в сек.
+            localContainer.Containers["settings"].Values["TimeOut"] = 5000;
+            localContainer.Containers["settings"].Values["Culture"] = "en-US";
+            localContainer.Containers["settings"].Values["onlyLocal"] = false;
 
-            localSettings.Values["RobotName"] = "grey";
+            localContainer.Containers["settings"].Values["comPortItem"] = "";
 
-            localSettings.Values["Interval"] = 1.4;//HWDT в сек.
-            localSettings.Values["TimeOut"] = 5000;
-            localSettings.Values["Culture"] = "en-US";
-            localSettings.Values["onlyLocal"] = false;
-
-            localSettings.Values["localizationAngle"] = 0;
-            localSettings.Values["comPortItem"] = "";
-
-            localSettings.Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
-            localSettings.Values["RebootAtNight"] = false;
-            localSettings.Values["VReal"] = 12.75;
+            localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
+            localContainer.Containers["settings"].Values["VReal"] = 12.75;
         }
 
-        private void ReadSettings()
+        private void ReadAllSettings()
         {//Инициализация всех параметров сразу после загрузки этой программы
-            CommonStruct.reconnect = Convert.ToBoolean(localSettings.Values["Reconnect"]);
-            CommonStruct.smoothStopTime = Convert.ToInt16(localSettings.Values["SmoothStopTime"]);
-            CommonStruct.stopSmoothly = Convert.ToBoolean(localSettings.Values["StopSmoothly"]);
-            CommonStruct.wheelsPwrRange = Convert.ToString(localSettings.Values["WheelsPwrRange"]);
-            CommonStruct.PWMStoppingSpeed = Convert.ToInt16(localSettings.Values["PWMStoppingSpeed"]);
+            CommonStruct.smoothStopTime = Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
+            CommonStruct.stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
+            CommonStruct.wheelsPwrRange = Convert.ToString(localContainer.Containers["settings"].Values["WheelsPwrRange"]);
+            CommonStruct.PWMStoppingSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["PWMStoppingSpeed"]);
             textBoxPWMStoppingSpeed.Text = CommonStruct.PWMStoppingSpeed.ToString();
-            CommonStruct.maxWheelsSpeed = Convert.ToInt16(localSettings.Values["MaxWheelsSpeed"]);
-            CommonStruct.cameraController = Convert.ToString(localSettings.Values["cameraController"]);
+            CommonStruct.maxWheelsSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
+            CommonStruct.cameraController = Convert.ToString(localContainer.Containers["settings"].Values["cameraController"]);
             
-            CommonStruct.cameraSpeed = Convert.ToDouble(localSettings.Values["CameraSpeed"]);
+            CommonStruct.cameraSpeed = Convert.ToDouble(localContainer.Containers["settings"].Values["CameraSpeed"]);
 
-            CommonStruct.cameraFastSpeed = CommonFunctions.ZeroInFrontSet(Convert.ToString(localSettings.Values["CameraFastSpeed"]));
+            CommonStruct.cameraFastSpeed = CommonFunctions.ZeroInFrontSet(Convert.ToString(localContainer.Containers["settings"].Values["CameraFastSpeed"]));
             textBoxCameraFastSpeed.Text = Convert.ToInt16(CommonStruct.cameraFastSpeed).ToString();
-            CommonStruct.stepNumberForCalibration = Convert.ToString(localSettings.Values["stepNumberForCalibration"]);
+            CommonStruct.stepNumberForCalibration = Convert.ToString(localContainer.Containers["settings"].Values["stepNumberForCalibration"]);
             textBoxStepNumberForCalibration.Text = CommonStruct.stepNumberForCalibration.ToString();
-            CommonStruct.directTopDistance = Convert.ToInt16(localSettings.Values["directTopDistance"]);
+            CommonStruct.directTopDistance = Convert.ToInt16(localContainer.Containers["settings"].Values["directTopDistance"]);
             textBoxDirectTopDistance.Text = CommonStruct.directTopDistance.ToString();
-            CommonStruct.directBottomDistance = Convert.ToInt16(localSettings.Values["directBottomDistance"]);
+            CommonStruct.directBottomDistance = Convert.ToInt16(localContainer.Containers["settings"].Values["directBottomDistance"]);
             textBoxDirectBottomDistance.Text = CommonStruct.directBottomDistance.ToString();
+            CommonStruct.decriptedSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
 
-            string cameraAlpha = Convert.ToString(localSettings.Values["cameraAlpha"]);
+            string cameraAlpha = Convert.ToString(localContainer.Containers["settings"].Values["cameraAlpha"]);
             if (cameraAlpha == "") cameraAlpha = "0";
             CommonStruct.cameraAlpha = Convert.ToInt32(cameraAlpha);
 
-            CommonStruct.k1 = Convert.ToDouble(localSettings.Values["k1"]);
-            CommonStruct.k2 = Convert.ToDouble(localSettings.Values["k2"]);
-            CommonStruct.k3 = Convert.ToDouble(localSettings.Values["k3"]);
-            CommonStruct.k4 = Convert.ToDouble(localSettings.Values["k4"]);
+            CommonStruct.k1 = Convert.ToDouble(localContainer.Containers["settings"].Values["k1"]);
+            CommonStruct.k2 = Convert.ToDouble(localContainer.Containers["settings"].Values["k2"]);
+            CommonStruct.k3 = Convert.ToDouble(localContainer.Containers["settings"].Values["k3"]);
+            CommonStruct.k4 = Convert.ToDouble(localContainer.Containers["settings"].Values["k4"]);
 
-            CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(localSettings.Values["minWheelsSpeedForTurning"]);
+            CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"]);
             textBoxMinWheelsSpeedForTurning.Text = CommonStruct.minWheelsSpeedForTurning.ToString();
 
-            CommonStruct.defaultWebSiteAddress = Convert.ToString(localSettings.Values["defaultWebSiteAddress"]);
-            CommonStruct.webSiteAddress1 = Convert.ToString(localSettings.Values["webSiteAddress1"]);
-            CommonStruct.webSiteAddress2 = Convert.ToString(localSettings.Values["webSiteAddress2"]);
-            CommonStruct.webSiteAddress3 = Convert.ToString(localSettings.Values["webSiteAddress3"]);
-            CommonStruct.webSiteAddress4 = Convert.ToString(localSettings.Values["webSiteAddress4"]);
-            CommonStruct.webSiteAddress5 = Convert.ToString(localSettings.Values["webSiteAddress5"]);
-            CommonStruct.webSiteAddress6 = Convert.ToString(localSettings.Values["webSiteAddress6"]);
-            CommonStruct.webSiteAddress7 = Convert.ToString(localSettings.Values["webSiteAddress7"]);
-            CommonStruct.webSiteAddress8 = Convert.ToString(localSettings.Values["webSiteAddress8"]);
+            CommonStruct.defaultWebSiteAddress = Convert.ToString(localContainer.Containers["settings"].Values["defaultWebSiteAddress"]);
+            CommonStruct.webSiteAddress1 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress1"]);
+            CommonStruct.webSiteAddress2 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress2"]);
+            CommonStruct.webSiteAddress3 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress3"]);
+            CommonStruct.webSiteAddress4 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress4"]);
+            CommonStruct.webSiteAddress5 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress5"]);
+            CommonStruct.webSiteAddress6 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress6"]);
+            CommonStruct.webSiteAddress7 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress7"]);
+            CommonStruct.webSiteAddress8 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress8"]);
 
             CommonStruct.refPoints[0] = 0.0;
 
-            CommonStruct.speedTuningParam = Convert.ToDouble(localSettings.Values["speedTuningParam"]);
+            CommonStruct.speedTuningParam = Convert.ToDouble(localContainer.Containers["settings"].Values["speedTuningParam"]);
             textBoxSpeedTuningParam.Text = CommonStruct.speedTuningParam.ToString();
             
-            string userInterval = Convert.ToString(localSettings.Values["Interval"]);//HWDT в сек.
+            string userInterval = Convert.ToString(localContainer.Containers["settings"].Values["Interval"]);//HWDT в сек.
 
             string numberSeparator = CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator;
             if (numberSeparator == ".") { userInterval = userInterval.Replace(',', '.'); }//Значения inf больше нет
@@ -133,40 +117,30 @@ namespace RobotSideUWP
             interval1 = Math.Ceiling(10 * interval1);
             CommonStruct.interval = CommonFunctions.ZeroInFrontSet(interval1.ToString());
 
-            object obj = localSettings.Values["comPortItem"];
+            object obj = localContainer.Containers["settings"].Values["comPortItem"];
             if (obj == null)
             {
-                localSettings.Values["comPortItem"] = "Choose another port";
+                localContainer.Containers["settings"].Values["comPortItem"] = "Choose another port";
             }
             else
             {
-                CommonStruct.comPortItem = localSettings.Values["comPortItem"].ToString();
+                CommonStruct.comPortItem = localContainer.Containers["settings"].Values["comPortItem"].ToString();
             }
 
-            CommonStruct.timeOut = Convert.ToString(localSettings.Values["TimeOut"]);
-            CommonStruct.culture = Convert.ToString(localSettings.Values["Culture"]);
+            CommonStruct.timeOut = Convert.ToString(localContainer.Containers["settings"].Values["TimeOut"]);
+            CommonStruct.culture = Convert.ToString(localContainer.Containers["settings"].Values["Culture"]);
             
             if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
             else { ButtonLanguageEng_Click(null, null);}
 
-            CommonStruct.decriptedSerial = Convert.ToString(localSettings.Values["Serial"]);//Именно этот используется везде дальше (пока) 
             textBoxRobotSerial.Text = CommonStruct.decriptedSerial;
             
-            checkBoxOnlyLocal.IsChecked = Convert.ToBoolean(localSettings.Values["onlyLocal"]);
+            checkBoxOnlyLocal.IsChecked = Convert.ToBoolean(localContainer.Containers["settings"].Values["onlyLocal"]);
             if (checkBoxOnlyLocal.IsChecked == true) { CommonStruct.checkBoxOnlyLocal = true; }
             else { CommonStruct.checkBoxOnlyLocal = false; }
 
-            CommonStruct.localizationPoint = Convert.ToDouble(localSettings.Values["localizationAngle"]);
-            trackBarLocalizationAngle.Value = CommonStruct.localizationPoint;
-
-            CommonStruct.AngleInBreakPoint = Convert.ToDouble(localSettings.Values["angleInBreakPoint"]);
-            CommonStruct.DistanceToZero = Convert.ToDouble(localSettings.Values["distanceToZero"]);
-
-            CommonStruct.rebootAtNight = Convert.ToBoolean(localSettings.Values["RebootAtNight"]);
-
-            CommonStruct.localizationPoint = Convert.ToDouble(localSettings.Values["localizationAngle"]);
-            CommonStruct.deltaV = Convert.ToDouble(localSettings.Values["deltaV"]);
-            CommonStruct.VReal = Convert.ToDouble(localSettings.Values["VReal"]);
+            CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
+            CommonStruct.VReal = Convert.ToDouble(localContainer.Containers["settings"].Values["VReal"]);
         }
 
         private void InitializeRobot()
@@ -179,7 +153,7 @@ namespace RobotSideUWP
 			trackBarCameraSpeed.LargeChange = 10;
 			trackBarCameraSpeed.SmallChange = 1;
 			trackBarCameraSpeed.Minimum = 0;
-            trackBarCameraSpeed.Value = Convert.ToInt32(localSettings.Values["CameraSpeed"]);
+            trackBarCameraSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["CameraSpeed"]);
             textBoxCameraSpeedTesting.Text = trackBarCameraSpeed.Value.ToString();
 
             trackBarWheelsSpeed.ValueChanged += TrackBarWheelsSpeed_ValueChanged;
@@ -188,7 +162,7 @@ namespace RobotSideUWP
 			trackBarWheelsSpeed.LargeChange = 10;
 			trackBarWheelsSpeed.SmallChange = 1;
 			trackBarWheelsSpeed.Minimum = 0;
-            trackBarWheelsSpeed.Value = Convert.ToInt32(localSettings.Values["MaxWheelsSpeed"]);
+            trackBarWheelsSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
             textBoxWheelsSpeed.Text = trackBarWheelsSpeed.Value.ToString();
 
             trackBarWheelsSpeedTuning.ValueChanged += TrackBarWheelsSpeedTuning_ValueChanged;
@@ -197,7 +171,7 @@ namespace RobotSideUWP
             trackBarWheelsSpeedTuning.LargeChange = 1;
             trackBarWheelsSpeedTuning.SmallChange = 1;
             trackBarWheelsSpeedTuning.Minimum = -20;
-            trackBarWheelsSpeedTuning.Value = Convert.ToInt32(localSettings.Values["speedTuningParam"]);
+            trackBarWheelsSpeedTuning.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["speedTuningParam"]);
             // 
             CommonStruct.cameraSpeed = trackBarCameraSpeed.Value;
             if (CommonStruct.cameraController == "RD31")
@@ -213,10 +187,10 @@ namespace RobotSideUWP
 
             CultureInfo culture = CultureInfo.CurrentCulture;
             string decimalSeparator = culture.NumberFormat.NumberDecimalSeparator;
-            string k1 = Convert.ToString(localSettings.Values["k1"]);
-            string k2 = Convert.ToString(localSettings.Values["k2"]);
-            string k3 = Convert.ToString(localSettings.Values["k3"]);
-            string k4 = Convert.ToString(localSettings.Values["k4"]);
+            string k1 = Convert.ToString(localContainer.Containers["settings"].Values["k1"]);
+            string k2 = Convert.ToString(localContainer.Containers["settings"].Values["k2"]);
+            string k3 = Convert.ToString(localContainer.Containers["settings"].Values["k3"]);
+            string k4 = Convert.ToString(localContainer.Containers["settings"].Values["k4"]);
             if ((k1 == "") || (k1 == null)) { k1 = "0"; }
             if ((k2 == "") || (k2 == null)) { k2 = "0"; }
             if ((k3 == "") || (k3 == null)) { k3 = "0"; }
@@ -233,29 +207,28 @@ namespace RobotSideUWP
             CommonStruct.k3 = Convert.ToDouble(k3);
             CommonStruct.k4 = Convert.ToDouble(k4);
 
-            bool stopSmoothly = Convert.ToBoolean(localSettings.Values["StopSmoothly"]);
+            bool stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
             if (stopSmoothly == true) { checkSmoothlyStop.IsChecked = true; }
             else { checkSmoothlyStop.IsChecked = false; }
             CommonStruct.stopSmoothly = stopSmoothly;
 
-            bool rebootAtNight = Convert.ToBoolean(localSettings.Values["RebootAtNight"]);
+            bool rebootAtNight = Convert.ToBoolean(localContainer.Containers["settings"].Values["RebootAtNight"]);
             if (rebootAtNight == true) { checkRebootAtNight.IsChecked = true; }
             else { checkRebootAtNight.IsChecked = false; }
-            CommonStruct.rebootAtNight = rebootAtNight;
 
             AllControlIsEnabled(false);
 
            //Код инициализации для перезагрузки Windows ночью
-            object testObject3 = localSettings.Values["initTime"];
-            if (!testObject3.GetType().Equals(typeof(int)))
-            {
-                localSettings.Values["initTime"] = 240; //Время перезагрузки Виндовс;
-                CommonStruct.initTime = 240; //Время перезагрузки Виндовс;
-            }
-            else
-            {
-                CommonStruct.initTime = (int)testObject3;
-            }
+            //object testObject3 = localContainer.Containers["settings"].Values["initTime"];
+            //if (!testObject3.GetType().Equals(typeof(int)))
+            //{
+            //    localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс;
+            //    CommonStruct.initTime = 240; //Время перезагрузки Виндовс;
+            //}
+            //else
+            //{
+            //    CommonStruct.initTime = (int)testObject3;
+            //}
             int intHours = (int)Math.Round(CommonStruct.initTime / 60.0);
             int intMinutes = CommonStruct.initTime - 60 * intHours;
             TimeSpan initTime = new TimeSpan(intHours, intMinutes, 0); //(часы, мин, сек);
@@ -347,14 +320,14 @@ namespace RobotSideUWP
         {
             CommonStruct.maxWheelsSpeed = trackBarWheelsSpeed.Value;
             textBoxWheelsSpeed.Text = CommonStruct.maxWheelsSpeed.ToString();
-            localSettings.Values["MaxWheelsSpeed"] = CommonStruct.maxWheelsSpeed;
+            localContainer.Containers["settings"].Values["MaxWheelsSpeed"] = CommonStruct.maxWheelsSpeed;
         }
 
         private void TrackBarCameraSpeed_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
             CommonStruct.cameraSpeed = trackBarCameraSpeed.Value;
             textBoxCameraSpeedTesting.Text = CommonStruct.cameraSpeed.ToString();
-            localSettings.Values["CameraSpeed"] = CommonStruct.cameraSpeed;
+            localContainer.Containers["settings"].Values["CameraSpeed"] = CommonStruct.cameraSpeed;
             if (CommonStruct.cameraController == "RD31")
             {
                 CommonStruct.cameraSpeed = trackBarCameraSpeed.Value - 100;
@@ -365,7 +338,7 @@ namespace RobotSideUWP
         {
             CommonStruct.speedTuningParam = trackBarWheelsSpeedTuning.Value;
             this.textBoxWheelsSpeedTuning.Text = CommonStruct.speedTuningParam.ToString();
-            localSettings.Values["speedTuningParam"] = CommonStruct.speedTuningParam;
+            localContainer.Containers["settings"].Values["speedTuningParam"] = CommonStruct.speedTuningParam;
         }
 
         public static void SavingApplicationStates()

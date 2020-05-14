@@ -167,18 +167,11 @@
                     <Button x:Name="buttonLocalizationAngleCloseNoSave" Content="Close No Save" Margin="50,19,0,19" Click="buttonLocalizationAngleCloseNoSave_Click"/>
                 </StackPanel>
                 <TextBlock x:Name="textBoxLocalizationAngle" HorizontalAlignment="Left" Margin="45, 36,0,0" TextWrapping="Wrap" Text="Localization Angle" VerticalAlignment="Top" Width="228"/>
-                <Slider x:Name="trackBarLocalizationAngle" ValueChanged="trackBarLocalizationAngle_ValueChanged" Minimum="-180" Maximum="180" HorizontalContentAlignment="Center" HorizontalAlignment="Left" Margin="45,68,0,0" VerticalAlignment="Top" Width="275" Height="45" RenderTransformOrigin="0.5,0.5"/>
 
                 <TextBlock  x:Name="textBlockAngleFromICaption"  HorizontalAlignment="Left" Margin="350,35,0,0"  TextWrapping="Wrap" Text="FromIC" VerticalAlignment="Top"/>
-                <TextBox  x:Name="textBlockAngleFromIC"  KeyUp="textBlockAngleFromIC_KeyUp"  HorizontalAlignment="Left" Margin="350,68,0,0"  TextWrapping="Wrap" Text="180" VerticalAlignment="Top" BorderThickness="1"/>
-                <TextBlock  x:Name="textBlockChooseVoice"  HorizontalAlignment="Left" Margin="45,240,0,0"  TextWrapping="Wrap" Text="Choose Voice" VerticalAlignment="Top"/>
                 <TextBlock  x:Name="textBlockAngleCorrectedCaption"  HorizontalAlignment="Left" Margin="450,35,0,0"  TextWrapping="Wrap" Text="Corrected" VerticalAlignment="Top"/>
-                <TextBox  x:Name="textBlockAngleCorrected"  KeyUp="textBlockAngleFromIC_KeyUp"  HorizontalAlignment="Left" Margin="450,68,0,0"  TextWrapping="Wrap" Text="180" VerticalAlignment="Top" BorderThickness="1"/>
 
-                <TextBlock x:Name="textBlockAngleInBreakPointCaption" HorizontalAlignment="Left" Margin="45,120,0,0" TextWrapping="Wrap" Text="Угол в точке разрыва" VerticalAlignment="Top"/>
-                <TextBox  x:Name="textBlockAngleInBreakPoint" KeyUp="textBlockAngleInBreakPoint_KeyUp"  HorizontalAlignment="Left" Margin="45,150,0,0" TextWrapping="Wrap" Text="+170" VerticalAlignment="Top" BorderThickness="1"/>
                 <TextBlock  x:Name="textBlockDistanceToZeroCaption"  HorizontalAlignment="Left" Margin="245,120,0,0"  TextWrapping="Wrap" Text="Расстояние до нуля" VerticalAlignment="Top"/>
-                <TextBox  x:Name="textBlockDistanceToZero"  KeyUp="textBlockDistanceToZero_KeyUp"  HorizontalAlignment="Left" Margin="245,150,0,0"  TextWrapping="Wrap" Text="145" VerticalAlignment="Top" BorderThickness="1"/>
             </Grid>
         </Popup>
         <Popup x:Name="PopupWiFi" Grid.RowSpan="2">

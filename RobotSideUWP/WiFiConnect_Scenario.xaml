@@ -101,7 +101,6 @@
                         <PasswordBox x:Name="NetworkKey" Width="300" Margin="5,0,10,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                        <CheckBox x:Name="IsAutomaticReconnection" IsChecked="True">Auto reconnect?</CheckBox>
                         <Button Click="ConnectButton_Click" Margin="5,0,0,0">Connect</Button>
                     </StackPanel>
                 </StackPanel>

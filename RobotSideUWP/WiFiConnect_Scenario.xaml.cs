@@ -103,10 +103,7 @@ namespace RobotSideUWP
                 return;
             }
             WiFiReconnectionKind reconnectionKind = WiFiReconnectionKind.Manual;
-            if (IsAutomaticReconnection.IsChecked.HasValue && IsAutomaticReconnection.IsChecked == true)
-            {
-                reconnectionKind = WiFiReconnectionKind.Automatic;
-            }
+            reconnectionKind = WiFiReconnectionKind.Automatic;
 
             WiFiConnectionResult result;
             if (selectedNetwork.AvailableNetwork.SecuritySettings.NetworkAuthenticationType == Windows.Networking.Connectivity.NetworkAuthenticationType.Open80211 &&

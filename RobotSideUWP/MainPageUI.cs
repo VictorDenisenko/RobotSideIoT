@@ -66,21 +66,16 @@ namespace RobotSideUWP
             checkSmoothlyStop.Checked += checkSmoothlyStop_Checked;
             checkSmoothlyStop.Unchecked += CheckSmoothlyStop_Unchecked;
 
-            checkRebootAtNight.Checked += CheckRebootAtNight_Checked;
-            checkRebootAtNight.Unchecked += CheckRebootAtNight_Unchecked;
-
-            //labelRobotName.TextChanged += LabelRobotName_TextChanged;
-
             comboBoxWebSiteAddress.AllowDrop = true;
-            addresses[0] = Convert.ToString(localSettings.Values["defaultWebSiteAddress"]);
-            addresses[1] = Convert.ToString(localSettings.Values["webSiteAddress1"]);
-            addresses[2] = Convert.ToString(localSettings.Values["webSiteAddress2"]);
-            addresses[3] = Convert.ToString(localSettings.Values["webSiteAddress3"]);
-            addresses[4] = Convert.ToString(localSettings.Values["webSiteAddress4"]);
-            addresses[5] = Convert.ToString(localSettings.Values["webSiteAddress5"]);
-            addresses[6] = Convert.ToString(localSettings.Values["webSiteAddress6"]);
-            addresses[7] = Convert.ToString(localSettings.Values["webSiteAddress7"]);
-            addresses[8] = Convert.ToString(localSettings.Values["webSiteAddress8"]);
+            addresses[0] = Convert.ToString(localContainer.Containers["settings"].Values["defaultWebSiteAddress"]);
+            addresses[1] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress1"]);
+            addresses[2] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress2"]);
+            addresses[3] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress3"]);
+            addresses[4] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress4"]);
+            addresses[5] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress5"]);
+            addresses[6] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress6"]);
+            addresses[7] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress7"]);
+            addresses[8] = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress8"]);
 
             foreach (string address in addresses)
             {
@@ -92,18 +87,6 @@ namespace RobotSideUWP
             LeftGroup.PointerPressed += LeftGroup_PointerPressed;
             RightGroup.PointerPressed += RightGroup_PointerPressed;
             SettingsBorder.PointerPressed += SettingsBorder_PointerPressed;
-        }
-
-        private void CheckRebootAtNight_Unchecked(object sender, RoutedEventArgs e)
-        {
-            CommonStruct.rebootAtNight = false;
-            localSettings.Values["RebootAtNight"] = false;
-        }
-
-        private void CheckRebootAtNight_Checked(object sender, RoutedEventArgs e)
-        {
-            CommonStruct.rebootAtNight = true;
-            localSettings.Values["RebootAtNight"] = true;
         }
 
         private void SettingsBorder_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -133,8 +116,8 @@ namespace RobotSideUWP
         private void ComboBoxWebSiteAddress_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             addresses[0] = comboBoxWebSiteAddress.SelectedValue.ToString();
-            localSettings.Values["defaultWebSiteAddress"] = addresses[0];
-            CommonStruct.defaultWebSiteAddress = (string)localSettings.Values["defaultWebSiteAddress"];
+            localContainer.Containers["settings"].Values["defaultWebSiteAddress"] = addresses[0];
+            CommonStruct.defaultWebSiteAddress = (string)localContainer.Containers["settings"].Values["defaultWebSiteAddress"];
 
             client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
 
@@ -212,13 +195,13 @@ namespace RobotSideUWP
         void checkSmoothlyStop_Checked(object sender, RoutedEventArgs e)
         {
             CommonStruct.stopSmoothly = true;
-            localSettings.Values["StopSmoothly"] = true;
+            localContainer.Containers["settings"].Values["StopSmoothly"] = true;
         }
 
         void CheckSmoothlyStop_Unchecked(object sender, RoutedEventArgs e)
         {
             CommonStruct.stopSmoothly = false;
-            localSettings.Values["StopSmoothly"] = false;
+            localContainer.Containers["settings"].Values["StopSmoothly"] = false;
         }
 
         private void buttonGoForward_PointerDown(object sender, PointerRoutedEventArgs e)
@@ -464,7 +447,7 @@ namespace RobotSideUWP
             CommonStruct.buttonOpenFileFolder = "Open Folder";
             labelKeysKontrol.Text = "Keys";
             buttonStopWheels.Content = "Wheels Stop";
-            localSettings.Values["Culture"] = "en-US";
+            localContainer.Containers["settings"].Values["Culture"] = "en-US";
             labelSpeedTuning.Text = "Speed Tuning";
             textBlockSettings.Text = "Robot Settings";
             buttonCloseSettings.Content = "Close";
@@ -516,7 +499,7 @@ namespace RobotSideUWP
             CommonStruct.buttonOpenFileFolder = "Открыть папку";
             labelKeysKontrol.Text = "Клавиши";
             buttonStopWheels.Content = "Стоп (колеса)";
-            localSettings.Values["Culture"] = "ru-RU";
+            localContainer.Containers["settings"].Values["Culture"] = "ru-RU";
             labelSpeedTuning.Text = "Подстройка";
             textBlockSettings.Text = "Настройки робота";
             buttonCloseSettings.Content = "Закрыть";
@@ -532,7 +515,7 @@ namespace RobotSideUWP
 
         private void LabelRobotName_TextChanged(object sender, TextChangedEventArgs e)
         {
-            //localSettings.Values["RobotName"] = textBoxRobotName.Text;
+            //localContainer.Containers["settings"].Values["RobotName"] = textBoxRobotName.Text;
         }
 
     }

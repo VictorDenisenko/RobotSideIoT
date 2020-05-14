@@ -12,45 +12,44 @@ namespace RobotSideUWP
         public struct CommonStruct
 		{//Сюда записываются данные в формате с нулями перед числами (ZeroInFront Format)
 		static public string decriptedSerial { get; set; }
-		static public string timeOut { get; set; }
+        static public string timeOut = "5000";
 		public static string x1 = "";
 		public static string x2 = "";
-		public static double cameraSpeed { get; set; }
+        public static double cameraSpeed = 100;
         public static string wheelsAddress = "0002";
         public static string cameraAddress = "0003";
-		public static string interval { get; set; }
+        public static string interval = "1.4";
 		public static string portName { get; set; }
 		public static string bodRate { get; set; }
-		public static bool reconnect { get; set; }
 		public static bool portOpen { get; set; }
-		public static int PWMStoppingSpeed { get; set; }
-		public static double maxWheelsSpeed { get; set; }//Макс. скорость, задаваемая слайдером макс. скорости, в процентах. 
+        public static int PWMStoppingSpeed = 220;
+        public static double maxWheelsSpeed = 100;//Макс. скорость, задаваемая слайдером макс. скорости, в процентах. 
 		public static string lastCommandRight { get; set; }
 		public static string lastCommandLeft { get; set; }
-		public static int smoothStopTime { get; set; }
-		public static string wheelsPwrRange { get; set; }
+        public static int smoothStopTime = 1000;
+        public static string wheelsPwrRange = "4";
         public static string cameraPwrRange = "3";
 		public static int connectionNumber { get; set; }
-        public static string defaultWebSiteAddress { get; set; }
+        public static string defaultWebSiteAddress = "https://boteyes.com";
         public static string webAddressForMQTT { get; set; }
-        public static string stepNumberForCalibration { get; set; }
-        public static int directTopDistance = 0;
-        public static int directBottomDistance { get; set; }
+        public static string stepNumberForCalibration = "15";
+        public static int directTopDistance = 5;
+        public static int directBottomDistance = 10;
         public static string top_bottom_distance { get; set; }
-        public static int cameraAlpha { get; set; }
+        public static int cameraAlpha = 0;
         public static string PowerControl { get; set; }
         public static double lastSpeedLeft { get; set; }
         public static double lastSpeedRight { get; set; }
         public static string directionLeft = "0";
         public static bool stopBeforeWas = true;
         public static string directionRight = "0";
-        public static double k1 { get; set; }
-        public static double k2 { get; set; }
-        public static double k3 { get; set; }
-        public static double k4 { get; set; }
-        public static double speedTuningParam { get; set; }
+        public static double k1 = 0.7;
+        public static double k2 = 0.4;
+        public static double k3 = 0.2;
+        public static double k4 = 0.1;
+        public static double speedTuningParam = 0.0;
 
-        public static int minWheelsSpeedForTurning { get; set; }
+        public static int minWheelsSpeedForTurning = 50;
         public static string smileFilePath { get; set; }
 
         public static string downloadsPath { get; set; }
@@ -63,7 +62,6 @@ namespace RobotSideUWP
         public static string buttonOpenFileFolder = "";
         public static bool exitProgramm = false;
         public static bool stopSmoothly = true;
-        public static bool rebootAtNight = true;
 
         public static double speedLeftLocal = 0.0;
         public static double speedRightLocal = 0.0;
@@ -79,17 +77,14 @@ namespace RobotSideUWP
         static public string dataToWrite { get; set; }
         static public string readData { get; set; }
 
-        static public string webSiteAddress1 = "";
-        static public string webSiteAddress2 = "";
-        static public string webSiteAddress3 = "";
-        static public string webSiteAddress4 = "";
-        static public string webSiteAddress5 = "";
+        static public string webSiteAddress1 = "https://boteyes.com";
+        static public string webSiteAddress2 = "https://boteyes.ru";
+        static public string webSiteAddress3 = "https://robotaxino.com";
+        static public string webSiteAddress4 = "http://localhost";
+        static public string webSiteAddress5 = "https://localhost";
         static public string webSiteAddress6 = "";
         static public string webSiteAddress7 = "";
         static public string webSiteAddress8 = "";
-
-        //static public string robotName = "";
-        static public string serial = "";
 
         public static bool allControlIsEnabled = false;
 
@@ -104,13 +99,13 @@ namespace RobotSideUWP
         public static double DistanceToZero { get; internal set; }
 
         public static double localizationPoint;
-        internal static bool checkBoxOnlyLocal;
+        internal static bool checkBoxOnlyLocal = false;
         //public static double[] anglesFromIC = new double[16];
         public static string[] deviceIDNames = new string[10];
-        internal static string cameraController;
+        internal static string cameraController = "RD31";
 
         public static bool wheelsWasStopped = true;
-        public static int initTime;
+        public static int initTime = 240;
 
         public static double dVoltageCorrected = 12500;
         public static string voltageLevelFromRobot = "";
@@ -335,7 +330,7 @@ namespace RobotSideUWP
 				}
 			}
 
-		public static string Decryption(string inputWord)// Дешифрование 
+		public static string Decryption(string inputWord)// Дешифрование
 			{
 			try
 				{

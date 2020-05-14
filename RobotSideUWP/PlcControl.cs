@@ -422,13 +422,13 @@ namespace RobotSideUWP
                     return "";
                 }
                 dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
-                deltaV = Convert.ToDouble(MainPage.Current.localSettings.Values["deltaV"]);
+                deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
                 {
                     deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
-                    MainPage.Current.localSettings.Values["deltaV"] = deltaV;
+                    MainPage.Current.localContainer.Containers["settings"].Values["deltaV"] = deltaV;
                     CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }

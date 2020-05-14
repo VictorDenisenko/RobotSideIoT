@@ -41,7 +41,7 @@ namespace RobotSideUWP
 
         private void buttonAbout_Click(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.NotifyUser("НИЛ АП, http://www.boteyes.ru ", NotifyType.ErrorMessage);
+            MainPage.Current.NotifyUser("RealLab!, https://boteyes.com ", NotifyType.ErrorMessage);
         }
 
         private void RD31Button_Checked(object sender, RoutedEventArgs e)
@@ -66,7 +66,6 @@ namespace RobotSideUWP
 
     public sealed partial class MainPage : Page
     {
-
         public static ReadWrite readWrite = null;
         PlcControl plcControl = null;
         public static MainPage Current;
@@ -74,7 +73,10 @@ namespace RobotSideUWP
         private string forwardDirection = "0";
         private string backwardDirection = "1";
         string[] dataFromRobot = new string[16] { "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" }; //данные из робота  
-        public ApplicationDataContainer localSettings = null;
+        //public ApplicationDataContainer localSettings = null;
+
+        
+
         private ObservableCollection<DeviceInformation> listOfDevices;
         public DeviceInformation choosenDevice;
         private ExtendedExecutionSession session = null;
@@ -121,49 +123,69 @@ namespace RobotSideUWP
         GpioPin pin3;//Старая выгрузка Виндовс и новый Выкл-Вкл.
         GpioPinValue val3 = GpioPinValue.Low;
         GpioPin pin5;//Выкл - подача сигнала на таймер выключения питания
+        public ApplicationDataContainer localContainer;
 
         public MainPage()
         {
             clientId = Guid.NewGuid().ToString();
             InitializeComponent();
             listOfDevices = new ObservableCollection<DeviceInformation>();
-            localSettings = ApplicationData.Current.LocalSettings;
+            //localSettings = ApplicationData.Current.LocalSettings;
 
-            object testObject = localSettings.Values["defaultWebSiteAddress"];
-            if (testObject == null)
+            ///////////////////////////
+            localContainer = ApplicationData.Current.LocalSettings;
+            //localContainer.DeleteContainer("settings");
+            if (localContainer.Containers.ContainsKey("settings"))
             {
+                ReadAllSettings();
+            }
+            else
+            {
+                ApplicationDataContainer localSettings = localContainer.CreateContainer("settings", ApplicationDataCreateDisposition.Always);
                 WriteDefaultSettings();
-                ReadSettings();
+                ReadAllSettings();
             }
-            else
-            {
-                ReadSettings();
-            }
-            object testObject1 = localSettings.Values["angleInBreakPoint"];
-            if (testObject1 == null)
-            {
-                localSettings.Values["angleInBreakPoint"] = 170;
-                localSettings.Values["distanceToZero"] = 145;
-                CommonStruct.AngleInBreakPoint = Convert.ToDouble(localSettings.Values["angleInBreakPoint"]);
-                CommonStruct.DistanceToZero = Convert.ToDouble(localSettings.Values["distanceToZero"]);
-            }
+            //Функция для записи в контейнер новых значений. Записывать и считывать надо только новые пермеенные, назначенные опльзоателем. Если оне менял, то и записывать не надо.
 
-            object testObject2 = localSettings.Values["cameraController"];
-            if (testObject2 == null)
-            {
-                localSettings.Values["cameraController"] = "No";
-                CommonStruct.cameraController = "No";
-            }
-            else
-            {
-                CommonStruct.cameraController = Convert.ToString(testObject2);
-            }
+            //Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
+            Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
+
+            /////////////////////////////
+
+
+
+            //object testObject = localSettings.Values["defaultWebSiteAddress"];
+            //if (testObject == null)
+            //{
+            //    WriteDefaultSettings();
+            //    ReadAllSettings();
+            //}
+            //else
+            //{
+            //    ReadAllSettings();
+            //}
+            //object testObject1 = localSettings.Values["angleInBreakPoint"];
+            //if (testObject1 == null)
+            //{
+            //    localSettings.Values["angleInBreakPoint"] = 170;
+            //    localSettings.Values["distanceToZero"] = 145;
+            //}
+
+            //object testObject2 = localSettings.Values["cameraController"];
+            //if (testObject2 == null)
+            //{
+            //    localSettings.Values["cameraController"] = "No";
+            //    CommonStruct.cameraController = "No";
+            //}
+            //else
+            //{
+            //    CommonStruct.cameraController = Convert.ToString(testObject2);
+            //}
 
             InitializeUI();
             Current = this;
 
             InitializeRobot();
-            CommonStruct.decriptedSerial = Convert.ToString(localSettings.Values["Serial"]);
 
             //Таймер для перезагрузки (рестарта) Windows
             setTimeToRestartPicker.TimeChanged += SetTimeToRestar_TimeChanged;
@@ -350,7 +372,7 @@ namespace RobotSideUWP
             if (textBoxRealVoltage.Text != "") {
                 CommonStruct.VReal = Convert.ToDouble(textBoxRealVoltage.Text);
                 CommonStruct.textBoxRealVoltageChanged = true;
-                localSettings.Values["VReal"] = CommonStruct.VReal.ToString();
+                localContainer.Containers["settings"].Values["VReal"] = CommonStruct.VReal.ToString();
             }
         }
 
@@ -358,7 +380,7 @@ namespace RobotSideUWP
         {
             timeToRestartHours = setTimeToRestartPicker.Time.Hours;
             timeToRestartMinutes = setTimeToRestartPicker.Time.Minutes;
-            localSettings.Values["initTime"] = 60 * timeToRestartHours + timeToRestartMinutes;
+            localContainer.Containers["settings"].Values["initTime"] = 60 * timeToRestartHours + timeToRestartMinutes;
             CommonStruct.initTime = 60 * timeToRestartHours + timeToRestartMinutes;
         }
 
@@ -1057,27 +1079,27 @@ namespace RobotSideUWP
         private void buttonSetDefault_Click(object sender, RoutedEventArgs e)
         {
             WriteDefaultSettings();
-            localSettings.Values["Serial"] = textBoxRobotSerial.Text;
-            ReadSettings();
+            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
+            ReadAllSettings();
             ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
         }
 
         private void buttonSave_Click(object sender, RoutedEventArgs e)
         {
-            localSettings.Values["cameraController"] = CommonStruct.cameraController;
-            localSettings.Values["PWMStoppingSpeed"] = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
+            localContainer.Containers["settings"].Values["cameraController"] = CommonStruct.cameraController;
+            localContainer.Containers["settings"].Values["PWMStoppingSpeed"] = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
             CommonStruct.PWMStoppingSpeed = Convert.ToInt16(textBoxPWMStoppingSpeed.Text);
-            localSettings.Values["CameraFastSpeed"] = textBoxCameraFastSpeed.Text;
+            localContainer.Containers["settings"].Values["CameraFastSpeed"] = textBoxCameraFastSpeed.Text;
             CommonStruct.cameraFastSpeed = textBoxCameraFastSpeed.Text;
-            localSettings.Values["stepNumberForCalibration"] = textBoxStepNumberForCalibration.Text;
+            localContainer.Containers["settings"].Values["stepNumberForCalibration"] = textBoxStepNumberForCalibration.Text;
             CommonStruct.stepNumberForCalibration = textBoxStepNumberForCalibration.Text;
-            localSettings.Values["directTopDistance"] = Convert.ToInt16(textBoxDirectTopDistance.Text);
+            localContainer.Containers["settings"].Values["directTopDistance"] = Convert.ToInt16(textBoxDirectTopDistance.Text);
             CommonStruct.directTopDistance = Convert.ToInt16(textBoxDirectTopDistance.Text);
-            localSettings.Values["directBottomDistance"] = Convert.ToInt16(textBoxDirectBottomDistance.Text);
+            localContainer.Containers["settings"].Values["directBottomDistance"] = Convert.ToInt16(textBoxDirectBottomDistance.Text);
             CommonStruct.directBottomDistance = Convert.ToInt16(textBoxDirectBottomDistance.Text);
-            localSettings.Values["minWheelsSpeedForTurning"] = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
+            localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"] = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
             CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(textBoxMinWheelsSpeedForTurning.Text);
-            localSettings.Values["speedTuningParam"] = Convert.ToDouble(textBoxSpeedTuningParam.Text);
+            localContainer.Containers["settings"].Values["speedTuningParam"] = Convert.ToDouble(textBoxSpeedTuningParam.Text);
             CommonStruct.speedTuningParam = Convert.ToDouble(textBoxSpeedTuningParam.Text);
         }
 
@@ -1089,7 +1111,7 @@ namespace RobotSideUWP
         private void buttonRobotSerialPopup_Click(object sender, RoutedEventArgs e)
         {
             if (!PopupRobotSerial.IsOpen) { PopupRobotSerial.IsOpen = true; }
-            object obj = localSettings.Values["Serial"];
+            object obj = localContainer.Containers["settings"].Values["Serial"];
             if (obj != null)
             {
                 textBoxRobotSerial.Text = obj.ToString();
@@ -1102,7 +1124,7 @@ namespace RobotSideUWP
 
         private void buttonRobotSerialCloseAndSave_Click(object sender, RoutedEventArgs e)
         {
-            localSettings.Values["Serial"] = textBoxRobotSerial.Text;
+            localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
             CommonStruct.decriptedSerial = textBoxRobotSerial.Text;
             if (PopupRobotSerial.IsOpen) { PopupRobotSerial.IsOpen = false; }
         }
@@ -1118,7 +1140,7 @@ namespace RobotSideUWP
         {
             if (checkBoxOnlyLocal.IsChecked == true)
             {
-                localSettings.Values["onlyLocal"] = true;
+                localContainer.Containers["settings"].Values["onlyLocal"] = true;
                 CommonStruct.checkBoxOnlyLocal = true;
             }
 
@@ -1128,7 +1150,7 @@ namespace RobotSideUWP
         {
             if (checkBoxOnlyLocal.IsChecked == false)
             {
-                localSettings.Values["onlyLocal"] = false;
+                localContainer.Containers["settings"].Values["onlyLocal"] = false;
                 CommonStruct.checkBoxOnlyLocal = false;
             }
         }
@@ -1146,42 +1168,6 @@ namespace RobotSideUWP
         private void buttonLocalizationAngleCloseNoSave_Click(object sender, RoutedEventArgs e)
         {
             if (AIPopup.IsOpen) { AIPopup.IsOpen = false; }
-        }
-
-        private void trackBarLocalizationAngle_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-        {
-            CommonStruct.localizationPoint = trackBarLocalizationAngle.Value;
-            localSettings.Values["localizationAngle"] = CommonStruct.localizationPoint;
-        }
-
-        private void textBlockAngleFromIC_KeyUp(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
-        {
-            string s = e.Key.ToString();
-            if (s == "Enter")
-            {
-                CommonStruct.localizationPoint = trackBarLocalizationAngle.Value;
-                localSettings.Values["localizationAngle"] = CommonStruct.localizationPoint;
-            }
-        }
-
-        private void textBlockAngleInBreakPoint_KeyUp(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
-        {
-            string s = e.Key.ToString();
-            if (s == "Enter")
-            {
-                CommonStruct.AngleInBreakPoint = Convert.ToDouble(textBlockAngleInBreakPoint.Text);
-                localSettings.Values["angleInBreakPoint"] = CommonStruct.AngleInBreakPoint;
-            }
-        }
-
-        private void textBlockDistanceToZero_KeyUp(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
-        {
-            string s = e.Key.ToString();
-            if (s == "Enter")
-            {
-                CommonStruct.DistanceToZero = Convert.ToDouble(textBlockDistanceToZero.Text);
-                localSettings.Values["distanceToZero"] = CommonStruct.DistanceToZero;
-            }
         }
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)
