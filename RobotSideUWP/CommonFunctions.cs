@@ -25,7 +25,6 @@ namespace RobotSideUWP
         public static string wheelsPwrRange = "4";
         public static string cameraPwrRange = "3";
         public static string defaultWebSiteAddress = "https://boteyes.com";
-        public static string webAddressForMQTT { get; set; }
 
         public static double lastSpeedLeft { get; set; }
         public static double lastSpeedRight { get; set; }

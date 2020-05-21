@@ -1,7 +1,7 @@
 ﻿{
   "dependencies": {
-    "M2Mqtt": "4.3.0",
     "Microsoft.NETCore.UniversalWindowsPlatform": "6.2.8",
+    "Newtonsoft.Json": "12.0.3",
     "System.IO.MemoryMappedFiles": "4.3.0"
   },
   "frameworks": {

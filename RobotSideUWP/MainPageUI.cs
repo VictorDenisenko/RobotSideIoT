@@ -111,8 +111,6 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["defaultWebSiteAddress"] = addresses[0];
             CommonStruct.defaultWebSiteAddress = (string)localContainer.Containers["settings"].Values["defaultWebSiteAddress"];
 
-            client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
-
             buttonStart_Click(null, null);
         }
 

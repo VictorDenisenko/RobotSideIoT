@@ -1,24 +1,28 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using uPLibrary.Networking.M2Mqtt;
-using uPLibrary.Networking.M2Mqtt.Messages;
 using Windows.ApplicationModel.Core;
 using Windows.ApplicationModel.ExtendedExecution;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
+using Windows.Networking.Sockets;
+using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.System;
-using Windows.System.Profile;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
-using System.Threading;
+using Windows.UI.Xaml.Navigation;
+using Windows.Web;
+using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace RobotSideUWP
 {
@@ -64,6 +68,24 @@ namespace RobotSideUWP
         public Type ClassType { get; set; }
     }
 
+    public class DataFromClient
+    {
+        public string serialFromClient, wheelsStartStop, camera, dir, comments;
+        public short x, y;
+        public int packageNumber;
+        public string deltaTime;
+        public bool isThisData;
+    }
+
+    public class DataFromRobot
+    {
+        public string serialFromClient, wheelsStartStop, camera, dir, comments;
+        public short x, y;
+        public int packageNumber;
+        public string deltaTime;
+        public bool isThisData;
+    }
+
     public sealed partial class MainPage : Page
     {
         public static ReadWrite readWrite = null;
@@ -83,7 +105,6 @@ namespace RobotSideUWP
         private string[] arrBefore = new string[16];
         string clientId = "";
 
-        MqttClient client = null;
         /// /////////////
         string sArr3Before = "";
         string directionLeft; //направление вращения левого колеса
@@ -108,12 +129,21 @@ namespace RobotSideUWP
         int minAllowableSpeed = 15;
         string cameraIsStopped = "no";
         DispatcherTimer watchdogTimer;
-        DispatcherTimer reconnectTimer;
         static string oldText = "";
         GpioPin pin3;//Старая выгрузка Виндовс и новый Выкл-Вкл.
         GpioPinValue val3 = GpioPinValue.Low;
         GpioPin pin5;//Выкл - подача сигнала на таймер выключения питания
         public ApplicationDataContainer localContainer;
+        ////////////
+        private MessageWebSocket messageWebSocket;
+        private DataWriter messageWriter;
+        private string serverAddress = "";
+        private Uri uriServerAddress = null;
+        private bool isConnected = false;
+        DispatcherTimer reconnectTimer;
+        private string thisRobotSerial;
+        DataFromRobot dataToSend = new DataFromRobot();
+        DataFromClient receivedData = new DataFromClient();
 
         public MainPage()
         {
@@ -136,13 +166,11 @@ namespace RobotSideUWP
 
             InitializeUI();
             Current = this;
-
             InitializeRobot();
 
             //Калибровка измерителя напряжения на аккумуляторе
             textBoxRealVoltage.Text = CommonStruct.VReal.ToString();
             textBoxRealVoltage.TextChanged += TextBoxRealVoltage_TextChanged;
-
             textBoxRobotSerial.TextChanged += TextBoxRobotSerial_TextChanged;
 
             Task.Delay(1000).Wait();//Да, проверил, именно в этом месте программа останавливает свое выполнение на 1 сек
@@ -163,9 +191,6 @@ namespace RobotSideUWP
             //checkBoxOnlyLocal.Visibility = Visibility.Collapsed;
             //buttonExit.Visibility = Visibility.Collapsed;
 
-
-            client = MqttInitialization(CommonStruct.defaultWebSiteAddress);
-
             CommonStruct.robotSerial = textBoxRobotSerial.Text;
             dataFromRobot[0] = CommonStruct.robotSerial;
             dataFromRobot[1] = "";
@@ -177,11 +202,6 @@ namespace RobotSideUWP
             watchdogTimer = new DispatcherTimer();
             watchdogTimer.Tick += WatchdogTimer_Tick;
             watchdogTimer.Interval = new TimeSpan(0, 0, 0, 1, 200); //Ватчдог таймер (дни, часы, мин, сек, ms)
-
-            reconnectTimer = new DispatcherTimer();
-            reconnectTimer.Tick += ReconnectTimer_Tick;
-            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
-            reconnectTimer.Start();
 
             //Этот таймер должен давать два тика до того, как отошлется очередная команда плавной остановки (там 200 мс) 
             hostWatchdogInitTimer = new DispatcherTimer();
@@ -204,20 +224,262 @@ namespace RobotSideUWP
             pin5.SetDriveMode(GpioPinDriveMode.Output);
             pin5.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
 
+            ////////////
+            reconnectTimer = new DispatcherTimer();
+            reconnectTimer.Tick += ReconnectTimer_Tick;
+            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); //Таймер для реконнекта (дни, часы, мин, сек, ms)
+            //reconnectTimer.Start();
+            thisRobotSerial = CommonStruct.robotSerial;
+            Connect();
         }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            //Это надо ввести в файл app.xaml.cs, private void OnSuspending(object sender, SuspendingEventArgs e)
+            CloseSocket();
+        }
+
+        private void ReconnectTimer_Tick(object sender, object e)
+        {
+            if (isConnected == false)
+            {
+                try
+                {
+                    pin26.SetDriveMode(GpioPinDriveMode.Output);//pin26 - Зеленый светодиод
+                    pin26.Write(GpioPinValue.Low);
+                    Connect();
+                }
+                catch (Exception e1)
+                {
+                }
+                reconnectTimer.Start();
+            }
+            else
+            {
+                pin26.SetDriveMode(GpioPinDriveMode.Output);
+                pin26.Write(GpioPinValue.High);
+            }
+            if (readWrite.serialPort == null) readWrite.comPortInit();
+        }
+
+        private void Connect()
+        {
+            //Здесь надо проверить, открыто ли уже соединение и закрыть его если оно уже открыто, и только затем открыть новое.
+            messageWebSocket = new MessageWebSocket();
+            messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
+            var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(thisRobotSerial));
+            messageWebSocket.SetRequestHeader("serial", serialBase64);//В заголовок добавил SN
+            messageWebSocket.MessageReceived += MessageReceived;
+            messageWebSocket.Closed += OnClosed;
+            messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.Untrusted);
+            messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.InvalidName);
+
+            if (CommonStruct.defaultWebSiteAddress.Contains("https"))
+            {
+                serverAddress = CommonStruct.defaultWebSiteAddress.Replace("https", "wss");
+                uriServerAddress = new Uri(serverAddress + ":443/?robot");
+            }
+            else
+            {
+                serverAddress = CommonStruct.defaultWebSiteAddress.Replace("http", "ws");
+                uriServerAddress = new Uri(serverAddress + ":8080/?robot");
+            }
+            
+            try
+            {
+                Task connectTask = Task.Run(() => {
+                    _ = messageWebSocket.ConnectAsync(uriServerAddress);
+                });
+                reconnectTimer.Start();
+            }
+            catch (Exception ex) // For debugging
+            {
+                messageWebSocket.Dispose();
+                messageWebSocket = null;
+                return;
+            }
+            messageWriter = new DataWriter(messageWebSocket.OutputStream);
+            NotifyUser("Connected", NotifyType.StatusMessage);
+        }
+
+        private async Task SendMessageUsingMessageWebSocketAsync(string message)
+        {
+            try
+            {
+                using (var dataWriter = new DataWriter(messageWebSocket.OutputStream))
+                {
+                    dataWriter.WriteString(message);
+                    await dataWriter.StoreAsync();
+                    dataWriter.DetachStream();
+                }
+                NotifyUser("Sending message using MessageWebSocket: " + message, NotifyType.StatusMessage);
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        public static string BuildWebSocketError(Exception ex)
+        {
+            ex = ex.GetBaseException();
+            if ((uint)ex.HResult == 0x800C000EU)
+            {
+                // INET_E_SECURITY_PROBLEM - our custom certificate validator rejected the request.
+                return "Error: Rejected by custom certificate validation.";
+            }
+            WebErrorStatus status = WebSocketError.GetStatus(ex.HResult);
+            switch (status)
+            {
+                case WebErrorStatus.CannotConnect:
+                case WebErrorStatus.NotFound:
+                case WebErrorStatus.RequestTimeout:
+                    return "Cannot connect to the server.";
+                case WebErrorStatus.Unknown:
+                    return "COM error: " + ex.HResult;
+                default:
+                    return "Error: " + status;
+            }
+        }
+
+        static public async Task<bool> AreCertificateAndCertChainValidAsync(Certificate serverCert, IReadOnlyList<Certificate> certChain)
+        {
+            foreach (Certificate cert in certChain)
+            {
+                if (!await IsCertificateValidAsync(cert))
+                {
+                    return false;
+                }
+            }
+            return await IsCertificateValidAsync(serverCert);
+        }
+
+        static async Task<bool> IsCertificateValidAsync(Certificate serverCert)
+        {
+            // This is a placeholder call to simulate long-running async calls. Note that this code runs synchronously as part
+            // of the SSL/TLS handshake. Avoid performing lengthy operations here - else, the remote server may terminate the connection abruptly.
+            await Task.Delay(100);
+            // In this sample, we check the issuer of the certificate - this is purely for illustration purposes and should not be considered as a recommendation for certificate validation.
+            return serverCert.Issuer == "www.fabrikam.com";
+        }
+
+        private async void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                if (messageWebSocket == sender)
+                {
+                    CloseSocket();
+                }
+            });
+        }
+
+        private void MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
+        {
+            string read;
+            try
+            {
+                _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    try{
+                        using (DataReader reader = args.GetDataReader())
+                        {
+                            reader.UnicodeEncoding = UnicodeEncoding.Utf8;
+                            try
+                            {
+                                read = reader.ReadString(reader.UnconsumedBufferLength);
+                                receivedData = JsonConvert.DeserializeObject<DataFromClient>(read);
+
+                                ////////
+                                string result = receivedData.comments;
+                                string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
+                                s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
+                                separator[0] = ','; sArr = s.Split(separator, 16);
+
+                                if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.robotSerial))
+                                {
+                                    __SendReceiveAsync();
+                                }
+                                ////////////
+
+                                if (isConnected == false)
+                                {
+                                    if ((receivedData.comments.Contains(thisRobotSerial) == true) && (receivedData.comments.Contains("connected") == true))
+                                    {
+                                        _ = SendMessageUsingMessageWebSocketAsync("Robot is online.");
+                                        reconnectTimer.Stop();
+                                        isConnected = true;
+                                    }
+                                    else
+                                    {
+                                    }
+                                }
+                                else
+                                {
+                                    reconnectTimer.Stop();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                reconnectTimer.Stop();
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        isConnected = false;
+                        reconnectTimer.Start();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        private void CloseSocket()
+        {
+            if (messageWriter != null)
+            {
+                // In order to reuse the socket with another DataWriter, the socket's output stream needs to be detached.
+                // Otherwise, the DataWriter's destructor will automatically close the stream and all subsequent I/O operations invoked on the socket's output stream will fail with ObjectDisposedException.
+                messageWriter.DetachStream();
+                messageWriter.Dispose();
+                messageWriter = null;
+            }
+            if (messageWebSocket != null)
+            {
+                try
+                {
+                    messageWebSocket.Close(1000, "Closed due to user request.");
+                }
+                catch (Exception ex)
+                {
+                }
+                messageWebSocket = null;
+            }
+        }
+
+        private void SendData(DataFromRobot dataToSend)
+        {
+            string json = JsonConvert.SerializeObject(dataToSend);
+            _ = SendMessageUsingMessageWebSocketAsync(json);
+        }
+
+        private void SendMessageButton_Click(object sender, RoutedEventArgs e)
+        {
+            string message = "Message From Robot";
+            DataFromRobot dataToSend = new DataFromRobot();
+            dataToSend.comments = message;
+            dataToSend.isThisData = true;
+            SendData(dataToSend);
+        }
+
+
 
         private void TextBoxRobotSerial_TextChanged(object sender, TextChangedEventArgs e)
         {
             localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
             CommonStruct.robotSerial = textBoxRobotSerial.Text;
-        }
-
-        private MqttClient MqttInitialization(string address)
-        {
-            int k = address.IndexOf("//");
-            CommonStruct.webAddressForMQTT = address.Remove(0, k + 2);
-            client = new MqttClient(CommonStruct.webAddressForMQTT);
-            return client;
         }
 
         private async void Pin3_ValueChangedAsync(GpioPin sender, GpioPinValueChangedEventArgs args)
@@ -288,31 +550,7 @@ namespace RobotSideUWP
             }
         }
 
-        private void ReconnectTimer_Tick(object sender, object e)
-        {
-            try
-            {
-                bool isConnected = client.IsConnected;
-                if ((isConnected == false) && (bConnect == true)) {
-                    client.Connect(clientId);
-                    client.Subscribe(new string[] { CommonStruct.robotSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                    client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
 
-                    Current.NotifyUserFromOtherThreadAsync("MQTT Reconnected Successfully", NotifyType.ErrorMessage);
-                    pin26.SetDriveMode(GpioPinDriveMode.Output);//pin26 - Зеленый светодиод
-                    pin26.Write(GpioPinValue.Low);
-                } else {
-                    pin26.SetDriveMode(GpioPinDriveMode.Output);
-                    pin26.Write(GpioPinValue.High);
-                }
-
-                if (readWrite.serialPort == null) readWrite.comPortInit();
-            }
-            catch(Exception e1)
-            {
-                Current.NotifyUserFromOtherThreadAsync("ReconnectTimer_Tick " + e1.Message, NotifyType.ErrorMessage);
-            }
-        }
 
         private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -723,20 +961,7 @@ namespace RobotSideUWP
         int timeBefore = 0;
         int iArrayCounter = 0;//Нужно чтобы отличить первый массив от последующих
 
-        private void Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
-        {
-            //Current.NotifyUserFromOtherThread("MQTT " + CommonStruct.wheelsWasStopped.ToString(), NotifyType.StatusMessage);
-            string topic = e.Topic; byte[] message = e.Message; string result = Encoding.UTF8.GetString(message);
-            string s = result; string delim = "\""; s = s.Replace(delim, "");//Строка с разделителями - запятыми
-            s = s.Replace(delim, ""); s = s.Replace("[", ""); s = s.Replace("]", ""); char[] separator = new char[1];
-            separator[0] = ','; sArr = s.Split(separator, 16);
-
-            if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.robotSerial)) {
-                __Client_MqttMsgPublishReceivedAsync(sender, e);
-            }
-        }
-
-         private void __Client_MqttMsgPublishReceivedAsync(object sender, MqttMsgPublishEventArgs e)
+        private void __SendReceiveAsync()
         {
             if (sArr[14] == "0") arrBefore[14] = "0";
             iNumberOfMessage = Convert.ToInt32(sArr[14]);
@@ -904,10 +1129,7 @@ namespace RobotSideUWP
             try
             {
                 if (CommonStruct.robotSerial.Length == 24) {
-                    client.Connect(clientId);//Может S/N вместо этого взять?
-                    client.Subscribe(new string[] { CommonStruct.robotSerial }, new byte[] { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE });
-                    client.ConnectionClosed += Client_ConnectionClosed;
-                    client.MqttMsgPublishReceived += Client_MqttMsgPublishReceivedAsync;
+                    Connect();//Может S/N вместо этого взять?
                 } else {
                     Current.NotifyUserFromOtherThreadAsync("Robot Serial Number is incorrect ", NotifyType.ErrorMessage);
                 }
@@ -920,7 +1142,6 @@ namespace RobotSideUWP
 
         private void Client_ConnectionClosed(object sender, EventArgs e)
         {
-            bool isConnected = client.IsConnected;
             Current.NotifyUserFromOtherThreadAsync("Connection Closed", NotifyType.StatusMessage);
             pin26.SetDriveMode(GpioPinDriveMode.Output);
             pin26.Write(GpioPinValue.Low);
@@ -931,7 +1152,7 @@ namespace RobotSideUWP
             try
             {
                 EndExtendedExecution();
-                client.Disconnect();
+                //client.Disconnect();
             }
             catch(Exception e1)
             {
