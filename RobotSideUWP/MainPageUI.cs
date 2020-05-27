@@ -132,7 +132,7 @@ namespace RobotSideUWP
                 await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(async () =>
                 {
                     if ((strMessage != "") && (type == NotifyType.ErrorMessage)) {
-                        await SendErrorsToServer(strMessage);
+                        //await SendErrorsToServer(strMessage);
                     }
                 }));
             });
