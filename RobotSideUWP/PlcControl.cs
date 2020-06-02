@@ -10,10 +10,11 @@ namespace RobotSideUWP
 {
     class PlcControl
 		{
-        static GpioPin pin6;//Выход для отключения питания 
+        static GpioPin pin6;//Выход для отключения питания подается на один из двух диодов на входе платы таймера отключения питания
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
         public DispatcherTimer batteryMeasuringTimer;
+        static DispatcherTimer timerRobotOff = new DispatcherTimer();
 
         public PlcControl()
         {
@@ -23,8 +24,11 @@ namespace RobotSideUWP
 
             batteryMeasuringTimer = new DispatcherTimer();
             batteryMeasuringTimer.Tick += BatteryMeasuringTimer_Tick;
-            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 30, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 10, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
             batteryMeasuringTimer.Start();
+
+            timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
+            timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
         }
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
@@ -32,6 +36,12 @@ namespace RobotSideUWP
             if(stopTimerCounter == 0)
             {
                 MainPage.Current.ChargeLevelMeasure();
+            }
+            else
+            {
+                Task.Delay(100).Wait();
+                MainPage.Current.ChargeLevelMeasure();
+                Task.Delay(100).Wait();
             }
         }
 
@@ -369,11 +379,7 @@ namespace RobotSideUWP
 
         public static string BatteryVoltageHandling(string input)
         {
-            double levelCeiling = 0.0;
-            double dAveragedVoltage = 0;
-            double deltaV = 0;
             bool isInt;
-            int res = 0;
             try
             {
                 string s1 = input;
@@ -392,25 +398,26 @@ namespace RobotSideUWP
 
                 string averagedVoltage = s1.Substring(14, 4);
                 string x = averagedVoltage.Substring(0, 1);
-                if (averagedVoltage.Substring(0,1) != "1")
+                if (averagedVoltage.Substring(0, 1) != "1")
                 {
-                    averagedVoltage = averagedVoltage.Substring(0,3);
+                    averagedVoltage = averagedVoltage.Substring(0, 3);
                 }
                 CommonStruct.chargeCurrentFromRobot = data1.Substring(0, 4);
+                int res;
                 isInt = Int32.TryParse(CommonStruct.chargeCurrentFromRobot, out res);
                 if (isInt == true)
                 {
                     CommonStruct.dChargeCurrent = (Convert.ToDouble(CommonStruct.chargeCurrentFromRobot));
                 }
-                
+
                 isInt = Int32.TryParse(averagedVoltage, out res);
-                if ((averagedVoltage == "") || (isInt == false)  )
+                if ((averagedVoltage == "") || (isInt == false))
                 {
                     averagedVoltage = "0";
                     return "";
                 }
-                dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
-                deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
+                double dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
+                double deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
@@ -430,19 +437,15 @@ namespace RobotSideUWP
                     pin6 = GpioController.GetDefault().OpenPin(6);
                     pin6.SetDriveMode(GpioPinDriveMode.Output);
                     pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                    //Запускаем таймер, чтобы снять низкий уровень с выходов Распберри:
-                    DispatcherTimer timerRobotOff;
-                    timerRobotOff = new DispatcherTimer();
-                    timerRobotOff.Tick += TimerRobotOff_Tick;
-                    timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
-                    timerRobotOff.Start();
+                                                 
+                    timerRobotOff.Start();//Запускаем таймер, чтобы выгрузить Виндовс:
                     MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
                 }
                 if (CommonStruct.dVoltageCorrected > 1250)
                 {
                     CommonStruct.dVoltageCorrected = 1250;
                 }
-                levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
+                double levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
                 CommonStruct.outputValuePercentage = levelCeiling.ToString();
 
                 if ((CommonStruct.dChargeCurrent < 30) && (CommonStruct.dVoltageCorrected > 0))
@@ -462,14 +465,14 @@ namespace RobotSideUWP
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)
-        {//Таймер, который выключет напряжение питания через минутут после того как напряжение на аккумуляторе станет меньше 10,5 В.
+        {//Таймер, который выключет напряжение питания через минуту после того как напряжение на аккумуляторе станет меньше 10,5 В.
             try
             {
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
-                Task t = new Task(async () =>
+                Task t = new Task(() =>
                 {
-                    await MainPage.SendVoltageToServer("BotEyes is Off");
+                    MainPage.Current.SendCommentsToServer("BotEyes is Off");
                     CommonStruct.permissionToSendToWebServer = false;
                 });
                 t.Start();
@@ -481,7 +484,5 @@ namespace RobotSideUWP
                 MainPage.Current.NotifyUserFromOtherThreadAsync("TimerRobotOff_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
         }
-
-        
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -9,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.ApplicationModel.ExtendedExecution;
-using Windows.Devices.Enumeration;
 using Windows.Devices.Gpio;
 using Windows.Networking.Sockets;
 using Windows.Security.Cryptography.Certificates;
@@ -21,7 +19,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-using Windows.Web;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace RobotSideUWP
@@ -79,11 +76,16 @@ namespace RobotSideUWP
 
     public class DataFromRobot
     {
-        public string serialFromClient, wheelsStartStop, camera, dir, comments;
-        public short x, y;
-        public int packageNumber;
-        public string deltaTime;
-        public bool isThisData;
+        public string serialFromClient = "0";
+        public string wheelsStartStop = "0";
+        public string camera = "0";
+        public string dir = "0";
+        public string comments = "0";
+        public short x = 0;
+        public short y = 0;
+        public int packageNumber = 0;
+        public string deltaTime = "0";
+        public bool isThisData = true;
     }
 
     public sealed partial class MainPage : Page
@@ -130,9 +132,9 @@ namespace RobotSideUWP
         string cameraIsStopped = "no";
         DispatcherTimer watchdogTimer;
         static string oldText = "";
-        GpioPin pin3;//Старая выгрузка Виндовс и новый Выкл-Вкл.
+        GpioPin pin3;//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
         GpioPinValue val3 = GpioPinValue.Low;
-        GpioPin pin5;//Выкл - подача сигнала на таймер выключения питания
+        GpioPin pin5;//Выкл - подача напряжения на аппаратный таймер выключения питания
         public ApplicationDataContainer localContainer;
         ////////////
         private MessageWebSocket messageWebSocket;
@@ -213,7 +215,7 @@ namespace RobotSideUWP
             //Task.Delay(1000).Wait();
             plcControl = new PlcControl();
 
-            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
             pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//Поменял с 10 мс на 100 мс
             pin3.SetDriveMode(GpioPinDriveMode.Input);
             pin3.ValueChanged += Pin3_ValueChangedAsync;
@@ -236,7 +238,7 @@ namespace RobotSideUWP
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 0, 500); //Таймер для приема ответа сервера pong
+            pongTimer.Interval = new TimeSpan(0, 0, 0, 1, 0); //Таймер для приема ответа сервера pong
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -253,22 +255,12 @@ namespace RobotSideUWP
                 DataFromRobot dataToSend = new DataFromRobot();
                 dataToSend.comments = message;
                 dataToSend.isThisData = false;
-                SendData(dataToSend);
+                _ = SendData(dataToSend);
                 isConnected = false;
                 pongTimer.Start();
             }
             catch (Exception)
-            {}
-            if (isConnected == false)
-            {
-                pin26.SetDriveMode(GpioPinDriveMode.Output);
-                pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
-            }
-            else
-            {
-                pin26.SetDriveMode(GpioPinDriveMode.Output);
-                pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
-            }
+            { }
             if (readWrite.serialPort == null) readWrite.comPortInit();
         }
 
@@ -276,16 +268,26 @@ namespace RobotSideUWP
         {//Событие появлzется через 500 мс после старта пинга
             if (isConnected == false)
             {
-                try
-                {
+                try{
+                    pin26.SetDriveMode(GpioPinDriveMode.Output);
+                    pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
                     Connect();
                     pongTimer.Stop();
                     NotifyUser("Server is disconnected", NotifyType.StatusMessage);
+                    //if (CommonStruct.permissionToSendToWebServer == true)
+                    //{
+                    //    SendCommentsToServer("Server is disconnected");
+                    //}
                 }
                 catch (Exception)
-                {}
+                { }
             }
-            else pongTimer.Stop();
+            else
+            {
+                pongTimer.Stop();
+                pin26.SetDriveMode(GpioPinDriveMode.Output);
+                pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
+            }
         }
 
         private void Connect()
@@ -310,8 +312,7 @@ namespace RobotSideUWP
                 uriServerAddress = new Uri(serverAddress + ":8080/?robot");
             }
             
-            try
-            {
+            try{
                 Task connectTask = Task.Run(() => {
                     _ = messageWebSocket.ConnectAsync(uriServerAddress);
                 });
@@ -333,24 +334,9 @@ namespace RobotSideUWP
                 {
                     using (var dataWriter = new DataWriter(messageWebSocket.OutputStream))
                     {
-                        try
-                        {
-                            dataWriter.WriteString(message);
-                        }
-                        catch(Exception e1)
-                        { }
-                        try
-                        {
-                            await dataWriter.StoreAsync();
-                        }
-                        catch (Exception e2)
-                        { }
-                        try
-                        {
-                            dataWriter.DetachStream();
-                        }
-                        catch(Exception e3)
-                            { }
+                        dataWriter.WriteString(message);
+                        await dataWriter.StoreAsync();
+                        dataWriter.DetachStream();
                     }
                 }
             }
@@ -361,8 +347,7 @@ namespace RobotSideUWP
         private void MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
             string read;
-            try
-            {
+            try{
                 _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
                     try{
@@ -372,7 +357,17 @@ namespace RobotSideUWP
                             try
                             {
                                 read = reader.ReadString(reader.UnconsumedBufferLength);
+
                                 receivedData = JsonConvert.DeserializeObject<DataFromClient>(read);
+                                sArr[0] = receivedData.serialFromClient;
+                                sArr[1] = receivedData.x.ToString();
+                                sArr[2] = receivedData.y.ToString();
+                                sArr[3] = receivedData.wheelsStartStop;
+                                sArr[4] = receivedData.camera;
+                                sArr[5] = receivedData.dir;
+                                sArr[14] = receivedData.packageNumber.ToString();
+                                sArr[15] = receivedData.deltaTime;
+
                                 if ((receivedData.comments == "pong") || (receivedData.comments == "Robot is connected"))
                                 {
                                     isConnected = true;
@@ -380,9 +375,10 @@ namespace RobotSideUWP
                                 Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
                                 receivedData.comments = "";
 
-                                if ((plcControl.stopTimerCounter == 0) && (sArr[0] == CommonStruct.robotSerial))
+                                if ((plcControl.stopTimerCounter == 0) && (receivedData.comments != "pong"))
                                 {
-                                    __SendReceiveAsync();
+                                    Polling(sArr);
+                                    //__SendReceiveAsync();
                                 }
                                 ////////////
                             }
@@ -430,10 +426,10 @@ namespace RobotSideUWP
             }
         }
 
-        private void SendData(DataFromRobot dataToSend)
+        private async Task SendData(DataFromRobot dataToSend)
         {
             string json = JsonConvert.SerializeObject(dataToSend);
-            _ = SendMessageUsingMessageWebSocketAsync(json);
+            await SendMessageUsingMessageWebSocketAsync(json);
         }
 
         private void TextBoxRobotSerial_TextChanged(object sender, TextChangedEventArgs e)
@@ -458,10 +454,10 @@ namespace RobotSideUWP
                         httpResponse = await httpClient.GetAsync(uri);
                         if ((httpResponse.IsSuccessStatusCode) && (CommonStruct.robotSerial != ""))
                         {
-                            Task t = new Task(async () =>
+                            Task t = new Task(() =>
                             {
+                                SendCommentsToServer("BotEyes is Off");
                                 CommonStruct.permissionToSendToWebServer = false;
-                                await SendVoltageToServer("BotEyes is Off");
                             });
                             t.Start();
                             Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);//Таймер нельзя, т.к. 
@@ -494,10 +490,10 @@ namespace RobotSideUWP
             pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается (нулем выключает)
             try
             {
-                Task t = new Task(async () =>
+                Task t = new Task(() =>
                 {
+                    SendCommentsToServer("BotEyes is Off");
                     CommonStruct.permissionToSendToWebServer = false;
-                    await SendVoltageToServer("BotEyes is Off");
                 });
                 t.Start();
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
@@ -569,13 +565,14 @@ namespace RobotSideUWP
          private void Polling(string[] arr)
         {
             #region Base Cycle
-                if (arr != null)
+
+            if (arr != null)
                 {
                 var _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                     {
                         textBox_x_coord.Text = arr[1];//x_coord
                         textBox_y_coord.Text = arr[2];//y_coord
-                        textBoxWheelsStop.Text = arr[3];//wheelsStop
+                        textBoxWheelsStop.Text = sArr[3];//wheelsStop
                         textBoxCameraAngle.Text = arr[4];//сameraData
                         textBoxKeys.Text = arr[5];//Управление клавишами
                     });
@@ -758,8 +755,9 @@ namespace RobotSideUWP
                             }
                         }
                     }
-                    ///////////Управление клавишами
-                    if (((arr[5] != "Stop") && (arr[5] != null) && (arr[5] != "0")) && (arr[3] == "Start"))
+
+                ///////////Управление клавишами
+                if (((arr[5] != "Stop") && (arr[5] != null) && (arr[5] != "0")) && (arr[3] == "Start"))
                     {//Управление клавишами
                         sArr3Before = "КолесаВращались";
                         double xCoord = 0.0;
@@ -981,8 +979,8 @@ namespace RobotSideUWP
             });
         }
 
-        
-        public static async Task SendVoltageToServer(string text)
+
+        public void SendCommentsToServer(string text)
         {
             if (text == "") return;
             string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
@@ -992,29 +990,18 @@ namespace RobotSideUWP
                 Current.NotifyUser("SendVoltageToServer(): Serial is not defined.", NotifyType.ErrorMessage);
                 return;
             }
-
-            try {
-                //var authData = string.Format("{0}:{1}", "admin", "admin");
-                var authData = string.Format("{0}:{1}", "", "");//Password don't needed for both websites
-                var authHeaderValue = Convert.ToBase64String(Encoding.UTF8.GetBytes(authData));
-
-                using (HttpClient client = new HttpClient()) {
-                    client.MaxResponseContentBufferSize = 256000;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("None", authHeaderValue);
-                    HttpContent content = null;
-
-                    using (HttpResponseMessage response = await client.PutAsync(uri, content)) {
-                        if (!response.IsSuccessStatusCode) {
-                            ipAddress = "StatusCode: " + Convert.ToString(response.StatusCode);
-                        }
-                        if (response.Content != null) {
-                            string responseBodyAsText;
-                            responseBodyAsText = await response.Content.ReadAsStringAsync();
-                        }
-                    }
-                }
+            try
+            {
+                DataFromRobot dataToSend = new DataFromRobot();
+                dataToSend.isThisData = false;dataToSend.camera = "";dataToSend.deltaTime = "";dataToSend.dir = "";
+                dataToSend.packageNumber = 0;dataToSend.serialFromClient = "";dataToSend.wheelsStartStop = "";
+                dataToSend.x = 0;dataToSend.y = 0;
+                dataToSend.comments = text;
+                dataToSend.isThisData = false;
+                _ = SendData(dataToSend);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 ipAddress = "StatusCode: " + ex.Message;
                 Current.NotifyUser("SendVoltageToServer() " + ex.Message, NotifyType.ErrorMessage);
             }
@@ -1206,9 +1193,9 @@ namespace RobotSideUWP
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)
         {
-            Task t = new Task(async () =>
+            Task t = new Task(() =>
             {
-                await SendVoltageToServer("BotEyes is Off");
+                SendCommentsToServer("BotEyes is Off");
                 CommonStruct.permissionToSendToWebServer = false;
             });
             t.Start();

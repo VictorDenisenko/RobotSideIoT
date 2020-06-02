@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Devices.Enumeration;
 using Windows.Devices.SerialCommunication;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml;
-using Windows.ApplicationModel.Core;
 
 namespace RobotSideUWP
 {
@@ -163,17 +162,17 @@ namespace RobotSideUWP
                             if ((batteryVoltage == "Charging...") && (CommonStruct.permissionToSendToWebServer == true))
                             {
                                 CommonStruct.voltageLevelFromRobot = batteryVoltage;
-                                await MainPage.SendVoltageToServer(batteryVoltage);
+                                MainPage.Current.SendCommentsToServer(batteryVoltage);
                             }
                             else if((dBatteryVoltage <=100) && (dBatteryVoltage >=1) && (CommonStruct.permissionToSendToWebServer == true))
                             {
                                 CommonStruct.voltageLevelFromRobot = batteryVoltage;
-                                await MainPage.SendVoltageToServer(batteryVoltage + "%");
+                                MainPage.Current.SendCommentsToServer(batteryVoltage + "%");
                             }
                             else
                             {
                                 CommonStruct.voltageLevelFromRobot = "";
-                                await MainPage.SendVoltageToServer("");
+                                MainPage.Current.SendCommentsToServer("");
                             }
                         }
                     }
