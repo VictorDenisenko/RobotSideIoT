@@ -233,12 +233,12 @@ namespace RobotSideUWP
 
             reconnectTimer = new DispatcherTimer();
             reconnectTimer.Tick += ReconnectTimer_Tick;
-            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для реконнекта к MQTT брокеру (дни, часы, мин, сек, ms)
+            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для реконнекта к серверу
             reconnectTimer.Start();
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 1, 0); //Таймер для приема ответа сервера pong
+            pongTimer.Interval = new TimeSpan(0, 0, 0, 5, 0); //Таймер для приема ответа сервера pong
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)

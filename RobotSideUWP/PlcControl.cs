@@ -194,9 +194,33 @@ namespace RobotSideUWP
                 string directionRight = CommonStruct.directionRight;
                 double k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
                 switch (stopTimerCounter) {
-                    case 1: Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
-                    case 2: Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
-                    case 3: Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
+                    case 1:
+                        if ((k2 * speedLeft < 15) || (k2 * speedRight < 15))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Wheels(directionLeft, k2 * speedLeft, directionRight, k2 * speedRight); break;
+                        }
+                    case 2:
+                        if ((k3 * speedLeft < 15) || (k3 * speedRight < 15))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Wheels(directionLeft, k3 * speedLeft, directionRight, k3 * speedRight); break;
+                        }
+                    case 3:
+                        if ((k4 * speedLeft < 15) || (k4 * speedRight < 15))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            Wheels(directionLeft, k4 * speedLeft, directionRight, k4 * speedRight); break;
+                        }
                     case 4: 
                             string hexAddress = CommonStruct.wheelsAddress;
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
