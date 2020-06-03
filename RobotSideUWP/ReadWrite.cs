@@ -171,8 +171,8 @@ namespace RobotSideUWP
                             }
                             else
                             {
-                                CommonStruct.voltageLevelFromRobot = "";
-                                MainPage.Current.SendCommentsToServer("");
+                                CommonStruct.voltageLevelFromRobot = "0";
+                                MainPage.Current.SendCommentsToServer("0%");
                             }
                         }
                     }

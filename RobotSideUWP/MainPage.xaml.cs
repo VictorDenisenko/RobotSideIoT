@@ -216,9 +216,9 @@ namespace RobotSideUWP
             plcControl = new PlcControl();
 
             pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
-            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//Поменял с 10 мс на 100 мс
+            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//Поменял с 10 мс на 500 мс
             pin3.SetDriveMode(GpioPinDriveMode.Input);
-            pin3.ValueChanged += Pin3_ValueChangedAsync;
+            pin3.ValueChanged += Pin3_ValueChanged;
             val3 = pin3.Read();
 
             pin5 = GpioController.GetDefault().OpenPin(5);//Аппаратный таймер выключения робота (Севера) запускается
@@ -438,35 +438,18 @@ namespace RobotSideUWP
             CommonStruct.robotSerial = textBoxRobotSerial.Text;
         }
 
-        private async void Pin3_ValueChangedAsync(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {//Это пин, на который опдается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку напряжение на нем поднимается от 0,9В до 3 В.
             try
             {
                 if (args.Edge == GpioPinEdge.RisingEdge)
                 {
-                    Windows.Web.Http.HttpResponseMessage httpResponse = new Windows.Web.Http.HttpResponseMessage();
-                    Windows.Web.Http.HttpClient httpClient = new Windows.Web.Http.HttpClient();
-                    //string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
-                    string ipAddress = CommonStruct.defaultWebSiteAddress;
-                    Uri uri = new Uri(ipAddress);
                     try
                     {
-                        httpResponse = await httpClient.GetAsync(uri);
-                        if ((httpResponse.IsSuccessStatusCode) && (CommonStruct.robotSerial != ""))
-                        {
-                            Task t = new Task(() =>
-                            {
-                                SendCommentsToServer("BotEyes is Off");
-                                CommonStruct.permissionToSendToWebServer = false;
-                            });
-                            t.Start();
-                            Timer periodicTimer = new Timer(ShutDownLaunch, null, 2000, Timeout.Infinite);//Таймер нельзя, т.к. 
-                        }
-                        else
-                        {
-                            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
-                        }
+                        SendCommentsToServer("BotEyes is Off");
+                        CommonStruct.permissionToSendToWebServer = false;
+                        pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
                     }
                     catch (Exception ex)
                     {
@@ -474,7 +457,6 @@ namespace RobotSideUWP
                         ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
                         return;
                     }
-
                 }
             }
             catch (Exception e)
@@ -485,28 +467,22 @@ namespace RobotSideUWP
             }
         }
 
-        private void ShutDownLaunch(object state)
-        {
-            pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается (нулем выключает)
-            try
-            {
-                Task t = new Task(() =>
-                {
-                    SendCommentsToServer("BotEyes is Off");
-                    CommonStruct.permissionToSendToWebServer = false;
-                });
-                t.Start();
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
-            }
-            catch(Exception e2)
-            {
-                Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
-                pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
-            }
-        }
-
-
+        //private void ShutDownLaunch(object state)
+        //{
+        //    pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается (нулем выключает)
+        //    try
+        //    {
+        //        SendCommentsToServer("BotEyes is Off");
+        //        CommonStruct.permissionToSendToWebServer = false;
+        //        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+        //    }
+        //    catch(Exception e2)
+        //    {
+        //        Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
+        //        pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
+        //        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+        //    }
+        //}
 
         private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -864,7 +840,7 @@ namespace RobotSideUWP
                 readWrite.Write(CommonStruct.dataToWrite);//
 
                 if (CommonStruct.voltageLevelFromRobot == "")
-                {
+                {// Это если из компорта вернется пустая строка, то ее надо пропустить
                     return;
                 }
                 else
@@ -1192,7 +1168,7 @@ namespace RobotSideUWP
         }
 
         private void buttonShutdown_Click(object sender, RoutedEventArgs e)
-        {
+        {//Выключение кнопкой на экране HDMI монитора
             Task t = new Task(() =>
             {
                 SendCommentsToServer("BotEyes is Off");

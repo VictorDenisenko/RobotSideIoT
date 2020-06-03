@@ -24,7 +24,7 @@ namespace RobotSideUWP
 
             batteryMeasuringTimer = new DispatcherTimer();
             batteryMeasuringTimer.Tick += BatteryMeasuringTimer_Tick;
-            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 10, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 20, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
             batteryMeasuringTimer.Start();
 
             timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
@@ -33,16 +33,16 @@ namespace RobotSideUWP
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
         {
-            if(stopTimerCounter == 0)
-            {
-                MainPage.Current.ChargeLevelMeasure();
-            }
-            else
-            {
+            //if(stopTimerCounter == 0)
+            //{
+            //    MainPage.Current.ChargeLevelMeasure();
+            //}
+            //else
+            //{
                 Task.Delay(100).Wait();
                 MainPage.Current.ChargeLevelMeasure();
                 Task.Delay(100).Wait();
-            }
+            //}
         }
 
         public static int CameraSpeedToPWM()
@@ -231,7 +231,8 @@ namespace RobotSideUWP
                         break;
                     case 6:
                         //CommonStruct.NowIsCurrentMeasuring = false;
-                        MainPage.Current.ChargeLevelMeasure();
+                        //MainPage.Current.ChargeLevelMeasure();
+                        MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
                         smoothlyStopTimer.Stop();
                         stopTimerCounter = 0;
                         CommonStruct.stopBeforeWas = true;
@@ -453,10 +454,12 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;
-                if ((CommonStruct.dVoltageCorrected < 1050) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+
+                //CommonStruct.dVoltageCorrected = 1000;
+
+                if ((CommonStruct.dVoltageCorrected < 1150) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
-                    CommonStruct.dVoltageCorrected = 1050;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
                     pin6 = GpioController.GetDefault().OpenPin(6);
                     pin6.SetDriveMode(GpioPinDriveMode.Output);
@@ -470,7 +473,8 @@ namespace RobotSideUWP
                     CommonStruct.dVoltageCorrected = 1250;
                 }
                 double levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
-                CommonStruct.outputValuePercentage = levelCeiling.ToString();
+                if (levelCeiling < 0) levelCeiling = 0;
+                CommonStruct.outputValuePercentage = "0";
 
                 if ((CommonStruct.dChargeCurrent < 30) && (CommonStruct.dVoltageCorrected > 0))
                 {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
@@ -489,17 +493,13 @@ namespace RobotSideUWP
         }
 
         private static void TimerRobotOff_Tick(object sender, object e)
-        {//Таймер, который выключет напряжение питания через минуту после того как напряжение на аккумуляторе станет меньше 10,5 В.
+        {//Таймер, который выключет напряжение питания через минуту после того как напряжение на аккумуляторе станет меньше 11,5 В.
             try
             {
                 pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
-                Task t = new Task(() =>
-                {
-                    MainPage.Current.SendCommentsToServer("BotEyes is Off");
-                    CommonStruct.permissionToSendToWebServer = false;
-                });
-                t.Start();
+                MainPage.Current.SendCommentsToServer("Battery is low.");
+                CommonStruct.permissionToSendToWebServer = false;
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 11,5
             }
             catch (Exception e1)
             {
