@@ -177,7 +177,7 @@ namespace RobotSideUWP
                         }
                     }
                     testString = testString + "   " + receivedStrings;
-                    MainPage.Current.NotifyUserForTesting(testString);
+                    //MainPage.Current.NotifyUserForTesting(testString);
                     if (testString.Length > 400) testString = "";
                 });
                 MainPage.Current.NotifyUserFromOtherThreadAsync("", NotifyType.ErrorMessage);

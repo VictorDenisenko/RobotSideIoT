@@ -33,16 +33,9 @@ namespace RobotSideUWP
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
         {
-            //if(stopTimerCounter == 0)
-            //{
-            //    MainPage.Current.ChargeLevelMeasure();
-            //}
-            //else
-            //{
-                Task.Delay(100).Wait();
-                MainPage.Current.ChargeLevelMeasure();
-                Task.Delay(100).Wait();
-            //}
+            Task.Delay(100).Wait();
+            MainPage.Current.ChargeLevelMeasure();
+            Task.Delay(100).Wait();
         }
 
         public static int CameraSpeedToPWM()
@@ -62,7 +55,6 @@ namespace RobotSideUWP
 			string interval = CommonStruct.interval;
             try
                 {
-			
 				if (setReset == "set")
 					{
                     MainPage.readWrite.Write("^RA" + address + interval + "\r");//Остановка через время, заданное в таймере
@@ -113,7 +105,6 @@ namespace RobotSideUWP
                         CommonStruct.stopBeforeWas = false;
                     }
                 }
-               
             }
             catch (Exception e1)
             {
@@ -226,11 +217,16 @@ namespace RobotSideUWP
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             break;
                     case 5:
-                        //CommonStruct.NowIsCurrentMeasuring = true;
-                        //MainPage.Current.ChargeLevelMeasure();//Здесь это обязательно, т.к. эта функция меряет и ток при остановке в доке
+                        if (CommonStruct.voltageLevelFromRobot.Contains("Charging"))
+                        {
+                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot);
+                        }
+                        else
+                        {
+                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+                        }
                         break;
                     case 6:
-                        MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
                         smoothlyStopTimer.Stop();
                         stopTimerCounter = 0;
                         CommonStruct.stopBeforeWas = true;

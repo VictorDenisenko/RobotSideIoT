@@ -147,6 +147,13 @@ namespace RobotSideUWP
         //DataFromRobot dataToSend = new DataFromRobot();
         DataFromClient receivedData = new DataFromClient();
         DispatcherTimer pongTimer;
+        public string testString = "";
+
+        DateTime now1;
+        string timeNow2;
+        string timeNow1;
+        DateTime now2;
+        long ticksSent;
 
         public MainPage()
         {
@@ -258,6 +265,10 @@ namespace RobotSideUWP
                 _ = SendData(dataToSend);
                 isConnected = false;
                 pongTimer.Start();
+
+                now1 = DateTime.Now;
+                timeNow1 = now1.ToString();
+                ticksSent = now1.Ticks;
             }
             catch (Exception)
             { }
@@ -271,6 +282,16 @@ namespace RobotSideUWP
                 try{
                     pin26.SetDriveMode(GpioPinDriveMode.Output);
                     pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
+
+                    var x = receivedData.comments;
+                    now2 = DateTime.Now;
+                    timeNow2 = now2.ToString();
+
+                    var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+
+                    long deltaTicks = (ticksNow - ticksSent) / 10000;
+
+
                     Connect();
                     pongTimer.Stop();
                     NotifyUser("Server is disconnected", NotifyType.StatusMessage);
@@ -346,7 +367,7 @@ namespace RobotSideUWP
 
         private void MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
-            string read;
+            string read = null;
             try{
                 _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
@@ -368,14 +389,25 @@ namespace RobotSideUWP
                                 sArr[14] = receivedData.packageNumber.ToString();
                                 sArr[15] = receivedData.deltaTime;
 
-                                if (receivedData.comments == "pong") 
+                                testString = testString + "   " + receivedData.comments + "\r";
+
+                                NotifyUserForTesting(testString);
+                                if (testString.Length > 400) testString = "";
+
+                                //if (receivedData.comments == "pong") 
+                                if (read != null)
                                 {
                                     isConnected = true;
                                 }
+                                else
+                                {
+                                    isConnected = false;
+                                }
                                 Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
-                                receivedData.comments = "";
+                                //receivedData.comments = "";
 
-                                if ((plcControl.stopTimerCounter == 0) && (receivedData.comments != "pong"))
+                                if ((plcControl.stopTimerCounter == 0) && (receivedData.isThisData == true)
+                                )
                                 {
                                     Polling(sArr);
                                     //__SendReceiveAsync();
