@@ -265,7 +265,7 @@ namespace RobotSideUWP
         }
 
         private void PongTimer_Tick(object sender, object e)
-        {//Событие появлzется через 500 мс после старта пинга
+        {//Событие появляется через 5 с после старта пинга
             if (isConnected == false)
             {
                 try{
@@ -368,7 +368,7 @@ namespace RobotSideUWP
                                 sArr[14] = receivedData.packageNumber.ToString();
                                 sArr[15] = receivedData.deltaTime;
 
-                                if ((receivedData.comments == "pong") || (receivedData.comments == "Robot is connected"))
+                                if (receivedData.comments == "pong") 
                                 {
                                     isConnected = true;
                                 }
@@ -828,8 +828,6 @@ namespace RobotSideUWP
                 {
                     pin26.Write(GpioPinValue.Low);
                 }
-            //Чтобы зеленый не остался гореть, когда нет данных. 
-                pin26.Write(GpioPinValue.Low);
         }
 
         public void ChargeLevelMeasure()
@@ -869,21 +867,6 @@ namespace RobotSideUWP
                 }
             }
             catch(Exception e1) {
-                Current.NotifyUser("ChargeLevelTimer_TickAsync " + e1.Message, NotifyType.ErrorMessage);
-            }
-        }
-
-        public void ChargeCurrentMeasure()
-        {
-            try
-            {
-                CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                //readWrite.Write(CommonStruct.dataToWrite);//
-
-                if (CommonStruct.chargeCurrentFromRobot == "") return;
-            }
-            catch (Exception e1)
-            {
                 Current.NotifyUser("ChargeLevelTimer_TickAsync " + e1.Message, NotifyType.ErrorMessage);
             }
         }
@@ -955,17 +938,8 @@ namespace RobotSideUWP
             });
         }
 
-
         public void SendCommentsToServer(string text)
         {
-            if (text == "") return;
-            string ipAddress = CommonStruct.defaultWebSiteAddress + ":443";
-            Uri uri = new Uri(ipAddress + "/datafromrobot?data=" + text + "&serial=" + CommonStruct.robotSerial);
-            if (CommonStruct.robotSerial == "")
-            {
-                Current.NotifyUser("SendVoltageToServer(): Serial is not defined.", NotifyType.ErrorMessage);
-                return;
-            }
             try
             {
                 DataFromRobot dataToSend = new DataFromRobot();
@@ -978,7 +952,6 @@ namespace RobotSideUWP
             }
             catch (Exception ex)
             {
-                ipAddress = "StatusCode: " + ex.Message;
                 Current.NotifyUser("SendVoltageToServer() " + ex.Message, NotifyType.ErrorMessage);
             }
         }

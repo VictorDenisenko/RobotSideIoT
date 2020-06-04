@@ -188,7 +188,7 @@ namespace RobotSideUWP
                 switch (kHostWtahdogTicks) {
                     case 1:
                         CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                        readWrite.Write(CommonStruct.dataToWrite);//
+                        readWrite.Write(CommonStruct.dataToWrite);//эта команд апосылается при инициализации робота
                         break;
                     case 2:
                         buttonStart_Click(null, null);

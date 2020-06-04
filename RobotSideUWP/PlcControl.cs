@@ -227,11 +227,9 @@ namespace RobotSideUWP
                             break;
                     case 5:
                         //CommonStruct.NowIsCurrentMeasuring = true;
-                        //MainPage.Current.ChargeCurrentMeasure();
+                        //MainPage.Current.ChargeLevelMeasure();//Здесь это обязательно, т.к. эта функция меряет и ток при остановке в доке
                         break;
                     case 6:
-                        //CommonStruct.NowIsCurrentMeasuring = false;
-                        //MainPage.Current.ChargeLevelMeasure();
                         MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
                         smoothlyStopTimer.Stop();
                         stopTimerCounter = 0;
@@ -454,8 +452,6 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;
-
-                //CommonStruct.dVoltageCorrected = 1000;
 
                 if ((CommonStruct.dVoltageCorrected < 1150) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
