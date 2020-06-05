@@ -154,6 +154,7 @@ namespace RobotSideUWP
         string timeNow1;
         DateTime now2;
         long ticksSent;
+        GpioPin pin13;//Вход, подключенный к клеммам зарядного устройства
 
         public MainPage()
         {
@@ -231,6 +232,25 @@ namespace RobotSideUWP
             pin5 = GpioController.GetDefault().OpenPin(5);//Аппаратный таймер выключения робота (Севера) запускается
             pin5.SetDriveMode(GpioPinDriveMode.Output);
             pin5.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+
+            pin13 = GpioController.GetDefault().OpenPin(13);//Подключено ли зарядное устроство 
+            pin13.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//
+            pin13.SetDriveMode(GpioPinDriveMode.Input);
+            pin13.ValueChanged += Pin13_ValueChanged;
+            GpioPinValue val13 = pin13.Read();
+        }
+
+        private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            if (args.Edge == GpioPinEdge.FallingEdge)
+            {
+
+                SendCommentsToServer("Charging...");
+            }
+            else if (args.Edge == GpioPinEdge.RisingEdge)
+            {
+                SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+            }
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -250,7 +270,7 @@ namespace RobotSideUWP
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            //Это надо ввести в файл app.xaml.cs, private void OnSuspending(object sender, SuspendingEventArgs e)
+            //Это может быть надо ввести в файл app.xaml.cs, private void OnSuspending(object sender, SuspendingEventArgs e)
             CloseSocket();
         }
 
@@ -277,6 +297,9 @@ namespace RobotSideUWP
 
         private void PongTimer_Tick(object sender, object e)
         {//Событие появляется через 5 с после старта пинга
+
+            GpioPinValue val13 = pin13.Read();
+
             if (isConnected == false)
             {
                 try{
@@ -392,7 +415,7 @@ namespace RobotSideUWP
                                 testString = testString + "   " + receivedData.comments + "\r";
 
                                 NotifyUserForTesting(testString);
-                                if (testString.Length > 400) testString = "";
+                                if (testString.Length > 300) testString = "";
 
                                 //if (receivedData.comments == "pong") 
                                 if (read != null)
@@ -498,23 +521,6 @@ namespace RobotSideUWP
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
             }
         }
-
-        //private void ShutDownLaunch(object state)
-        //{
-        //    pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается (нулем выключает)
-        //    try
-        //    {
-        //        SendCommentsToServer("BotEyes is Off");
-        //        CommonStruct.permissionToSendToWebServer = false;
-        //        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
-        //    }
-        //    catch(Exception e2)
-        //    {
-        //        Current.NotifyUser("Shutdown problem " + e2.Message, NotifyType.ErrorMessage);
-        //        pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-        //        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
-        //    }
-        //}
 
         private void TextBoxRealVoltage_TextChanged(object sender, TextChangedEventArgs e)
         {
