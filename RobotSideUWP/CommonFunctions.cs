@@ -67,7 +67,7 @@ namespace RobotSideUWP
         public static bool wheelsWasStopped = true;
         public static int initTime = 240;
 
-        public static double dVoltageCorrected = 12500;
+        public static double dVoltageCorrected;
         public static string voltageLevelFromRobot = "";
         public static string chargeCurrentFromRobot = "";
         public static bool NowIsCurrentMeasuring;
@@ -81,6 +81,10 @@ namespace RobotSideUWP
         public static long numberOfVoltageMeasurings = 0;
         public static double dChargeCurrent = 0.0;
         public static string outputValuePercentage;
+
+        public static bool IsChargingCondition = false;
+        public static bool IsRobotGoesFromDock = false;
+        public static long dockingCounter = 0;
     }
 
 	class CommonFunctions

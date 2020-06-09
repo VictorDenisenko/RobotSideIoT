@@ -141,7 +141,7 @@ namespace RobotSideUWP
         private DataWriter messageWriter;
         private string serverAddress = "";
         private Uri uriServerAddress = null;
-        private bool isConnected = false;
+        private static bool isConnected = false;
         DispatcherTimer reconnectTimer;
         private string thisRobotSerial;
         //DataFromRobot dataToSend = new DataFromRobot();
@@ -231,41 +231,57 @@ namespace RobotSideUWP
 
             pin5 = GpioController.GetDefault().OpenPin(5);//Аппаратный таймер выключения робота (Севера) запускается
             pin5.SetDriveMode(GpioPinDriveMode.Output);
-            pin5.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+            pin5.Write(GpioPinValue.High);// 
 
             pin13 = GpioController.GetDefault().OpenPin(13);//Подключено ли зарядное устроство 
             pin13.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//
             pin13.SetDriveMode(GpioPinDriveMode.Input);
             pin13.ValueChanged += Pin13_ValueChanged;
             GpioPinValue val13 = pin13.Read();
+            if(val13 == GpioPinValue.Low)
+            {
+                CommonStruct.IsChargingCondition = true;
+                SendCommentsToServer("Charging...");
+            }
         }
 
         private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
+        {//Pin13 - определяет, стоит ли робот на зарядке в доке.
             if (args.Edge == GpioPinEdge.FallingEdge)
-            {
-
+            {//стал в док
+                GpioPinValue val13 = pin13.Read();
+                CommonStruct.IsChargingCondition = true;
                 SendCommentsToServer("Charging...");
             }
             else if (args.Edge == GpioPinEdge.RisingEdge)
-            {
-                SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+            {//Выходит из дока
+                GpioPinValue val13 = pin13.Read();
+                CommonStruct.dockingCounter = 0;
+                CommonStruct.IsChargingCondition = false;
+                if (CommonStruct.voltageLevelFromRobot != "")
+                {
+                    SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+                }
+                else
+                {
+                    SendCommentsToServer("");
+                }
             }
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
+       {
             //uriServerAddress = new Uri(serverAddress);
             thisRobotSerial = CommonStruct.robotSerial;
 
             reconnectTimer = new DispatcherTimer();
             reconnectTimer.Tick += ReconnectTimer_Tick;
-            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для реконнекта к серверу
+            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
             reconnectTimer.Start();
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 5, 0); //Таймер для приема ответа сервера pong
+            pongTimer.Interval = new TimeSpan(0, 0, 0, 19, 0); //Таймер для приема ответа сервера pong
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -278,14 +294,13 @@ namespace RobotSideUWP
         {
             try
             {
-                string message = "ping";
+                string message = "ping1";
                 DataFromRobot dataToSend = new DataFromRobot();
                 dataToSend.comments = message;
                 dataToSend.isThisData = false;
-                _ = SendData(dataToSend);
-                isConnected = false;
                 pongTimer.Start();
-
+                isConnected = false;
+                _ = SendData(dataToSend);
                 now1 = DateTime.Now;
                 timeNow1 = now1.ToString();
                 ticksSent = now1.Ticks;
@@ -297,9 +312,6 @@ namespace RobotSideUWP
 
         private void PongTimer_Tick(object sender, object e)
         {//Событие появляется через 5 с после старта пинга
-
-            GpioPinValue val13 = pin13.Read();
-
             if (isConnected == false)
             {
                 try{
@@ -307,21 +319,9 @@ namespace RobotSideUWP
                     pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
 
                     var x = receivedData.comments;
-                    now2 = DateTime.Now;
-                    timeNow2 = now2.ToString();
-
-                    var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
-
-                    long deltaTicks = (ticksNow - ticksSent) / 10000;
-
-
                     Connect();
                     pongTimer.Stop();
                     NotifyUser("Server is disconnected", NotifyType.StatusMessage);
-                    //if (CommonStruct.permissionToSendToWebServer == true)
-                    //{
-                    //    SendCommentsToServer("Server is disconnected");
-                    //}
                 }
                 catch (Exception)
                 { }
@@ -412,12 +412,24 @@ namespace RobotSideUWP
                                 sArr[14] = receivedData.packageNumber.ToString();
                                 sArr[15] = receivedData.deltaTime;
 
-                                testString = testString + "   " + receivedData.comments + "\r";
+                                now2 = DateTime.Now;
+                                timeNow2 = now2.ToString();
+                                var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+                                long deltaTicks = (ticksNow - ticksSent) / 10000; //Получаем в мс
+
+                                DateTime now3 = DateTime.Now;
+                                string timeNow3 = now3.ToString();
+
+                                testString = testString + deltaTicks + "   " + receivedData.comments + "\r";
 
                                 NotifyUserForTesting(testString);
                                 if (testString.Length > 300) testString = "";
 
-                                //if (receivedData.comments == "pong") 
+                                if (receivedData.comments.Contains("pong"))
+                                {
+                                    isConnected = true;
+                                }
+
                                 if (read != null)
                                 {
                                     isConnected = true;
@@ -881,11 +893,11 @@ namespace RobotSideUWP
                 }
                 else
                 {
-                    if (CommonStruct.voltageLevelFromRobot == "Charging...")
+                    if (CommonStruct.IsChargingCondition == true)
                     {
                         labelChargeLevel.Background = new SolidColorBrush(Windows.UI.Colors.Yellow);
                         labelChargeLevel.Foreground = new SolidColorBrush(Windows.UI.Colors.Green);
-                        labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot;
+                        labelChargeLevel.Text = "Charging...";
                     }
                     else
                     {
@@ -1064,7 +1076,7 @@ namespace RobotSideUWP
             try
             {
                 if (CommonStruct.robotSerial.Length == 24) {
-                    Connect();//Может S/N вместо этого взять?
+                    Connect();//
                 } else {
                     Current.NotifyUserFromOtherThreadAsync("Robot Serial Number is incorrect ", NotifyType.ErrorMessage);
                 }

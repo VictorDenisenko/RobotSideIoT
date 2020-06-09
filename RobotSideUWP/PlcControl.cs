@@ -29,13 +29,20 @@ namespace RobotSideUWP
 
             timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
             timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
+
+            pin6 = GpioController.GetDefault().OpenPin(6);
+            pin6.SetDriveMode(GpioPinDriveMode.Output);
+            pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
         }
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
         {
-            Task.Delay(100).Wait();
-            MainPage.Current.ChargeLevelMeasure();
-            Task.Delay(100).Wait();
+            if (CommonStruct.IsChargingCondition == false)
+            {
+                Task.Delay(100).Wait();
+                MainPage.Current.ChargeLevelMeasure();
+                Task.Delay(100).Wait();
+            }
         }
 
         public static int CameraSpeedToPWM()
@@ -217,13 +224,19 @@ namespace RobotSideUWP
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
                             break;
                     case 5:
-                        if (CommonStruct.voltageLevelFromRobot.Contains("Charging"))
+                        
+                        if (CommonStruct.dockingCounter == 0)
                         {
-                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot);
+                            MainPage.Current.ChargeLevelMeasure();
+                        }
+                        CommonStruct.dockingCounter++;
+                        if (CommonStruct.IsChargingCondition == false)
+                        {
+                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
                         }
                         else
                         {
-                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+                            MainPage.Current.SendCommentsToServer("Charging...");
                         }
                         break;
                     case 6:
@@ -432,7 +445,7 @@ namespace RobotSideUWP
                 isInt = Int32.TryParse(averagedVoltage, out res);
                 if ((averagedVoltage == "") || (isInt == false))
                 {
-                    averagedVoltage = "0";
+                    averagedVoltage = "1200";
                     return "";
                 }
                 double dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
@@ -453,10 +466,6 @@ namespace RobotSideUWP
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
-                    pin6 = GpioController.GetDefault().OpenPin(6);
-                    pin6.SetDriveMode(GpioPinDriveMode.Output);
-                    pin6.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
-                                                 
                     timerRobotOff.Start();//Запускаем таймер, чтобы выгрузить Виндовс:
                     MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
                 }
@@ -466,16 +475,16 @@ namespace RobotSideUWP
                 }
                 double levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
                 if (levelCeiling < 0) levelCeiling = 0;
-                CommonStruct.outputValuePercentage = "0";
 
                 if ((CommonStruct.dChargeCurrent < 30) && (CommonStruct.dVoltageCorrected > 0))
                 {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
-                    CommonStruct.outputValuePercentage = levelCeiling.ToString();
+                    CommonStruct.IsChargingCondition = false;
                 }
                 else
                 {
-                    CommonStruct.outputValuePercentage = "Charging...";
+                    CommonStruct.IsChargingCondition = true;
                 }
+                CommonStruct.outputValuePercentage = levelCeiling.ToString();
             }
             catch (Exception e2)
             {
@@ -488,14 +497,16 @@ namespace RobotSideUWP
         {//Таймер, который выключет напряжение питания через минуту после того как напряжение на аккумуляторе станет меньше 11,5 В.
             try
             {
-                pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                //pin6.Write(GpioPinValue.High);// 
+                pin6.Write(GpioPinValue.Low);// 
                 MainPage.Current.SendCommentsToServer("Battery is low.");
                 CommonStruct.permissionToSendToWebServer = false;
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 11,5
             }
             catch (Exception e1)
             {
-                pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+                //pin6.Write(GpioPinValue.High);// 
+                pin6.Write(GpioPinValue.Low);// 
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
                 MainPage.Current.NotifyUserFromOtherThreadAsync("TimerRobotOff_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
