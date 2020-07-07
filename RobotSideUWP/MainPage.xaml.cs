@@ -132,9 +132,9 @@ namespace RobotSideUWP
         string cameraIsStopped = "no";
         DispatcherTimer watchdogTimer;
         static string oldText = "";
-        GpioPin pin3;//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
-        GpioPinValue val3 = GpioPinValue.Low;
-        GpioPin pin5;//Выкл - подача напряжения на аппаратный таймер выключения питания
+        GpioPin pin6;//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+        GpioPinValue val6 = GpioPinValue.Low;
+        public GpioPin pin5;//Выкл - подача напряжения на аппаратный таймер выключения питания
         public ApplicationDataContainer localContainer;
         ////////////
         private MessageWebSocket messageWebSocket;
@@ -142,8 +142,7 @@ namespace RobotSideUWP
         private string serverAddress = "";
         private Uri uriServerAddress = null;
         private static bool isConnected = false;
-        DispatcherTimer reconnectTimer;
-        private string thisRobotSerial;
+        DispatcherTimer pingTimer;
         //DataFromRobot dataToSend = new DataFromRobot();
         DataFromClient receivedData = new DataFromClient();
         DispatcherTimer pongTimer;
@@ -196,6 +195,7 @@ namespace RobotSideUWP
             }
 
             pin26 = GpioController.GetDefault().OpenPin(26);
+            pin26.SetDriveMode(GpioPinDriveMode.Output);
             pin26.Write(GpioPinValue.Low);// Latch HIGH value first. This ensures a default value when the pin is set as output
 
             //checkBoxOnlyLocal.Visibility = Visibility.Collapsed;
@@ -223,18 +223,18 @@ namespace RobotSideUWP
             //Task.Delay(1000).Wait();
             plcControl = new PlcControl();
 
-            pin3 = GpioController.GetDefault().OpenPin(3);//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
-            pin3.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//Поменял с 10 мс на 500 мс
-            pin3.SetDriveMode(GpioPinDriveMode.Input);
-            pin3.ValueChanged += Pin3_ValueChanged;
-            val3 = pin3.Read();
+            pin6 = GpioController.GetDefault().OpenPin(6);//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку нпряжение на нем поднимается от 0,9В до 3 В.
+            pin6.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin6.SetDriveMode(GpioPinDriveMode.Input);
+            pin6.ValueChanged += Pin6_ValueChanged;
+            val6 = pin6.Read();
 
             pin5 = GpioController.GetDefault().OpenPin(5);//Аппаратный таймер выключения робота (Севера) запускается
             pin5.SetDriveMode(GpioPinDriveMode.Output);
             pin5.Write(GpioPinValue.High);// 
 
             pin13 = GpioController.GetDefault().OpenPin(13);//Подключено ли зарядное устроство 
-            pin13.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 500);//
+            pin13.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Большой таймаут приводит к тому, что событие вообще не появляется
             pin13.SetDriveMode(GpioPinDriveMode.Input);
             pin13.ValueChanged += Pin13_ValueChanged;
             GpioPinValue val13 = pin13.Read();
@@ -244,7 +244,7 @@ namespace RobotSideUWP
                 SendCommentsToServer("Charging...");
             }
         }
-
+       
         private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {//Pin13 - определяет, стоит ли робот на зарядке в доке.
             if (args.Edge == GpioPinEdge.FallingEdge)
@@ -272,16 +272,14 @@ namespace RobotSideUWP
         protected override void OnNavigatedTo(NavigationEventArgs e)
        {
             //uriServerAddress = new Uri(serverAddress);
-            thisRobotSerial = CommonStruct.robotSerial;
-
-            reconnectTimer = new DispatcherTimer();
-            reconnectTimer.Tick += ReconnectTimer_Tick;
-            reconnectTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
-            reconnectTimer.Start();
+            pingTimer = new DispatcherTimer();
+            pingTimer.Tick += PingTimer_Tick;
+            pingTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
+            //reconnectTimer.Start();
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 19, 0); //Таймер для приема ответа сервера pong
+            pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -290,13 +288,12 @@ namespace RobotSideUWP
             CloseSocket();
         }
 
-        private void ReconnectTimer_Tick(object sender, object e)
+        private void PingTimer_Tick(object sender, object e)
         {
             try
             {
-                string message = "ping1";
                 DataFromRobot dataToSend = new DataFromRobot();
-                dataToSend.comments = message;
+                dataToSend.comments = "ping1";//Это пинг до сервера, а есть еше pong от клиента
                 dataToSend.isThisData = false;
                 pongTimer.Start();
                 isConnected = false;
@@ -311,7 +308,7 @@ namespace RobotSideUWP
         }
 
         private void PongTimer_Tick(object sender, object e)
-        {//Событие появляется через 5 с после старта пинга
+        {//Событие появляется через 10 с после старта пинга
             if (isConnected == false)
             {
                 try{
@@ -338,7 +335,7 @@ namespace RobotSideUWP
         {
             messageWebSocket = new MessageWebSocket();
             messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
-            var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(thisRobotSerial));
+            var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(CommonStruct.robotSerial));
             messageWebSocket.SetRequestHeader("serial", serialBase64);//В заголовок добавил SN
             messageWebSocket.MessageReceived += MessageReceived;
             messageWebSocket.Closed += OnClosed;
@@ -426,17 +423,20 @@ namespace RobotSideUWP
                                 if (testString.Length > 300) testString = "";
 
                                 if (receivedData.comments.Contains("pong"))
-                                {
+                                {//pong1 - это от срервера, а pong - от клиента (от браузера)
                                     isConnected = true;
+                                    pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
                                 }
 
                                 if (read != null)
                                 {
                                     isConnected = true;
+                                    pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
                                 }
                                 else
                                 {
                                     isConnected = false;
+                                    pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод включен
                                 }
                                 Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
                                 //receivedData.comments = "";
@@ -505,8 +505,9 @@ namespace RobotSideUWP
             CommonStruct.robotSerial = textBoxRobotSerial.Text;
         }
 
-        private void Pin3_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        private void Pin6_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {//Это пин, на который подается сигнал от кнопки включения-выключения. При нажатии на кнопку напряжение на нем поднимается от 0,9В до 3 В.
+            Current.NotifyUserFromOtherThreadAsync("Shutdown Started", NotifyType.StatusMessage);
             try
             {
                 if (args.Edge == GpioPinEdge.RisingEdge)
@@ -516,21 +517,21 @@ namespace RobotSideUWP
                         SendCommentsToServer("BotEyes is Off");
                         CommonStruct.permissionToSendToWebServer = false;
                         pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
                     }
                     catch (Exception ex)
                     {
                         pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                        ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
                         return;
                     }
                 }
             }
             catch (Exception e)
             {
-                MainPage.Current.NotifyUser("Shutdown problem " + e.Message, NotifyType.ErrorMessage);
+                Current.NotifyUser("Shutdown problem " + e.Message, NotifyType.ErrorMessage);
                 pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
             }
         }
 
@@ -1068,7 +1069,7 @@ namespace RobotSideUWP
             buttonStop.FontSize = 20;
             buttonStop.IsEnabled = true;
 
-            buttonStart.Background = new SolidColorBrush(Windows.UI.Colors.LightGray); ;
+            buttonStart.Background = new SolidColorBrush(Windows.UI.Colors.LightGray); 
             buttonStart.Foreground = new SolidColorBrush(Windows.UI.Colors.Gray);
             buttonStart.FontFamily = new FontFamily("Microsoft Sans Serif");
             buttonStart.IsEnabled = false;
@@ -1148,7 +1149,7 @@ namespace RobotSideUWP
             WriteDefaultSettings();
             localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
             ReadAllSettings();
-            ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(0));
+            ShutdownManager.BeginShutdown(ShutdownKind.Restart, TimeSpan.FromSeconds(2));
         }
 
         private void buttonSave_Click(object sender, RoutedEventArgs e)
@@ -1198,7 +1199,7 @@ namespace RobotSideUWP
                 CommonStruct.permissionToSendToWebServer = false;
             });
             t.Start();
-            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));
+            ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
         }
 
         private void buttonRestart_Click(object sender, RoutedEventArgs e)

@@ -10,11 +10,17 @@ namespace RobotSideUWP
 {
     class PlcControl
 		{
-        static GpioPin pin6;//Выход для отключения питания подается на один из двух диодов на входе платы таймера отключения питания
+        //static GpioPin pin6;//Выход для отключения питания подается на один из двух диодов на входе платы таймера отключения питания
         public DispatcherTimer smoothlyStopTimer;
         public int stopTimerCounter = 0;
         public DispatcherTimer batteryMeasuringTimer;
         static DispatcherTimer timerRobotOff = new DispatcherTimer();
+        GpioPin pin17;// Правый датчик препятствия
+        GpioPinValue val17Right = GpioPinValue.High;
+        GpioPin pin18;// Левый датчик препятствия
+        GpioPinValue val18Left = GpioPinValue.High;
+        GpioPin pin19;// Передний датчик препятствия
+        GpioPinValue val19Top = GpioPinValue.High;
 
         public PlcControl()
         {
@@ -30,9 +36,50 @@ namespace RobotSideUWP
             timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
             timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
 
-            pin6 = GpioController.GetDefault().OpenPin(6);
-            pin6.SetDriveMode(GpioPinDriveMode.Output);
-            pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+            //pin6 = GpioController.GetDefault().OpenPin(6);
+            //pin6.SetDriveMode(GpioPinDriveMode.Output);
+            //pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
+
+            pin17 = GpioController.GetDefault().OpenPin(17);//Это правый датчик столкновений
+            pin17.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin17.SetDriveMode(GpioPinDriveMode.Input);
+            pin17.ValueChanged += Pin17_ValueChanged;
+
+            pin18 = GpioController.GetDefault().OpenPin(18);//Это правый датчик столкновений
+            pin18.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin18.SetDriveMode(GpioPinDriveMode.Input);
+            pin18.ValueChanged += Pin18_ValueChanged;
+
+            pin19 = GpioController.GetDefault().OpenPin(19);//Это правый датчик столкновений
+            pin19.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin19.SetDriveMode(GpioPinDriveMode.Input);
+            pin19.ValueChanged += Pin19_ValueChanged;
+        }
+
+        private void Pin17_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            val17Right = pin17.Read();
+            if(val17Right == GpioPinValue.Low)
+            {
+                WheelsStopSmoothly(50);
+            }
+        }
+
+        private void Pin18_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            val18Left = pin18.Read();
+            if (val18Left == GpioPinValue.Low)
+            {
+                WheelsStopSmoothly(50);
+            }
+        }
+        private void Pin19_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            val19Top = pin19.Read();
+            if (val19Top == GpioPinValue.Low)
+            {
+                WheelsStopSmoothly(50);
+            }
         }
 
         private void BatteryMeasuringTimer_Tick(object sender, object e)
@@ -85,6 +132,22 @@ namespace RobotSideUWP
         {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
             try
             {
+                //val17Right = pin17.Read();
+                //val18Left = pin18.Read();
+                //val19Top = pin19.Read();
+                if ((val17Right == GpioPinValue.Low) && (directionRight == "0"))
+                {
+                    return;
+                }
+                if ((val18Left == GpioPinValue.Low) && (directionLeft == "0"))
+                {
+                    return;
+                }
+                if ((val19Top == GpioPinValue.Low) && ((directionRight == "0") || (directionLeft == "0")))
+                {
+                    return;
+                }
+
                 if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeft != directionLeft) || (CommonStruct.directionRight != directionRight)))
                 {
                     WheelsStopSmoothly(200);
@@ -497,17 +560,15 @@ namespace RobotSideUWP
         {//Таймер, который выключет напряжение питания через минуту после того как напряжение на аккумуляторе станет меньше 11,5 В.
             try
             {
-                //pin6.Write(GpioPinValue.High);// 
-                pin6.Write(GpioPinValue.Low);// 
+                MainPage.Current.pin5.Write(GpioPinValue.Low);// 
                 MainPage.Current.SendCommentsToServer("Battery is low.");
                 CommonStruct.permissionToSendToWebServer = false;
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 11,5
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));//Выгружаем Windows если напряжение меньше 11,5
             }
             catch (Exception e1)
             {
-                //pin6.Write(GpioPinValue.High);// 
-                pin6.Write(GpioPinValue.Low);// 
-                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(0));//Выгружаем Windows если напряжение меньше 10,5 В  
+                MainPage.Current.pin5.Write(GpioPinValue.Low);// 
+                ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));//Выгружаем Windows если напряжение меньше 10,5 В  
                 MainPage.Current.NotifyUserFromOtherThreadAsync("TimerRobotOff_Tick " + e1.Message, NotifyType.ErrorMessage);
             }
         }
