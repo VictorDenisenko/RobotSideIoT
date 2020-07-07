@@ -182,13 +182,13 @@ namespace RobotSideUWP
             CommonStruct.permissionToSendToWebServer = true;
         }
 
-        private void HostWatchdogInitTimer_Tick(object sender, object e) {
+        private void HostWatchdogInitTimer_Tick(object sender, object e) {//Начальная установка в модулях
             kHostWtahdogTicks++;
             try {//использую четыре тика, чтобы корректно записать и считать ответ на установку сторожевого таймера
                 switch (kHostWtahdogTicks) {
                     case 1:
                         CommonStruct.dataToWrite = "^A3" + CommonStruct.wheelsAddress + "\r";//Формирование команды чтения из АЦП
-                        readWrite.Write(CommonStruct.dataToWrite);//эта команд апосылается при инициализации робота
+                        readWrite.Write(CommonStruct.dataToWrite);//эта команда посылается при инициализации робота
                         break;
                     case 2:
                         buttonStart_Click(null, null);
@@ -196,7 +196,6 @@ namespace RobotSideUWP
                     case 3: plcControl.HostWatchDog(CommonStruct.wheelsAddress, "set");
                         break;
                     case 4: {
-                            
                             if (CommonStruct.cameraController == "No") {
                                 if (CommonStruct.readData == "!0002014\r") {
                                     hostWatchdogInitTimer.Stop();

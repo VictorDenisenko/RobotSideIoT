@@ -275,7 +275,7 @@ namespace RobotSideUWP
             pingTimer = new DispatcherTimer();
             pingTimer.Tick += PingTimer_Tick;
             pingTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
-            //reconnectTimer.Start();
+            pingTimer.Start();
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
