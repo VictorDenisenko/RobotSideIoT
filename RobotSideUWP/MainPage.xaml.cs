@@ -341,7 +341,6 @@ namespace RobotSideUWP
             }
         }
 
-
         private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {//Pin13 - определяет, стоит ли робот на зарядке в доке.
             if (args.Edge == GpioPinEdge.FallingEdge)
