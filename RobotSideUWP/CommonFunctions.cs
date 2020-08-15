@@ -65,6 +65,9 @@ namespace RobotSideUWP
         internal static string cameraController = "RD31";
 
         public static bool wheelsWasStopped = true;
+        public static bool wheelsIsStopped = true;
+        public static bool wheelsGoForwardIsAllowed = true;
+        public static bool wheelsAreGoBackward = false;
         public static int initTime = 240;
 
         public static double dVoltageCorrected;
@@ -76,6 +79,7 @@ namespace RobotSideUWP
         internal static double VReal = 12.75;
         public static double deltaV = 0.0;
         public static bool permissionToSendToWebServer { get; set; }
+        public static bool leftObstacle { get; internal set; }
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
         public static long numberOfVoltageMeasurings = 0;
@@ -85,6 +89,10 @@ namespace RobotSideUWP
         public static bool IsChargingCondition = false;
         public static bool IsRobotGoesFromDock = false;
         public static long dockingCounter = 0;
+        public static string dockIsFound = "yes";
+        internal static string autoDockingStarted;
+        internal static bool rightObstacle;
+        internal static bool firstTimeObstacle = true;
     }
 
 	class CommonFunctions

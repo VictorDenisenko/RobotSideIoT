@@ -162,12 +162,12 @@ namespace RobotSideUWP
                             if((dBatteryVoltage <=100) && (dBatteryVoltage >=1) && (CommonStruct.permissionToSendToWebServer == true))
                             {
                                 CommonStruct.voltageLevelFromRobot = batteryVoltage;
-                                MainPage.Current.SendCommentsToServer(batteryVoltage + "%");
+                                MainPage.Current.SendComments(batteryVoltage + "%");
                             }
                             else
                             {
                                 CommonStruct.voltageLevelFromRobot = "0";
-                                MainPage.Current.SendCommentsToServer("0%");
+                                MainPage.Current.SendComments("0%");
                             }
                         }
                     }

@@ -86,6 +86,7 @@ namespace RobotSideUWP
         public int packageNumber = 0;
         public string deltaTime = "0";
         public bool isThisData = true;
+        public string toWhom = "client";
     }
 
     public sealed partial class MainPage : Page
@@ -144,7 +145,7 @@ namespace RobotSideUWP
         private static bool isConnected = false;
         DispatcherTimer pingTimer;
         //DataFromRobot dataToSend = new DataFromRobot();
-        DataFromClient receivedData = new DataFromClient();
+        public DataFromClient receivedData = new DataFromClient();
         DispatcherTimer pongTimer;
         public string testString = "";
 
@@ -154,6 +155,17 @@ namespace RobotSideUWP
         DateTime now2;
         long ticksSent;
         GpioPin pin13;//Вход, подключенный к клеммам зарядного устройства
+
+        int dockingTurnsNumber = 0;
+        int dockingTurnsNumberLocal = 0;
+        DispatcherTimer robotTurningTimer;
+        DispatcherTimer obstacleTimer;
+
+        GpioPin pin17;// Правый датчик препятствия
+        GpioPinValue val17Right = GpioPinValue.High;
+        GpioPin pin18;// Левый датчик препятствия
+        GpioPinValue val18Left = GpioPinValue.High;
+        bool ObstacleAvoidanceIs = true;
 
         public MainPage()
         {
@@ -241,37 +253,9 @@ namespace RobotSideUWP
             if(val13 == GpioPinValue.Low)
             {
                 CommonStruct.IsChargingCondition = true;
-                SendCommentsToServer("Charging...");
+                SendComments("Charging...");
             }
-        }
-       
-        private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {//Pin13 - определяет, стоит ли робот на зарядке в доке.
-            if (args.Edge == GpioPinEdge.FallingEdge)
-            {//стал в док
-                GpioPinValue val13 = pin13.Read();
-                CommonStruct.IsChargingCondition = true;
-                SendCommentsToServer("Charging...");
-            }
-            else if (args.Edge == GpioPinEdge.RisingEdge)
-            {//Выходит из дока
-                GpioPinValue val13 = pin13.Read();
-                CommonStruct.dockingCounter = 0;
-                CommonStruct.IsChargingCondition = false;
-                if (CommonStruct.voltageLevelFromRobot != "")
-                {
-                    SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
-                }
-                else
-                {
-                    SendCommentsToServer("");
-                }
-            }
-        }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-       {
-            //uriServerAddress = new Uri(serverAddress);
             pingTimer = new DispatcherTimer();
             pingTimer.Tick += PingTimer_Tick;
             pingTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
@@ -280,6 +264,182 @@ namespace RobotSideUWP
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
             pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
+
+            robotTurningTimer = new DispatcherTimer();
+            robotTurningTimer.Interval = new TimeSpan(0, 0, 1);//Таймер для подталкивания робота при поиске док-станции
+            robotTurningTimer.Tick += RobotTurningTimer_Tick;
+
+            pin17 = GpioController.GetDefault().OpenPin(17);//Это правый датчик столкновений
+            pin17.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin17.SetDriveMode(GpioPinDriveMode.Input);
+            pin17.ValueChanged += Pin17_ValueChanged;
+
+            pin18 = GpioController.GetDefault().OpenPin(18);//Это правый датчик столкновений
+            pin18.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin18.SetDriveMode(GpioPinDriveMode.Input);
+            pin18.ValueChanged += Pin18_ValueChanged;
+
+            obstacleTimer = new DispatcherTimer();//Таймер для датчиков препятствий
+            obstacleTimer.Tick += ObstacleTimer_Tick;
+            obstacleTimer.Interval = new TimeSpan(0, 0, 4);//
+            
+        }
+
+        private void ObstacleTimer_Tick(object sender, object e)
+        {
+            CommonStruct.rightObstacle = false;
+            CommonStruct.leftObstacle = false;
+            obstacleTimer.Stop();
+        }
+
+        private void Pin17_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {//
+            if (ObstacleAvoidanceIs == true)
+            {//firstTimeObstacle = флаг запрета на повторные отправления сообщений, снимаtncz после того как пользователь опять нажмет Go 
+                if (CommonStruct.firstTimeObstacle == true)
+                {
+                    val17Right = pin17.Read();
+                    if (val17Right == GpioPinValue.Low)
+                    {
+                        
+                        CommonStruct.rightObstacle = true;
+                        CommonStruct.wheelsIsStopped = true;
+                        //plcControl.WheelsStopSmoothly(50);
+                        plcControl.WheelsStop();
+                        SendComments("Obstacle on the right", "client");
+                        _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                            obstacleTimer.Start();
+                        });
+
+                        CommonStruct.firstTimeObstacle = false;
+                    }
+                }
+            }
+        }
+
+        private void Pin18_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {
+            if (ObstacleAvoidanceIs == true)
+            {
+                if (CommonStruct.firstTimeObstacle == true)
+                {
+                    val18Left = pin18.Read();
+                    if (val18Left == GpioPinValue.Low)
+                    {
+                        CommonStruct.leftObstacle = true;
+                        CommonStruct.wheelsIsStopped = true;
+                        //plcControl.WheelsStopSmoothly(50);
+                        plcControl.WheelsStop();
+                        SendComments("Obstacle on the left", "client");
+                        _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                            obstacleTimer.Start();
+                        });
+                    }
+                }
+            }
+        }
+
+
+        private void Pin13_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {//Pin13 - определяет, стоит ли робот на зарядке в доке.
+            if (args.Edge == GpioPinEdge.FallingEdge)
+            {//стал в док
+                GpioPinValue val13 = pin13.Read();
+                CommonStruct.IsChargingCondition = true;
+                SendComments("Charging...");
+            }
+            else if (args.Edge == GpioPinEdge.RisingEdge)
+            {//Выходит из дока
+                GpioPinValue val13 = pin13.Read();
+                CommonStruct.dockingCounter = 0;
+                CommonStruct.IsChargingCondition = false;
+                if (CommonStruct.voltageLevelFromRobot != "")
+                {
+                    SendComments(CommonStruct.voltageLevelFromRobot + "%");
+                }
+                else
+                {
+                    SendComments("");
+                }
+            }
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+       {//Это только для класса Page
+        }
+
+        private void RobotTurningTimer_Tick(object sender, object e)
+        {
+            CommonStruct.autoDockingStarted = "yes";
+            dockingTurnsNumber++;
+            if ((CommonStruct.dockIsFound == "no") && (dockingTurnsNumber < 5))
+            { 
+                TurnLeft(20);
+                //robotTurningTimer.Start();
+            }
+            else if(dockingTurnsNumber == 5)
+            {
+                plcControl.WheelsStop();
+            }
+            else if ((CommonStruct.dockIsFound == "no") && (dockingTurnsNumber > 5) && (dockingTurnsNumber < 15))
+            {
+                TurnRight(20);
+                //robotTurningTimer.Start();
+            }
+            else if (CommonStruct.dockIsFound == "yes") 
+            {//Если станция найдена, то переменная CommonStruct.dockIsFound = "yes" 
+                if(dockingTurnsNumberLocal == 0)
+                {
+                    plcControl.WheelsStop();
+                }
+                else if (dockingTurnsNumberLocal >10)
+                {
+                    plcControl.WheelsStop();
+                    robotTurningTimer.Stop();
+                }
+                else if(dockingTurnsNumberLocal < 10)
+                    GoDirect(30);
+                if (CommonStruct.IsChargingCondition == true)
+                {
+                    plcControl.WheelsStop();
+                    robotTurningTimer.Stop();
+                }
+                dockingTurnsNumberLocal++;
+            }
+            else
+            {
+                plcControl.WheelsStop();
+                robotTurningTimer.Stop();
+            }
+        }
+
+        private void TurnLeft(double speed)
+        {
+            directionLeft = backwardDirection;
+            directionRight = forwardDirection;
+            CommonStruct.directionLeft = directionLeft;
+            CommonStruct.directionRight = directionRight;
+            plcControl.Wheels(directionLeft, speed, directionRight, speed);
+        }
+
+        private void TurnRight(double speed)
+        {
+            directionLeft = forwardDirection;
+            directionRight = backwardDirection;
+            CommonStruct.directionLeft = directionLeft;
+            CommonStruct.directionRight = directionRight;
+            plcControl.Wheels(directionLeft, speed, directionRight, speed);
+        }
+
+        private void GoDirect(double speed)
+        {
+            directionLeft = forwardDirection;
+            directionRight = directionLeft;
+            CommonStruct.directionLeft = directionLeft;
+            CommonStruct.directionRight = directionRight;
+            plcControl.Wheels(directionLeft, speed, directionRight, speed);
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -292,15 +452,19 @@ namespace RobotSideUWP
         {
             try
             {
-                DataFromRobot dataToSend = new DataFromRobot();
-                dataToSend.comments = "ping1";//Это пинг до сервера, а есть еше pong от клиента
-                dataToSend.isThisData = false;
-                pongTimer.Start();
-                isConnected = false;
-                _ = SendData(dataToSend);
-                now1 = DateTime.Now;
-                timeNow1 = now1.ToString();
-                ticksSent = now1.Ticks;
+                if (CommonStruct.wheelsIsStopped == true)
+                {
+                    DataFromRobot dataToSend = new DataFromRobot();
+                    dataToSend.comments = "ping1";//Это пинг до сервера, а есть еше pong от клиента
+                    dataToSend.isThisData = false;
+                    dataToSend.toWhom = "client";
+                    pongTimer.Start();
+                    isConnected = false;
+                    _ = SendData(dataToSend);
+                    now1 = DateTime.Now;
+                    timeNow1 = now1.ToString();
+                    ticksSent = now1.Ticks;
+                }
             }
             catch (Exception)
             { }
@@ -319,6 +483,7 @@ namespace RobotSideUWP
                     Connect();
                     pongTimer.Stop();
                     NotifyUser("Server is disconnected", NotifyType.StatusMessage);
+                    NotifyUserForTesting("Server is disconnected " + x);
                 }
                 catch (Exception)
                 { }
@@ -406,6 +571,7 @@ namespace RobotSideUWP
                                 sArr[3] = receivedData.wheelsStartStop;
                                 sArr[4] = receivedData.camera;
                                 sArr[5] = receivedData.dir;
+                                sArr[6] = receivedData.comments;
                                 sArr[14] = receivedData.packageNumber.ToString();
                                 sArr[15] = receivedData.deltaTime;
 
@@ -427,8 +593,29 @@ namespace RobotSideUWP
                                     isConnected = true;
                                     pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
                                 }
+                                else if(receivedData.comments.Contains("autodocking"))
+                                {
+                                    sArr[1] = "0";
+                                    sArr[2] = "0";
+                                    if (CommonStruct.IsChargingCondition == false)
+                                    {
+                                        robotTurningTimer.Start();
+                                        CommonStruct.dockIsFound = "no";
+                                        CommonStruct.autoDockingStarted = "yes";
+                                        dockingTurnsNumber = 0;
+                                        dockingTurnsNumberLocal = 0;
+                                    }
+                                }
+                                else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
+                                {
+                                    ObstacleAvoidanceIs = true;
+                                }
+                                else if (receivedData.comments.Contains("obstacleAvoidanceNo"))
+                                {
+                                    ObstacleAvoidanceIs = false;
+                                }
 
-                                if (read != null)
+                                    if (read != null)
                                 {
                                     isConnected = true;
                                     pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
@@ -441,8 +628,7 @@ namespace RobotSideUWP
                                 Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
                                 //receivedData.comments = "";
 
-                                if ((plcControl.stopTimerCounter == 0) && (receivedData.isThisData == true)
-                                )
+                                if ((plcControl.stopTimerCounter == 0) && (receivedData.isThisData == true))
                                 {
                                     Polling(sArr);
                                     //__SendReceiveAsync();
@@ -499,6 +685,13 @@ namespace RobotSideUWP
             await SendMessageUsingMessageWebSocketAsync(json);
         }
 
+        private async Task SendData(DataFromRobot dataToSend, string toWhom)
+        {
+            dataToSend.toWhom = "toWhom";
+            string json = JsonConvert.SerializeObject(dataToSend);
+            await SendMessageUsingMessageWebSocketAsync(json);
+        }
+
         private void TextBoxRobotSerial_TextChanged(object sender, TextChangedEventArgs e)
         {
             localContainer.Containers["settings"].Values["Serial"] = textBoxRobotSerial.Text;
@@ -514,7 +707,7 @@ namespace RobotSideUWP
                 {
                     try
                     {
-                        SendCommentsToServer("BotEyes is Off");
+                        SendComments("BotEyes is Off");
                         CommonStruct.permissionToSendToWebServer = false;
                         pin5.Write(GpioPinValue.Low);//Аппаратный таймер выключения запускается нулем
                         ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));
@@ -602,6 +795,7 @@ namespace RobotSideUWP
                         textBoxWheelsStop.Text = sArr[3];//wheelsStop
                         textBoxCameraAngle.Text = arr[4];//сameraData
                         textBoxKeys.Text = arr[5];//Управление клавишами
+                        textBoxSmileName.Text = receivedData.comments;//
                     });
 
                     string direction = "0";
@@ -989,7 +1183,7 @@ namespace RobotSideUWP
             });
         }
 
-        public void SendCommentsToServer(string text)
+        public void SendComments(string text)
         {
             try
             {
@@ -998,6 +1192,26 @@ namespace RobotSideUWP
                 dataToSend.packageNumber = 0;dataToSend.serialFromClient = "";dataToSend.wheelsStartStop = "";
                 dataToSend.x = 0;dataToSend.y = 0;
                 dataToSend.comments = text;
+                dataToSend.toWhom = "client";
+                dataToSend.isThisData = false;
+                _ = SendData(dataToSend);
+            }
+            catch (Exception ex)
+            {
+                Current.NotifyUser("SendVoltageToServer() " + ex.Message, NotifyType.ErrorMessage);
+            }
+        }
+
+        public void SendComments(string text, string toWhom)
+        {
+            try
+            {
+                DataFromRobot dataToSend = new DataFromRobot();
+                dataToSend.isThisData = false; dataToSend.camera = ""; dataToSend.deltaTime = ""; dataToSend.dir = "";
+                dataToSend.packageNumber = 0; dataToSend.serialFromClient = ""; dataToSend.wheelsStartStop = "";
+                dataToSend.x = 0; dataToSend.y = 0;
+                dataToSend.comments = text;
+                dataToSend.toWhom = toWhom;
                 dataToSend.isThisData = false;
                 _ = SendData(dataToSend);
             }
@@ -1195,7 +1409,7 @@ namespace RobotSideUWP
         {//Выключение кнопкой на экране HDMI монитора
             Task t = new Task(() =>
             {
-                SendCommentsToServer("BotEyes is Off");
+                SendComments("BotEyes is Off");
                 CommonStruct.permissionToSendToWebServer = false;
             });
             t.Start();
@@ -1226,6 +1440,8 @@ namespace RobotSideUWP
         public List<Scenario> Scenarios
         {
             get { return this.scenarios; }
+            
         }
     }
 }
+

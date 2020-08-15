@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Chat;
 using Windows.ApplicationModel.Core;
 using Windows.Devices.Gpio;
 using Windows.System;
@@ -15,12 +16,8 @@ namespace RobotSideUWP
         public int stopTimerCounter = 0;
         public DispatcherTimer batteryMeasuringTimer;
         static DispatcherTimer timerRobotOff = new DispatcherTimer();
-        GpioPin pin17;// Правый датчик препятствия
-        GpioPinValue val17Right = GpioPinValue.High;
-        GpioPin pin18;// Левый датчик препятствия
-        GpioPinValue val18Left = GpioPinValue.High;
-        GpioPin pin19;// Передний датчик препятствия
-        GpioPinValue val19Top = GpioPinValue.High;
+        private string forwardDirection = "0";
+        private string backwardDirection = "1";
 
         public PlcControl()
         {
@@ -35,53 +32,9 @@ namespace RobotSideUWP
 
             timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
             timerRobotOff.Interval = new TimeSpan(0, 0, 1); //(часы, мин, сек)
-
-            //pin6 = GpioController.GetDefault().OpenPin(6);
-            //pin6.SetDriveMode(GpioPinDriveMode.Output);
-            //pin6.Write(GpioPinValue.High);// Latch HIGH value first. This ensures a default value when the pin is set as output
-
-            pin17 = GpioController.GetDefault().OpenPin(17);//Это правый датчик столкновений
-            pin17.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
-            pin17.SetDriveMode(GpioPinDriveMode.Input);
-            pin17.ValueChanged += Pin17_ValueChanged;
-
-            pin18 = GpioController.GetDefault().OpenPin(18);//Это правый датчик столкновений
-            pin18.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
-            pin18.SetDriveMode(GpioPinDriveMode.Input);
-            pin18.ValueChanged += Pin18_ValueChanged;
-
-            pin19 = GpioController.GetDefault().OpenPin(19);//Это правый датчик столкновений
-            pin19.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
-            pin19.SetDriveMode(GpioPinDriveMode.Input);
-            pin19.ValueChanged += Pin19_ValueChanged;
         }
 
-        private void Pin17_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
-            val17Right = pin17.Read();
-            if(val17Right == GpioPinValue.Low)
-            {
-                WheelsStopSmoothly(50);
-            }
-        }
-
-        private void Pin18_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
-            val18Left = pin18.Read();
-            if (val18Left == GpioPinValue.Low)
-            {
-                WheelsStopSmoothly(50);
-            }
-        }
-        private void Pin19_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {
-            val19Top = pin19.Read();
-            if (val19Top == GpioPinValue.Low)
-            {
-                WheelsStopSmoothly(50);
-            }
-        }
-
+        
         private void BatteryMeasuringTimer_Tick(object sender, object e)
         {
             if (CommonStruct.IsChargingCondition == false)
@@ -132,47 +85,41 @@ namespace RobotSideUWP
         {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
             try
             {
-                //val17Right = pin17.Read();
-                //val18Left = pin18.Read();
-                //val19Top = pin19.Read();
-                if ((val17Right == GpioPinValue.Low) && (directionRight == "0"))
+                if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) ||(directionRight == forwardDirection)))
                 {
                     return;
                 }
-                if ((val18Left == GpioPinValue.Low) && (directionLeft == "0"))
-                {
-                    return;
-                }
-                if ((val19Top == GpioPinValue.Low) && ((directionRight == "0") || (directionLeft == "0")))
-                {
-                    return;
-                }
-
+                CommonStruct.firstTimeObstacle = true;
+//Все, что ниже, остается без изменений после ввода датчиков столкновений
                 if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeft != directionLeft) || (CommonStruct.directionRight != directionRight)))
                 {
                     WheelsStopSmoothly(200);
                 }
                 else
-                { 
-                    double speedLeft0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[0];
-                    double speedRight0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[1];
+                {
+                    if (((CommonStruct.wheelsGoForwardIsAllowed == false) && ((directionLeft != "0") || (directionRight != "0"))) || (CommonStruct.wheelsGoForwardIsAllowed == true))
+                    {
+                        double speedLeft0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[0];
+                        double speedRight0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[1];
 
-                    double speedRadius = Math.Sqrt((speedLeft0* speedLeft0) + (speedRight0* speedRight0));
-                    if (speedRadius > 1) {
+                        double speedRadius = Math.Sqrt((speedLeft0 * speedLeft0) + (speedRight0 * speedRight0));
+                        if (speedRadius > 1)
+                        {
 
-                        string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
-                        string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
-                        string hexAddress = CommonStruct.wheelsAddress;
-                        string PwrRange = CommonStruct.wheelsPwrRange;
-                        string commandLeft = directionLeft + speedLeft;
-                        string commandRight = directionRight + speedRight;
-                        //CommonStruct.wheelsWasStopped = false;
-                        MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
-                        CommonStruct.lastSpeedLeft = _speedLeft;
-                        CommonStruct.lastSpeedRight = _speedRight;
-                        CommonStruct.directionLeft = directionLeft;
-                        CommonStruct.directionRight = directionRight;
-                        CommonStruct.stopBeforeWas = false;
+                            string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
+                            string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
+                            string hexAddress = CommonStruct.wheelsAddress;
+                            string PwrRange = CommonStruct.wheelsPwrRange;
+                            string commandLeft = directionLeft + speedLeft;
+                            string commandRight = directionRight + speedRight;
+                            //CommonStruct.wheelsWasStopped = false;
+                            MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
+                            CommonStruct.lastSpeedLeft = _speedLeft;
+                            CommonStruct.lastSpeedRight = _speedRight;
+                            CommonStruct.directionLeft = directionLeft;
+                            CommonStruct.directionRight = directionRight;
+                            CommonStruct.stopBeforeWas = false;
+                        }
                     }
                 }
             }
@@ -209,10 +156,12 @@ namespace RobotSideUWP
             {
                 try
                 {
+                    CommonStruct.wheelsIsStopped = true;
+                    CommonStruct.wheelsGoForwardIsAllowed = true;
                     string hexAddress = CommonStruct.wheelsAddress;
                     MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
                     CommonStruct.stopBeforeWas = true;
-            }
+                }
                 catch(Exception e)
                 {
                     MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStop" + e.Message, NotifyType.ErrorMessage);
@@ -221,7 +170,7 @@ namespace RobotSideUWP
             }
 
         public void WheelsStopSmoothly(double interval)
-            {
+        {
             try
                 {
                 double speedLeft = CommonStruct.lastSpeedLeft;
@@ -243,7 +192,9 @@ namespace RobotSideUWP
                 {
                     MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStopSmoothly" + e.Message, NotifyType.ErrorMessage);
                 }
-            }
+            CommonStruct.wheelsIsStopped = true;
+            CommonStruct.wheelsGoForwardIsAllowed = true;
+        }
 
         private void SmoothlyStopTimer_Tick(object sender, object e)
         {
@@ -295,11 +246,11 @@ namespace RobotSideUWP
                         CommonStruct.dockingCounter++;
                         if (CommonStruct.IsChargingCondition == false)
                         {
-                            MainPage.Current.SendCommentsToServer(CommonStruct.voltageLevelFromRobot + "%");
+                            MainPage.Current.SendComments(CommonStruct.voltageLevelFromRobot + "%");
                         }
                         else
                         {
-                            MainPage.Current.SendCommentsToServer("Charging...");
+                            MainPage.Current.SendComments("Charging...");
                         }
                         break;
                     case 6:
@@ -561,7 +512,7 @@ namespace RobotSideUWP
             try
             {
                 MainPage.Current.pin5.Write(GpioPinValue.Low);// 
-                MainPage.Current.SendCommentsToServer("Battery is low.");
+                MainPage.Current.SendComments("Battery is low.");
                 CommonStruct.permissionToSendToWebServer = false;
                 ShutdownManager.BeginShutdown(ShutdownKind.Shutdown, TimeSpan.FromSeconds(2));//Выгружаем Windows если напряжение меньше 11,5
             }

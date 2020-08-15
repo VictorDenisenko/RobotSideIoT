@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" IgnorableNamespaces="uap mp iot">
-  <Identity Name="RobotSideUWP" Publisher="CN=vic" Version="3.0.3.0" />
+  <Identity Name="RobotSideUWP" Publisher="CN=vic" Version="3.0.6.0" />
   <mp:PhoneIdentity PhoneProductId="299c4ee2-6f9d-4f8e-b736-ca0fcafee3a0" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>RobotSideUWP</DisplayName>
