@@ -293,7 +293,7 @@ namespace RobotSideUWP
         }
 
         private void Pin17_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
-        {//
+        {//Правый датчик столкновений
             if (ObstacleAvoidanceIs == true)
             {//firstTimeObstacle = флаг запрета на повторные отправления сообщений, снимаtncz после того как пользователь опять нажмет Go 
                 if (CommonStruct.firstTimeObstacle == true)
@@ -301,7 +301,6 @@ namespace RobotSideUWP
                     val17Right = pin17.Read();
                     if (val17Right == GpioPinValue.Low)
                     {
-                        
                         CommonStruct.rightObstacle = true;
                         CommonStruct.wheelsIsStopped = true;
                         //plcControl.WheelsStopSmoothly(50);

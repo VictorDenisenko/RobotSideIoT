@@ -87,6 +87,7 @@ namespace RobotSideUWP
             {
                 if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) ||(directionRight == forwardDirection)))
                 {
+                    _speedLeft = 0.0; _speedRight = 0.0;
                     return;
                 }
                 CommonStruct.firstTimeObstacle = true;
@@ -99,8 +100,8 @@ namespace RobotSideUWP
                 {
                     if (((CommonStruct.wheelsGoForwardIsAllowed == false) && ((directionLeft != "0") || (directionRight != "0"))) || (CommonStruct.wheelsGoForwardIsAllowed == true))
                     {
-                        double speedLeft0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[0];
-                        double speedRight0 = PlcControl.WheelsSpeedTuning(_speedLeft, _speedRight)[1];
+                        double speedLeft0 = WheelsSpeedTuning(_speedLeft, _speedRight)[0];
+                        double speedRight0 = WheelsSpeedTuning(_speedLeft, _speedRight)[1];
 
                         double speedRadius = Math.Sqrt((speedLeft0 * speedLeft0) + (speedRight0 * speedRight0));
                         if (speedRadius > 1)
