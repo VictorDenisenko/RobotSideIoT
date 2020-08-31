@@ -72,6 +72,8 @@ namespace RobotSideUWP
         public int packageNumber;
         public string deltaTime;
         public bool isThisData;
+        public int distance = 500;
+        public int alpha = 0;
     }
 
     public class DataFromRobot
@@ -281,7 +283,7 @@ namespace RobotSideUWP
 
             obstacleTimer = new DispatcherTimer();//Таймер для датчиков препятствий
             obstacleTimer.Tick += ObstacleTimer_Tick;
-            obstacleTimer.Interval = new TimeSpan(0, 0, 4);//
+            obstacleTimer.Interval = new TimeSpan(0, 0, 3);//
             
         }
 
@@ -572,6 +574,7 @@ namespace RobotSideUWP
                                 sArr[6] = receivedData.comments;
                                 sArr[14] = receivedData.packageNumber.ToString();
                                 sArr[15] = receivedData.deltaTime;
+                                
 
                                 now2 = DateTime.Now;
                                 timeNow2 = now2.ToString();
@@ -586,6 +589,11 @@ namespace RobotSideUWP
                                 NotifyUserForTesting(testString);
                                 if (testString.Length > 300) testString = "";
 
+                                if (receivedData.comments == null)
+                                {
+                                    return;
+                                }
+
                                 if (receivedData.comments.Contains("pong"))
                                 {//pong1 - это от срервера, а pong - от клиента (от браузера)
                                     isConnected = true;
@@ -593,16 +601,19 @@ namespace RobotSideUWP
                                 }
                                 else if(receivedData.comments.Contains("autodocking"))
                                 {
-                                    sArr[1] = "0";
-                                    sArr[2] = "0";
-                                    if (CommonStruct.IsChargingCondition == false)
-                                    {
-                                        robotTurningTimer.Start();
-                                        CommonStruct.dockIsFound = "no";
-                                        CommonStruct.autoDockingStarted = "yes";
-                                        dockingTurnsNumber = 0;
-                                        dockingTurnsNumberLocal = 0;
-                                    }
+                                    int distance = receivedData.distance;
+                                    int alpha = receivedData.alpha;
+
+                                    //sArr[1] = "0";
+                                    //sArr[2] = "0";
+                                    //if (CommonStruct.IsChargingCondition == false)
+                                    //{
+                                    //    robotTurningTimer.Start();
+                                    //    CommonStruct.dockIsFound = "no";
+                                    //    CommonStruct.autoDockingStarted = "yes";
+                                    //    dockingTurnsNumber = 0;
+                                    //    dockingTurnsNumberLocal = 0;
+                                    //}
                                 }
                                 else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
                                 {
