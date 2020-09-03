@@ -89,7 +89,6 @@ namespace RobotSideUWP
         public static bool IsChargingCondition = false;
         public static bool IsRobotGoesFromDock = false;
         public static long dockingCounter = 0;
-        public static string dockIsFound = "yes";
         internal static string autoDockingStarted;
         internal static bool rightObstacle;
         internal static bool firstTimeObstacle = true;

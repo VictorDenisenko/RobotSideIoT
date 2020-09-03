@@ -67,11 +67,16 @@ namespace RobotSideUWP
 
     public class DataFromClient
     {
-        public string serialFromClient, wheelsStartStop, camera, dir, comments;
-        public short x, y;
-        public int packageNumber;
-        public string deltaTime;
-        public bool isThisData;
+        public string serialFromClient = "0";
+        public string wheelsStartStop = "0";
+        public string camera = "0";
+        public string dir = "0";
+        public string comments = "";
+        public short x = 0;
+        public short y = 0;
+        public int packageNumber = 0;
+        public string deltaTime = "0";
+        public bool isThisData = true;
         public int distance = 500;
         public int alpha = 0;
     }
@@ -82,7 +87,7 @@ namespace RobotSideUWP
         public string wheelsStartStop = "0";
         public string camera = "0";
         public string dir = "0";
-        public string comments = "0";
+        public string comments = "";
         public short x = 0;
         public short y = 0;
         public int packageNumber = 0;
@@ -159,7 +164,7 @@ namespace RobotSideUWP
         GpioPin pin13;//Вход, подключенный к клеммам зарядного устройства
 
         int dockingTurnsNumber = 0;
-        int dockingTurnsNumberLocal = 0;
+        int dockingGoesNumber = 0;
         DispatcherTimer robotTurningTimer;
         DispatcherTimer obstacleTimer;
 
@@ -168,6 +173,12 @@ namespace RobotSideUWP
         GpioPin pin18;// Левый датчик препятствия
         GpioPinValue val18Left = GpioPinValue.High;
         bool ObstacleAvoidanceIs = true;
+        double deltaTimeTurning = 100;
+        double deltaTimeGo = 100;
+        double oldAlpha = 0;
+        double oldDistance = 1;
+        double alphaVelocity = 0.0;
+        double distanceVelocity = 0.0;
 
         public MainPage()
         {
@@ -268,7 +279,7 @@ namespace RobotSideUWP
             pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
 
             robotTurningTimer = new DispatcherTimer();
-            robotTurningTimer.Interval = new TimeSpan(0, 0, 1);//Таймер для подталкивания робота при поиске док-станции
+            //robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, deltaTimeDocking);//Таймер для подталкивания робота при поиске док-станции
             robotTurningTimer.Tick += RobotTurningTimer_Tick;
 
             pin17 = GpioController.GetDefault().OpenPin(17);//Это правый датчик столкновений
@@ -312,7 +323,6 @@ namespace RobotSideUWP
                         {
                             obstacleTimer.Start();
                         });
-
                         CommonStruct.firstTimeObstacle = false;
                     }
                 }
@@ -372,47 +382,9 @@ namespace RobotSideUWP
 
         private void RobotTurningTimer_Tick(object sender, object e)
         {
-            CommonStruct.autoDockingStarted = "yes";
-            dockingTurnsNumber++;
-            if ((CommonStruct.dockIsFound == "no") && (dockingTurnsNumber < 5))
-            { 
-                TurnLeft(20);
-                //robotTurningTimer.Start();
-            }
-            else if(dockingTurnsNumber == 5)
-            {
-                plcControl.WheelsStop();
-            }
-            else if ((CommonStruct.dockIsFound == "no") && (dockingTurnsNumber > 5) && (dockingTurnsNumber < 15))
-            {
-                TurnRight(20);
-                //robotTurningTimer.Start();
-            }
-            else if (CommonStruct.dockIsFound == "yes") 
-            {//Если станция найдена, то переменная CommonStruct.dockIsFound = "yes" 
-                if(dockingTurnsNumberLocal == 0)
-                {
-                    plcControl.WheelsStop();
-                }
-                else if (dockingTurnsNumberLocal >10)
-                {
-                    plcControl.WheelsStop();
-                    robotTurningTimer.Stop();
-                }
-                else if(dockingTurnsNumberLocal < 10)
-                    GoDirect(30);
-                if (CommonStruct.IsChargingCondition == true)
-                {
-                    plcControl.WheelsStop();
-                    robotTurningTimer.Stop();
-                }
-                dockingTurnsNumberLocal++;
-            }
-            else
-            {
-                plcControl.WheelsStop();
-                robotTurningTimer.Stop();
-            }
+            plcControl.WheelsStop();
+            robotTurningTimer.Stop();
+            SendComments("lookForPosition", "tablet");
         }
 
         private void TurnLeft(double speed)
@@ -595,25 +567,84 @@ namespace RobotSideUWP
                                 }
 
                                 if (receivedData.comments.Contains("pong"))
-                                {//pong1 - это от срервера, а pong - от клиента (от браузера)
+                                {//pong1 - это от сервера, а pong - от клиента (от браузера).Эта ловушка ловит и pong и pong1 т.к. "Contains"
                                     isConnected = true;
                                     pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
                                 }
                                 else if(receivedData.comments.Contains("autodocking"))
                                 {
+                                    if (CommonStruct.IsChargingCondition == true)
+                                    {
+                                        dockingTurnsNumber = 0;
+                                        dockingGoesNumber = 0;
+                                        plcControl.WheelsStop();
+                                        return;
+                                    }
+                                    CommonStruct.autoDockingStarted = "yes";
                                     int distance = receivedData.distance;
                                     int alpha = receivedData.alpha;
+                                    int delta = 5;//Position error in degrees
+                                    if(distance < 100)
+                                    {
+                                        delta = 3;
+                                    }
+                                    
+                                    if (dockingTurnsNumber > 30)
+                                    {
+                                        plcControl.WheelsStop();
+                                        return;
+                                    }
 
-                                    //sArr[1] = "0";
-                                    //sArr[2] = "0";
-                                    //if (CommonStruct.IsChargingCondition == false)
-                                    //{
-                                    //    robotTurningTimer.Start();
-                                    //    CommonStruct.dockIsFound = "no";
-                                    //    CommonStruct.autoDockingStarted = "yes";
-                                    //    dockingTurnsNumber = 0;
-                                    //    dockingTurnsNumberLocal = 0;
-                                    //}
+                                    if (alpha < 90 - delta)
+                                    {//Поворот вправо
+                                        double speed = 20;
+                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
+                                        robotTurningTimer.Start();
+                                        TurnRight(speed);
+                                        if (dockingTurnsNumber != 0)
+                                        {
+                                            alphaVelocity = Math.Abs((alpha - oldAlpha) / deltaTimeTurning);
+                                            deltaTimeTurning = Convert.ToInt32((90 - alpha) / alphaVelocity);
+                                            if (deltaTimeTurning < 100) deltaTimeTurning = 100;
+                                            if (deltaTimeTurning > 500) deltaTimeTurning = 500;
+                                        }
+                                        oldAlpha = alpha;
+                                        dockingTurnsNumber++;
+                                    }
+                                    else if (alpha > 90 + delta)
+                                    {//Поворот влево
+                                        
+                                        double speed = 20;
+                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
+                                        robotTurningTimer.Start();
+                                        TurnLeft(speed);
+                                        if (dockingTurnsNumber != 0)
+                                        {
+                                            alphaVelocity = Math.Abs((alpha - oldAlpha) / deltaTimeTurning);
+                                            deltaTimeTurning = (int)((alpha - 90) / alphaVelocity);
+                                            if (deltaTimeTurning < 100) deltaTimeTurning = 100;
+                                            if (deltaTimeTurning > 500) deltaTimeTurning = 500;
+                                        }
+                                        oldAlpha = alpha;
+                                        dockingTurnsNumber++;
+                                    }
+                                    else if ((alpha >= 90 - delta) && (alpha <= 90 + delta))
+                                    {//Go direct
+                                        
+                                        double speed = 50;
+                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeGo);
+                                        robotTurningTimer.Start();
+                                        GoDirect(speed);
+                                        if (dockingGoesNumber != 0)
+                                        {
+                                            distanceVelocity = (int)((distance - oldDistance) / deltaTimeGo);
+                                            deltaTimeGo = (int)((alpha - 90) / distanceVelocity);
+                                            if (deltaTimeGo < 100) deltaTimeGo = 100;
+                                            if (deltaTimeGo > 1500) deltaTimeGo = 1500;
+                                        }
+                                        oldDistance = distance;
+                                        dockingGoesNumber++;
+                                    }
                                 }
                                 else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
                                 {
@@ -645,7 +676,8 @@ namespace RobotSideUWP
                                 ////////////
                             }
                             catch (Exception ex)
-                            {}
+                            {
+                            }
                         }
                     }
                     catch (Exception e)
