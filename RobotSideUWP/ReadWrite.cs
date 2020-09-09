@@ -89,12 +89,16 @@ namespace RobotSideUWP
             try {
                 if (serialPort != null) {
                     Task<UInt32> storeAsyncTask;
-                    dataWriteObject.WriteString(dataToWrite);
-                    storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
-                    UInt32 bytesWritten = await storeAsyncTask;
-                    if (bytesWritten > 0) {
-                        await ReadAsync();
-                        CommonStruct.permissionToSend = true;
+                    if (dataWriteObject != null)
+                    {
+                        dataWriteObject.WriteString(dataToWrite);
+                        storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
+                        UInt32 bytesWritten = await storeAsyncTask;
+                        if (bytesWritten > 0)
+                        {
+                            await ReadAsync();
+                            CommonStruct.permissionToSend = true;
+                        }
                     }
                 } else {
                     MainPage.Current.NotifyUserFromOtherThreadAsync("Connection to commport error ", NotifyType.ErrorMessage);

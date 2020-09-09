@@ -175,10 +175,12 @@ namespace RobotSideUWP
         bool ObstacleAvoidanceIs = true;
         double deltaTimeTurning = 100;
         double deltaTimeGo = 100;
+        double deltaTimeGoLast = 100;
         double oldAlpha = 0;
         double oldDistance = 1;
         double alphaVelocity = 0.0;
         double distanceVelocity = 0.0;
+        string whereRobotIs = "";
 
         public MainPage()
         {
@@ -382,8 +384,17 @@ namespace RobotSideUWP
 
         private void RobotTurningTimer_Tick(object sender, object e)
         {
-            plcControl.WheelsStop();
+            if (whereRobotIs == "turning")
+            {
+                plcControl.WheelsStop();
+            }
+            else if(whereRobotIs == "go")
+            {
+                plcControl.WheelsStopSmoothly(300);
+            }
+            
             robotTurningTimer.Stop();
+            if (CommonStruct.IsChargingCondition == true) return;
             SendComments("lookForPosition", "tablet");
         }
 
@@ -572,79 +583,142 @@ namespace RobotSideUWP
                                     pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
                                 }
                                 else if(receivedData.comments.Contains("autodocking"))
-                                {
+                                {//Auto Docking
                                     if (CommonStruct.IsChargingCondition == true)
                                     {
                                         dockingTurnsNumber = 0;
                                         dockingGoesNumber = 0;
-                                        plcControl.WheelsStop();
+                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, 200);
+                                        robotTurningTimer.Start();
+                                        deltaTimeTurning = 100;
+                                        deltaTimeGo = 100;
+                                        oldAlpha = 0;
+                                        oldDistance = 1;
+                                        alphaVelocity = 0.0;
+                                        distanceVelocity = 0.0;
+                                        SendComments("dockingStopped", "tablet");
                                         return;
                                     }
                                     CommonStruct.autoDockingStarted = "yes";
                                     int distance = receivedData.distance;
                                     int alpha = receivedData.alpha;
-                                    int delta = 5;//Position error in degrees
-                                    if(distance < 100)
+                                    int delta = 10;//Position error in degrees
+                                    if(distance < 200)
                                     {
-                                        delta = 3;
+                                        delta = 2;
+                                    }
+                                    else
+                                    {
+                                        delta = 10;
                                     }
                                     
-                                    if (dockingTurnsNumber > 30)
+                                    if (dockingTurnsNumber > 40)
                                     {
                                         plcControl.WheelsStop();
                                         return;
                                     }
+                                    bool passedTroughTarget = true;
+                                    if ((oldAlpha > 90 && alpha <= 90) || (oldAlpha < 90 && alpha >= 90))
+                                    {
+                                        passedTroughTarget = true;
+                                    }
+                                    else if ((oldAlpha > 90 && alpha >= 90) || (oldAlpha < 90 && alpha <= 90))
+                                    {
+                                        passedTroughTarget = false;
+                                    }
 
                                     if (alpha < 90 - delta)
                                     {//Поворот вправо
+                                        whereRobotIs = "turning";
                                         double speed = 20;
+                                        if (90 - alpha < 10 || passedTroughTarget == true || distance < 100)
+                                        {
+                                            deltaTimeTurning = 100;
+                                        }
+                                        else if ((90 - alpha >= 10) && (90 - alpha < 45))
+                                        {
+                                            deltaTimeTurning = 300;
+                                        }
+                                        else if (90 - alpha >= 45)
+                                        {
+                                            deltaTimeTurning = 500;
+                                        }
                                         robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
                                         robotTurningTimer.Start();
                                         TurnRight(speed);
-                                        if (dockingTurnsNumber != 0)
-                                        {
-                                            alphaVelocity = Math.Abs((alpha - oldAlpha) / deltaTimeTurning);
-                                            deltaTimeTurning = Convert.ToInt32((90 - alpha) / alphaVelocity);
-                                            if (deltaTimeTurning < 100) deltaTimeTurning = 100;
-                                            if (deltaTimeTurning > 500) deltaTimeTurning = 500;
-                                        }
-                                        oldAlpha = alpha;
                                         dockingTurnsNumber++;
+                                        oldAlpha = alpha;
                                     }
                                     else if (alpha > 90 + delta)
                                     {//Поворот влево
-                                        
+                                        whereRobotIs = "turning";
                                         double speed = 20;
+                                        if ((alpha - 90) < 10 || passedTroughTarget == true || distance < 100)
+                                        {
+                                            deltaTimeTurning = 100;
+                                        }
+                                        else if ((alpha - 90 >= 10) && (alpha - 90 < 45))
+                                        {
+                                            deltaTimeTurning = 400;
+                                        }
+                                        else if (alpha - 90 >= 45)
+                                        {
+                                            deltaTimeTurning = 600;
+                                        }
                                         robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
                                         robotTurningTimer.Start();
                                         TurnLeft(speed);
-                                        if (dockingTurnsNumber != 0)
-                                        {
-                                            alphaVelocity = Math.Abs((alpha - oldAlpha) / deltaTimeTurning);
-                                            deltaTimeTurning = (int)((alpha - 90) / alphaVelocity);
-                                            if (deltaTimeTurning < 100) deltaTimeTurning = 100;
-                                            if (deltaTimeTurning > 500) deltaTimeTurning = 500;
-                                        }
-                                        oldAlpha = alpha;
                                         dockingTurnsNumber++;
+                                        oldAlpha = alpha;
                                     }
                                     else if ((alpha >= 90 - delta) && (alpha <= 90 + delta))
                                     {//Go direct
-                                        
+                                        whereRobotIs = "go";
                                         double speed = 50;
+                                        if (distance > 300)
+                                        {
+                                            deltaTimeGo = 1000;
+                                        }
+                                        else if (distance <= 300 && distance > 100)
+                                        {
+                                            deltaTimeGo = 1000;
+                                        }
+                                        else if (distance <= 100)
+                                        {
+                                            deltaTimeGo = 1500;
+                                        }
                                         robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeGo);
                                         robotTurningTimer.Start();
                                         GoDirect(speed);
+
                                         if (dockingGoesNumber != 0)
                                         {
                                             distanceVelocity = (int)((distance - oldDistance) / deltaTimeGo);
-                                            deltaTimeGo = (int)((alpha - 90) / distanceVelocity);
+                                            deltaTimeGoLast = (int)(distance / distanceVelocity);
                                             if (deltaTimeGo < 100) deltaTimeGo = 100;
                                             if (deltaTimeGo > 1500) deltaTimeGo = 1500;
+
+                                            if(distance < 200)
+                                            {
+                                                deltaTimeGo = deltaTimeGoLast + 500;
+                                            }
                                         }
                                         oldDistance = distance;
                                         dockingGoesNumber++;
                                     }
+                                }
+                                else if (receivedData.comments.Contains("stopDocking"))
+                                {
+                                    deltaTimeTurning = 100;
+                                    deltaTimeGo = 100;
+                                    oldAlpha = 0;
+                                    oldDistance = 1;
+                                    alphaVelocity = 0.0;
+                                    distanceVelocity = 0.0;
+                                    dockingGoesNumber = 0;
+                                    dockingTurnsNumber = 0;
+                                    plcControl.WheelsStop();
+                                    return;
                                 }
                                 else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
                                 {
