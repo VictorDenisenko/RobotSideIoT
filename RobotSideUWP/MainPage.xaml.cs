@@ -175,6 +175,7 @@ namespace RobotSideUWP
         bool ObstacleAvoidanceIs = true;
         double deltaTimeTurning = 100;
         double deltaTimeGo = 100;
+        double deltaTimeGoOld = 100;
         double deltaTimeGoLast = 100;
         double oldAlpha = 0;
         double oldDistance = 1;
@@ -390,7 +391,7 @@ namespace RobotSideUWP
             }
             else if(whereRobotIs == "go")
             {
-                plcControl.WheelsStopSmoothly(300);
+                plcControl.WheelsStopSmoothly(100);
             }
             
             robotTurningTimer.Stop();
@@ -584,6 +585,7 @@ namespace RobotSideUWP
                                 }
                                 else if(receivedData.comments.Contains("autodocking"))
                                 {//Auto Docking
+                                    ObstacleAvoidanceIs = false;
                                     if (CommonStruct.IsChargingCondition == true)
                                     {
                                         dockingTurnsNumber = 0;
@@ -603,9 +605,14 @@ namespace RobotSideUWP
                                     int distance = receivedData.distance;
                                     int alpha = receivedData.alpha;
                                     int delta = 10;//Position error in degrees
-                                    if(distance < 200)
+
+                                    if (distance < 100)
                                     {
-                                        delta = 2;
+                                        delta = 10;
+                                    }
+                                    else if ((distance < 200) && (distance >= 100))
+                                    {
+                                        delta = 3;
                                     }
                                     else
                                     {
@@ -675,35 +682,30 @@ namespace RobotSideUWP
                                     {//Go direct
                                         whereRobotIs = "go";
                                         double speed = 50;
-                                        if (distance > 300)
-                                        {
-                                            deltaTimeGo = 1000;
-                                        }
-                                        else if (distance <= 300 && distance > 100)
-                                        {
-                                            deltaTimeGo = 1000;
-                                        }
-                                        else if (distance <= 100)
+                                        if (distance <= 100)
                                         {
                                             deltaTimeGo = 1500;
                                         }
+                                        else if ((distance > 100) && (distance <= 200))
+                                        {
+                                            deltaTimeGo = 400;
+                                        }
+                                        else if ((distance > 200) && (dockingGoesNumber != 0))
+                                        {
+                                            distanceVelocity = (oldDistance - distance) / deltaTimeGoOld;
+                                            deltaTimeGoLast = (int)(distance / distanceVelocity);
+                                            if (distance < 100) deltaTimeGo = 1500;
+                                            if (distance >= 100) deltaTimeGo = deltaTimeGoLast;
+                                        }
+                                        else
+                                        {
+                                            deltaTimeGo = 100;
+                                        }
+                                        oldDistance = distance;
+                                        deltaTimeGoOld = deltaTimeGo;
                                         robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeGo);
                                         robotTurningTimer.Start();
                                         GoDirect(speed);
-
-                                        if (dockingGoesNumber != 0)
-                                        {
-                                            distanceVelocity = (int)((distance - oldDistance) / deltaTimeGo);
-                                            deltaTimeGoLast = (int)(distance / distanceVelocity);
-                                            if (deltaTimeGo < 100) deltaTimeGo = 100;
-                                            if (deltaTimeGo > 1500) deltaTimeGo = 1500;
-
-                                            if(distance < 200)
-                                            {
-                                                deltaTimeGo = deltaTimeGoLast + 500;
-                                            }
-                                        }
-                                        oldDistance = distance;
                                         dockingGoesNumber++;
                                     }
                                 }
