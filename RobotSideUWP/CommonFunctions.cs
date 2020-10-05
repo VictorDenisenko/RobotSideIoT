@@ -9,7 +9,7 @@ using Windows.Storage;
 
 namespace RobotSideUWP
 {
-        public struct CommonStruct
+    public struct CommonStruct
 		{//Сюда записываются данные в формате с нулями перед числами (ZeroInFront Format)
 		static public string robotSerial { get; set; }
 		public static string x1 = "";
@@ -29,8 +29,10 @@ namespace RobotSideUWP
         public static double lastSpeedLeft { get; set; }
         public static double lastSpeedRight { get; set; }
         public static string directionLeft = "0";
+        public static string directionLeftBefore = "";
         public static bool stopBeforeWas = true;
         public static string directionRight = "0";
+        public static string directionRightBefore = "";
         public static double k1 = 0.7;
         public static double k2 = 0.4;
         public static double k3 = 0.2;
@@ -65,7 +67,7 @@ namespace RobotSideUWP
         internal static string cameraController = "RD31";
 
         public static bool wheelsWasStopped = true;
-        public static bool wheelsIsStopped = true;
+        public static bool wheelsIsStopped = false;
         public static bool wheelsGoForwardIsAllowed = true;
         public static bool wheelsAreGoBackward = false;
         public static int initTime = 240;
@@ -79,7 +81,6 @@ namespace RobotSideUWP
         internal static double VReal = 12.75;
         public static double deltaV = 0.0;
         public static bool permissionToSendToWebServer { get; set; }
-        public static bool leftObstacle { get; internal set; }
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера
         public static long numberOfVoltageMeasurings = 0;
@@ -91,7 +92,9 @@ namespace RobotSideUWP
         public static long dockingCounter = 0;
         internal static string autoDockingStarted;
         internal static bool rightObstacle;
+        internal static bool leftObstacle;
         internal static bool firstTimeObstacle = true;
+        internal static bool ObstacleAvoidanceIs;
     }
 
 	class CommonFunctions

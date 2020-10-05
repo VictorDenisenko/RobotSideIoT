@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Globalization;
-using Windows.Devices.Gpio;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Input;
 
 namespace RobotSideUWP
 {
@@ -48,6 +46,9 @@ namespace RobotSideUWP
 
             localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
             localContainer.Containers["settings"].Values["VReal"] = 12.75;
+
+            localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = true;
+            
         }
 
         private void ReadAllSettings()
@@ -108,6 +109,8 @@ namespace RobotSideUWP
 
             CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
             CommonStruct.VReal = Convert.ToDouble(localContainer.Containers["settings"].Values["VReal"]);
+
+            CommonStruct.ObstacleAvoidanceIs = Convert.ToBoolean(localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"]);
         }
 
         private void InitializeRobot()

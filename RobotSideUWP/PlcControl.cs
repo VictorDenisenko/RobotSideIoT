@@ -85,6 +85,7 @@ namespace RobotSideUWP
         {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
             try
             {
+                CommonStruct.wheelsIsStopped = false;
                 if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) ||(directionRight == forwardDirection)))
                 {
                     _speedLeft = 0.0; _speedRight = 0.0;
@@ -92,37 +93,52 @@ namespace RobotSideUWP
                 }
                 CommonStruct.firstTimeObstacle = true;
 //Все, что ниже, остается без изменений после ввода датчиков столкновений
-                if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeft != directionLeft) || (CommonStruct.directionRight != directionRight)))
+                if ((CommonStruct.stopBeforeWas == false) && ((CommonStruct.directionLeftBefore != directionLeft) || (CommonStruct.directionRightBefore != directionRight)))
                 {
                     WheelsStopSmoothly(200);
                 }
                 else
                 {
-                    if (((CommonStruct.wheelsGoForwardIsAllowed == false) && ((directionLeft != "0") || (directionRight != "0"))) || (CommonStruct.wheelsGoForwardIsAllowed == true))
+                    WheelsInside(directionLeft, _speedLeft, directionRight, _speedRight);
+                }
+            }
+            catch (Exception e1)
+            {
+                //CommonFunctions.WriteToLog(e1.Message + " Wheels");
+                MainPage.Current.NotifyUserFromOtherThreadAsync("Wheels " + e1.Message, NotifyType.ErrorMessage);
+            }
+        }
+
+        public void WheelsInside(string directionLeft, double _speedLeft, string directionRight, double _speedRight)
+        {//Управление мышкой и клавишами, за исключением локального управления с сенсорного экрана
+            try
+            {
+                if (((CommonStruct.wheelsGoForwardIsAllowed == false) && ((directionLeft != "0") || (directionRight != "0"))) || (CommonStruct.wheelsGoForwardIsAllowed == true))
+                {
+                    double speedLeft0 = WheelsSpeedTuning(_speedLeft, _speedRight)[0];
+                    double speedRight0 = WheelsSpeedTuning(_speedLeft, _speedRight)[1];
+
+                    double speedRadius = Math.Sqrt((speedLeft0 * speedLeft0) + (speedRight0 * speedRight0));
+                    if (speedRadius > 1)
                     {
-                        double speedLeft0 = WheelsSpeedTuning(_speedLeft, _speedRight)[0];
-                        double speedRight0 = WheelsSpeedTuning(_speedLeft, _speedRight)[1];
 
-                        double speedRadius = Math.Sqrt((speedLeft0 * speedLeft0) + (speedRight0 * speedRight0));
-                        if (speedRadius > 1)
-                        {
+                        string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
+                        string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
+                        string hexAddress = CommonStruct.wheelsAddress;
+                        string PwrRange = CommonStruct.wheelsPwrRange;
+                        string commandLeft = directionLeft + speedLeft;
+                        string commandRight = directionRight + speedRight;
+                        //CommonStruct.wheelsWasStopped = false;
 
-                            string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
-                            string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
-                            string hexAddress = CommonStruct.wheelsAddress;
-                            string PwrRange = CommonStruct.wheelsPwrRange;
-                            string commandLeft = directionLeft + speedLeft;
-                            string commandRight = directionRight + speedRight;
-                            //CommonStruct.wheelsWasStopped = false;
-                            MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
-                            CommonStruct.lastSpeedLeft = _speedLeft;
-                            CommonStruct.lastSpeedRight = _speedRight;
-                            CommonStruct.directionLeft = directionLeft;
-                            CommonStruct.directionRight = directionRight;
-                            CommonStruct.stopBeforeWas = false;
-                        }
+                        MainPage.readWrite.Write("^RB" + hexAddress + commandLeft + commandRight + "\r");//Установка скорости и направления для обоих колес
+                        CommonStruct.lastSpeedLeft = _speedLeft;
+                        CommonStruct.lastSpeedRight = _speedRight;
+                        CommonStruct.directionLeftBefore = directionLeft;
+                        CommonStruct.directionRightBefore = directionRight;
+                        CommonStruct.stopBeforeWas = false;
                     }
                 }
+                
             }
             catch (Exception e1)
             {
@@ -157,7 +173,6 @@ namespace RobotSideUWP
             {
                 try
                 {
-                    CommonStruct.wheelsIsStopped = true;
                     CommonStruct.wheelsGoForwardIsAllowed = true;
                     string hexAddress = CommonStruct.wheelsAddress;
                     MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Общий стоп для всех каналов
@@ -172,29 +187,33 @@ namespace RobotSideUWP
 
         public void WheelsStopSmoothly(double interval)
         {
-            try
+            if (CommonStruct.wheelsIsStopped == false)
+            {
+                try
                 {
-                double speedLeft = CommonStruct.lastSpeedLeft;
-                double speedRight = CommonStruct.lastSpeedRight;
-                string directionLeft = CommonStruct.directionLeft;
-                string directionRight = CommonStruct.directionRight;
-                double k1 = CommonStruct.k1;
-                stopTimerCounter = 0;
-                Wheels(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
-                Task t = new Task(async () => {
-                    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() => {
-                        smoothlyStopTimer.Interval = TimeSpan.FromMilliseconds(interval);
-                        smoothlyStopTimer.Start();
-                    }));
-                });
-                t.Start();
+                    double speedLeft = CommonStruct.lastSpeedLeft;
+                    double speedRight = CommonStruct.lastSpeedRight;
+                    string directionLeft = CommonStruct.directionLeftBefore;
+                    string directionRight = CommonStruct.directionRightBefore;
+                    double k1 = CommonStruct.k1;
+                    stopTimerCounter = 0;
+                    WheelsInside(directionLeft, k1 * speedLeft, directionRight, k1 * speedRight);
+                    Task t = new Task(async () =>
+                    {
+                        await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(() =>
+                        {
+                            smoothlyStopTimer.Interval = TimeSpan.FromMilliseconds(interval);
+                            smoothlyStopTimer.Start();
+                        }));
+                    });
+                    t.Start();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     MainPage.Current.NotifyUserFromOtherThreadAsync("WheelsStopSmoothly" + e.Message, NotifyType.ErrorMessage);
                 }
-            CommonStruct.wheelsIsStopped = true;
-            CommonStruct.wheelsGoForwardIsAllowed = true;
+                CommonStruct.wheelsGoForwardIsAllowed = true;
+            }
         }
 
         private void SmoothlyStopTimer_Tick(object sender, object e)
@@ -203,8 +222,8 @@ namespace RobotSideUWP
                 stopTimerCounter++;
                 double speedLeft = CommonStruct.lastSpeedLeft;
                 double speedRight = CommonStruct.lastSpeedRight;
-                string directionLeft = CommonStruct.directionLeft;
-                string directionRight = CommonStruct.directionRight;
+                string directionLeft = CommonStruct.directionLeftBefore;
+                string directionRight = CommonStruct.directionRightBefore;
                 double k2 = CommonStruct.k2, k3 = CommonStruct.k3, k4 = CommonStruct.k4;
                 switch (stopTimerCounter) {
                     case 1:
@@ -475,14 +494,14 @@ namespace RobotSideUWP
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }
 
-                CommonStruct.numberOfVoltageMeasurings++;
+                CommonStruct.numberOfVoltageMeasurings++;//Это защита от случайного срабатывания после одного измерения
 
-                if ((CommonStruct.dVoltageCorrected < 1150) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+                if ((CommonStruct.dVoltageCorrected < 1180) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
                     timerRobotOff.Start();//Запускаем таймер, чтобы выгрузить Виндовс:
-                    MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 10.5 V.", NotifyType.ErrorMessage);
+                    MainPage.Current.NotifyUserFromOtherThreadAsync("Supply Voltage less than 11.8 V.", NotifyType.ErrorMessage);
                 }
                 if (CommonStruct.dVoltageCorrected > 1250)
                 {
@@ -490,15 +509,7 @@ namespace RobotSideUWP
                 }
                 double levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
                 if (levelCeiling < 0) levelCeiling = 0;
-
-                if ((CommonStruct.dChargeCurrent < 30) && (CommonStruct.dVoltageCorrected > 0))
-                {//пусть лучше при сбое пишет % во время зараяда, чем "Charging" во время езды.
-                    CommonStruct.IsChargingCondition = false;
-                }
-                else
-                {
-                    CommonStruct.IsChargingCondition = true;
-                }
+                
                 CommonStruct.outputValuePercentage = levelCeiling.ToString();
             }
             catch (Exception e2)
