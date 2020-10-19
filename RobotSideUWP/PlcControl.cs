@@ -377,8 +377,8 @@ namespace RobotSideUWP
                 }
                 else if (CommonStruct.cameraController == "RD31")
                 {
-                    speed = CommonStruct.cameraSpeed;//от 0 до 100.
-                    MainPage.readWrite.Write("^R1" + hexAddress + direction + speed + "000" + "4" + "\r");
+                    string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);//от 0 до 100.
+                    MainPage.readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                 }
 
             }
@@ -446,10 +446,11 @@ namespace RobotSideUWP
         public static string BatteryVoltageHandling(string input)
         {
             bool isInt;
+            string s1 = input;
+            string averagedVoltage;
+            string exclimation = s1.Substring(0, 1);
             try
             {
-                string s1 = input;
-                string exclimation = s1.Substring(0, 1);
                 if (((s1 == "") || (input.Length != 25)) && (exclimation != "!"))
                 {
                     return "";
@@ -462,7 +463,8 @@ namespace RobotSideUWP
                     return "";
                 }
 
-                string averagedVoltage = s1.Substring(14, 4);
+                if (s1.Length <= 14) return "";
+                averagedVoltage = s1.Substring(14, 4);
                 string x = averagedVoltage.Substring(0, 1);
                 if (averagedVoltage.Substring(0, 1) != "1")
                 {
@@ -496,7 +498,7 @@ namespace RobotSideUWP
 
                 CommonStruct.numberOfVoltageMeasurings++;//Это защита от случайного срабатывания после одного измерения
 
-                if ((CommonStruct.dVoltageCorrected < 1180) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+                if ((CommonStruct.dVoltageCorrected < 1200) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
@@ -507,7 +509,7 @@ namespace RobotSideUWP
                 {
                     CommonStruct.dVoltageCorrected = 1250;
                 }
-                double levelCeiling = Math.Ceiling(CommonStruct.dVoltageCorrected - 1150);
+                double levelCeiling = 2 * Math.Ceiling(CommonStruct.dVoltageCorrected - 1200);
                 if (levelCeiling < 0) levelCeiling = 0;
                 
                 CommonStruct.outputValuePercentage = levelCeiling.ToString();

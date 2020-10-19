@@ -65,7 +65,7 @@ namespace RobotSideUWP
 
                 long deltaTicks = (ticksNow - ticksSent) / 10000;
 
-                if (deltaTicks < 30) {
+                if (deltaTicks < 30) {//Было 30 
                     if ((dataToWrite == "^RC0002\r")||(dataToWrite == "^RS00031\r")) {
                         var _ = CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
                             sendAfterDelayTimer.Start();
