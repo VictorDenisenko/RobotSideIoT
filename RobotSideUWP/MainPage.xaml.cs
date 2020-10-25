@@ -194,6 +194,7 @@ namespace RobotSideUWP
         string whereRobotIs = "";
 
         string testTbaletPositioning = "";
+        bool serverIsValid;
 
         public MainPage()
         {
@@ -290,7 +291,7 @@ namespace RobotSideUWP
 
             pongTimer = new DispatcherTimer();
             pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для приема ответа сервера pong
+            pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
 
             robotTurningTimer = new DispatcherTimer();
             //robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, deltaTimeDocking);//Таймер для подталкивания робота при поиске док-станции
@@ -477,7 +478,7 @@ namespace RobotSideUWP
                 dataToSend.toWhom = "server";//
                 pongTimer.Start();
                 isConnected = false;
-                _ = SendData(dataToSend);
+                SendData(dataToSend);
                 now1 = DateTime.Now;
                 timeNow1 = now1.ToString();
                 ticksSent = now1.Ticks;
@@ -497,11 +498,12 @@ namespace RobotSideUWP
 
                     var x = receivedData.comments;
                     Connect();
+                    //App.Current.Exit();
                     pongTimer.Stop();
                     NotifyUser("Server is disconnected", NotifyType.StatusMessage);
                     NotifyUserForTesting("Server is disconnected " + x);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 { }
             }
             else
@@ -514,15 +516,24 @@ namespace RobotSideUWP
 
         private void Connect()
         {
-            messageWebSocket = new MessageWebSocket();
+            if (messageWebSocket != null)
+            {
+                CloseSocket();
+                messageWebSocket = new MessageWebSocket();
+            }
+            else
+            {
+                messageWebSocket = new MessageWebSocket();
+            }
             messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
             var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(CommonStruct.robotSerial));
             messageWebSocket.SetRequestHeader("serial", serialBase64);//В заголовок добавил SN
             messageWebSocket.MessageReceived += MessageReceived;
             messageWebSocket.Closed += OnClosed;
+            //messageWebSocket.ServerCustomValidationRequested += MessageWebSocket_ServerCustomValidationRequested;
             messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.Untrusted);
             messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.InvalidName);
-
+            
             if (CommonStruct.defaultWebSiteAddress.Contains("https"))
             {
                 serverAddress = CommonStruct.defaultWebSiteAddress.Replace("https", "wss");
@@ -536,8 +547,9 @@ namespace RobotSideUWP
             
             try{
                 Task connectTask = Task.Run(() => {
-                    _ = messageWebSocket.ConnectAsync(uriServerAddress);
+                    Windows.Foundation.IAsyncAction x = messageWebSocket.ConnectAsync(uriServerAddress);
                 });
+                RoundTripTimeStatistics rts = new RoundTripTimeStatistics();
             }
             catch (Exception ex) // For debugging
             {
@@ -545,31 +557,68 @@ namespace RobotSideUWP
                 messageWebSocket = null;
                 return;
             }
+
+            
+
             messageWriter = new DataWriter(messageWebSocket.OutputStream);
             NotifyUser("Connected", NotifyType.StatusMessage);
         }
+
+        //private async Task SendMessageUsingMessageWebSocketAsync(string message)
+        //{
+        //    string test = message;
+        //    try
+        //    {
+        //        if (messageWebSocket != null)
+        //        {
+        //            using (var dataWriter = new DataWriter(messageWebSocket.OutputStream))
+        //            {
+        //                dataWriter.WriteString(message);
+        //                await dataWriter.StoreAsync();//Только для потоков
+        //                dataWriter.DetachStream();
+        //            }
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return;
+        //    }
+        //}
 
         private async Task SendMessageUsingMessageWebSocketAsync(string message)
         {
             string test = message;
             try
             {
-                if (messageWebSocket != null)
+                if ((messageWebSocket != null) && (messageWebSocket.Information.LocalAddress != null))
                 {
-                    using (var dataWriter = new DataWriter(messageWebSocket.OutputStream))
+                    messageWriter.WriteString(message);
+                    try
                     {
-                        dataWriter.WriteString(message);
-                        await dataWriter.StoreAsync();
-                        dataWriter.DetachStream();
+                        uint x = messageWriter.MeasureString("str");
+                        uint  xxx = await messageWriter.StoreAsync();// Send the data as one complete message.
+                        var xx = "";
+                    }
+                    catch (Exception ex)
+                    {
                     }
                 }
             }
             catch (Exception e)
-            {}
+            {
+            }
+        }
+
+        private void MessageWebSocket_ServerCustomValidationRequested(MessageWebSocket sender, WebSocketServerCustomValidationRequestedEventArgs args)
+        {
+            args.Reject();
+            
+            //serverIsValid = true;
         }
 
         private void MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
+                       
             string read = null;
             DataReader reader;
             try
@@ -942,7 +991,7 @@ namespace RobotSideUWP
         }
 
         private async void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
-        {
+        {//вызывается событием пришедшим от сервера
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 if (messageWebSocket == sender)
@@ -973,17 +1022,17 @@ namespace RobotSideUWP
             }
         }
 
-        private async Task SendData(DataFromRobot dataToSend)
+        private void SendData(DataFromRobot dataToSend)
         {
             string json = JsonConvert.SerializeObject(dataToSend);
-            await SendMessageUsingMessageWebSocketAsync(json);
+            _ = SendMessageUsingMessageWebSocketAsync(json);
         }
 
-        private async Task SendData(DataFromRobot dataToSend, string toWhom)
+        private void SendData(DataFromRobot dataToSend, string toWhom)
         {
             dataToSend.toWhom = "toWhom";
             string json = JsonConvert.SerializeObject(dataToSend);
-            await SendMessageUsingMessageWebSocketAsync(json);
+            _ = SendMessageUsingMessageWebSocketAsync(json);
         }
 
         private void TextBoxRobotSerial_TextChanged(object sender, TextChangedEventArgs e)
@@ -1445,7 +1494,7 @@ namespace RobotSideUWP
                 dataToSend.comments = text;
                 dataToSend.toWhom = "client";
                 dataToSend.isThisData = false;
-                _ = SendData(dataToSend);
+                SendData(dataToSend);
             }
             catch (Exception ex)
             {
@@ -1464,7 +1513,7 @@ namespace RobotSideUWP
                 dataToSend.comments = text;
                 dataToSend.toWhom = toWhom;
                 dataToSend.isThisData = false;
-                _ = SendData(dataToSend);
+                SendData(dataToSend);
             }
             catch (Exception ex)
             {
@@ -1551,6 +1600,11 @@ namespace RobotSideUWP
             {
                 Current.NotifyUserFromOtherThreadAsync(e1.Message, NotifyType.ErrorMessage);
             }
+        }
+
+        private void OnDisconnect()
+        {
+            CloseSocket();
         }
 
         private void Client_ConnectionClosed(object sender, EventArgs e)
