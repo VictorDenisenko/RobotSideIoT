@@ -14,7 +14,7 @@ namespace RobotSideUWP
 		static public string robotSerial { get; set; }
 		public static string x1 = "";
 		public static string x2 = "";
-        public static double cameraSpeed = 100;
+        public static double cameraSpeed = 95;
         public static string wheelsAddress = "0002";
         public static string cameraAddress = "0003";
         public static string interval = "1.4";

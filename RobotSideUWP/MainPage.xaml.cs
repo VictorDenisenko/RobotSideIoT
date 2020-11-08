@@ -648,13 +648,11 @@ namespace RobotSideUWP
                                     sArr[6] = receivedData.comments;
                                     sArr[14] = receivedData.packageNumber.ToString();
                                     sArr[15] = receivedData.deltaTime;
-
                                 }
                                 catch(Exception e3)
                                 {
                                     var x = e3.Message;
                                 }
-
 
                                 if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
                                 {

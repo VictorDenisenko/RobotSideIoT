@@ -52,136 +52,146 @@ namespace RobotSideUWP
 
         private void ReadAllSettings()
         {//Инициализация всех параметров сразу после загрузки этой программы
-            CommonStruct.smoothStopTime = Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
-            CommonStruct.stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
-            CommonStruct.wheelsPwrRange = Convert.ToString(localContainer.Containers["settings"].Values["WheelsPwrRange"]);
-            CommonStruct.PWMSteppingSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["PWMSteppingSpeed"]);
-            textBoxPWMSteppingSpeed.Text = CommonStruct.PWMSteppingSpeed.ToString();
-            CommonStruct.maxWheelsSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
-            CommonStruct.cameraController = Convert.ToString(localContainer.Containers["settings"].Values["cameraController"]);
-            
-            CommonStruct.cameraSpeed = Convert.ToDouble(localContainer.Containers["settings"].Values["CameraSpeed"]);
+            try
+            {
+                CommonStruct.smoothStopTime = Convert.ToInt16(localContainer.Containers["settings"].Values["SmoothStopTime"]);
+                CommonStruct.stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
+                CommonStruct.wheelsPwrRange = Convert.ToString(localContainer.Containers["settings"].Values["WheelsPwrRange"]);
+                CommonStruct.PWMSteppingSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["PWMSteppingSpeed"]);
+                textBoxPWMSteppingSpeed.Text = CommonStruct.PWMSteppingSpeed.ToString();
+                CommonStruct.maxWheelsSpeed = Convert.ToInt16(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
+                CommonStruct.cameraController = Convert.ToString(localContainer.Containers["settings"].Values["cameraController"]);
 
-            CommonStruct.robotSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
+                CommonStruct.cameraSpeed = Convert.ToDouble(localContainer.Containers["settings"].Values["CameraSpeed"]);
 
-            CommonStruct.k1 = Convert.ToDouble(localContainer.Containers["settings"].Values["k1"]);
-            CommonStruct.k2 = Convert.ToDouble(localContainer.Containers["settings"].Values["k2"]);
-            CommonStruct.k3 = Convert.ToDouble(localContainer.Containers["settings"].Values["k3"]);
-            CommonStruct.k4 = Convert.ToDouble(localContainer.Containers["settings"].Values["k4"]);
+                CommonStruct.robotSerial = Convert.ToString(localContainer.Containers["settings"].Values["Serial"]);
 
-            CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"]);
-            textBoxMinWheelsSpeedForTurning.Text = CommonStruct.minWheelsSpeedForTurning.ToString();
+                CommonStruct.k1 = Convert.ToDouble(localContainer.Containers["settings"].Values["k1"]);
+                CommonStruct.k2 = Convert.ToDouble(localContainer.Containers["settings"].Values["k2"]);
+                CommonStruct.k3 = Convert.ToDouble(localContainer.Containers["settings"].Values["k3"]);
+                CommonStruct.k4 = Convert.ToDouble(localContainer.Containers["settings"].Values["k4"]);
 
-            CommonStruct.defaultWebSiteAddress = Convert.ToString(localContainer.Containers["settings"].Values["defaultWebSiteAddress"]);
-            CommonStruct.webSiteAddress1 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress1"]);
-            CommonStruct.webSiteAddress2 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress2"]);
-            CommonStruct.webSiteAddress3 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress3"]);
-            CommonStruct.webSiteAddress4 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress4"]);
-            CommonStruct.webSiteAddress5 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress5"]);
-            CommonStruct.webSiteAddress6 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress6"]);
-            CommonStruct.webSiteAddress7 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress7"]);
-            CommonStruct.webSiteAddress8 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress8"]);
+                CommonStruct.minWheelsSpeedForTurning = Convert.ToInt16(localContainer.Containers["settings"].Values["minWheelsSpeedForTurning"]);
+                textBoxMinWheelsSpeedForTurning.Text = CommonStruct.minWheelsSpeedForTurning.ToString();
 
-            CommonStruct.speedTuningParam = Convert.ToDouble(localContainer.Containers["settings"].Values["speedTuningParam"]);
-            textBoxSpeedTuningParam.Text = CommonStruct.speedTuningParam.ToString();
-            
-            string userInterval = Convert.ToString(localContainer.Containers["settings"].Values["Interval"]);//HWDT в сек.
+                CommonStruct.defaultWebSiteAddress = Convert.ToString(localContainer.Containers["settings"].Values["defaultWebSiteAddress"]);
+                CommonStruct.webSiteAddress1 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress1"]);
+                CommonStruct.webSiteAddress2 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress2"]);
+                CommonStruct.webSiteAddress3 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress3"]);
+                CommonStruct.webSiteAddress4 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress4"]);
+                CommonStruct.webSiteAddress5 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress5"]);
+                CommonStruct.webSiteAddress6 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress6"]);
+                CommonStruct.webSiteAddress7 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress7"]);
+                CommonStruct.webSiteAddress8 = Convert.ToString(localContainer.Containers["settings"].Values["webSiteAddress8"]);
 
-            string numberSeparator = CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator;
-            if (numberSeparator == ".") { userInterval = userInterval.Replace(',', '.'); }//Значения inf больше нет
-            else { userInterval = userInterval.Replace('.', ','); }
-            if ((userInterval == "") || (userInterval == null)) { userInterval = "0"; }
-            double interval1 = Convert.ToDouble(userInterval);
-            interval1 = Math.Ceiling(10 * interval1);
-            CommonStruct.interval = CommonFunctions.ZeroInFrontSet(interval1.ToString());
+                CommonStruct.speedTuningParam = Convert.ToDouble(localContainer.Containers["settings"].Values["speedTuningParam"]);
+                textBoxSpeedTuningParam.Text = CommonStruct.speedTuningParam.ToString();
 
-            CommonStruct.culture = Convert.ToString(localContainer.Containers["settings"].Values["Culture"]);
-            
-            if (CommonStruct.culture == "ru-RU") {ButtonLanguageRu_Click(null, null);}
-            else { ButtonLanguageEng_Click(null, null);}
+                string userInterval = Convert.ToString(localContainer.Containers["settings"].Values["Interval"]);//HWDT в сек.
 
-            textBoxRobotSerial.Text = CommonStruct.robotSerial;
-            
-            checkBoxOnlyLocal.IsChecked = Convert.ToBoolean(localContainer.Containers["settings"].Values["onlyLocal"]);
-            if (checkBoxOnlyLocal.IsChecked == true) { CommonStruct.checkBoxOnlyLocal = true; }
-            else { CommonStruct.checkBoxOnlyLocal = false; }
+                string numberSeparator = CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator;
+                if (numberSeparator == ".") { userInterval = userInterval.Replace(',', '.'); }//Значения inf больше нет
+                else { userInterval = userInterval.Replace('.', ','); }
+                if ((userInterval == "") || (userInterval == null)) { userInterval = "0"; }
+                double interval1 = Convert.ToDouble(userInterval);
+                interval1 = Math.Ceiling(10 * interval1);
+                CommonStruct.interval = CommonFunctions.ZeroInFrontSet(interval1.ToString());
 
-            CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
-            CommonStruct.VReal = Convert.ToDouble(localContainer.Containers["settings"].Values["VReal"]);
+                CommonStruct.culture = Convert.ToString(localContainer.Containers["settings"].Values["Culture"]);
 
-            CommonStruct.ObstacleAvoidanceIs = Convert.ToBoolean(localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"]);
+                if (CommonStruct.culture == "ru-RU") { ButtonLanguageRu_Click(null, null); }
+                else { ButtonLanguageEng_Click(null, null); }
+
+                textBoxRobotSerial.Text = CommonStruct.robotSerial;
+
+                checkBoxOnlyLocal.IsChecked = Convert.ToBoolean(localContainer.Containers["settings"].Values["onlyLocal"]);
+                if (checkBoxOnlyLocal.IsChecked == true) { CommonStruct.checkBoxOnlyLocal = true; }
+                else { CommonStruct.checkBoxOnlyLocal = false; }
+
+                CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
+                CommonStruct.VReal = Convert.ToDouble(localContainer.Containers["settings"].Values["VReal"]);
+
+                CommonStruct.ObstacleAvoidanceIs = Convert.ToBoolean(localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"]);
+            }
+            catch(Exception ex)
+            { }
         }
 
         private void InitializeRobot()
 			{
-            textBoxWheelsSpeedTuning.Text = CommonStruct.speedTuningParam.ToString();
-
-            trackBarCameraSpeed.ValueChanged += TrackBarCameraSpeed_ValueChanged;
-			trackBarCameraSpeed.Maximum = 100;
-			trackBarCameraSpeed.TickFrequency = 20;
-			trackBarCameraSpeed.LargeChange = 10;
-			trackBarCameraSpeed.SmallChange = 1;
-			trackBarCameraSpeed.Minimum = 0;
-            trackBarCameraSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["CameraSpeed"]);
-            textBoxCameraSpeedTesting.Text = trackBarCameraSpeed.Value.ToString();
-
-            trackBarWheelsSpeed.ValueChanged += TrackBarWheelsSpeed_ValueChanged;
-			trackBarWheelsSpeed.Maximum = 100;
-			trackBarWheelsSpeed.TickFrequency = 20;
-			trackBarWheelsSpeed.LargeChange = 10;
-			trackBarWheelsSpeed.SmallChange = 1;
-			trackBarWheelsSpeed.Minimum = 0;
-            trackBarWheelsSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
-            textBoxWheelsSpeed.Text = trackBarWheelsSpeed.Value.ToString();
-
-            trackBarWheelsSpeedTuning.ValueChanged += TrackBarWheelsSpeedTuning_ValueChanged;
-            trackBarWheelsSpeedTuning.Maximum = 20;
-            trackBarWheelsSpeedTuning.TickFrequency = 1;
-            trackBarWheelsSpeedTuning.LargeChange = 1;
-            trackBarWheelsSpeedTuning.SmallChange = 1;
-            trackBarWheelsSpeedTuning.Minimum = -20;
-            trackBarWheelsSpeedTuning.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["speedTuningParam"]);
-            // 
-            CommonStruct.cameraSpeed = trackBarCameraSpeed.Value;
-            if (CommonStruct.cameraController == "RD31")
+            try
             {
-                CommonStruct.cameraSpeed = trackBarCameraSpeed.Value - 100;
-            }
-			
-            if (CommonStruct.culture == "ru-RU") { this.ButtonLanguageRu_Click(null, null); }
-			else { ButtonLanguageEng_Click(null, null); }
-            
+                textBoxWheelsSpeedTuning.Text = CommonStruct.speedTuningParam.ToString();
 
-            CultureInfo culture = CultureInfo.CurrentCulture;
-            string decimalSeparator = culture.NumberFormat.NumberDecimalSeparator;
-            string k1 = Convert.ToString(localContainer.Containers["settings"].Values["k1"]);
-            string k2 = Convert.ToString(localContainer.Containers["settings"].Values["k2"]);
-            string k3 = Convert.ToString(localContainer.Containers["settings"].Values["k3"]);
-            string k4 = Convert.ToString(localContainer.Containers["settings"].Values["k4"]);
-            if ((k1 == "") || (k1 == null)) { k1 = "0"; }
-            if ((k2 == "") || (k2 == null)) { k2 = "0"; }
-            if ((k3 == "") || (k3 == null)) { k3 = "0"; }
-            if ((k4 == "") || (k4 == null)) { k4 = "0"; }
-            if (decimalSeparator == ",")
+                trackBarCameraSpeed.ValueChanged += TrackBarCameraSpeed_ValueChanged;
+                trackBarCameraSpeed.Maximum = 100;
+                trackBarCameraSpeed.TickFrequency = 20;
+                trackBarCameraSpeed.LargeChange = 10;
+                trackBarCameraSpeed.SmallChange = 1;
+                trackBarCameraSpeed.Minimum = 0;
+                trackBarCameraSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["CameraSpeed"]);
+                textBoxCameraSpeedTesting.Text = trackBarCameraSpeed.Value.ToString();
+
+                trackBarWheelsSpeed.ValueChanged += TrackBarWheelsSpeed_ValueChanged;
+                trackBarWheelsSpeed.Maximum = 100;
+                trackBarWheelsSpeed.TickFrequency = 20;
+                trackBarWheelsSpeed.LargeChange = 10;
+                trackBarWheelsSpeed.SmallChange = 1;
+                trackBarWheelsSpeed.Minimum = 0;
+                trackBarWheelsSpeed.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["MaxWheelsSpeed"]);
+                textBoxWheelsSpeed.Text = trackBarWheelsSpeed.Value.ToString();
+
+                trackBarWheelsSpeedTuning.ValueChanged += TrackBarWheelsSpeedTuning_ValueChanged;
+                trackBarWheelsSpeedTuning.Maximum = 20;
+                trackBarWheelsSpeedTuning.TickFrequency = 1;
+                trackBarWheelsSpeedTuning.LargeChange = 1;
+                trackBarWheelsSpeedTuning.SmallChange = 1;
+                trackBarWheelsSpeedTuning.Minimum = -20;
+                trackBarWheelsSpeedTuning.Value = Convert.ToInt32(localContainer.Containers["settings"].Values["speedTuningParam"]);
+                // 
+                CommonStruct.cameraSpeed = trackBarCameraSpeed.Value;
+                if (CommonStruct.cameraController == "RD31")
                 {
-                k1 = k1.Replace(".", ",");
-                k2 = k2.Replace(".", ",");
-                k3 = k3.Replace(".", ",");
-                k4 = k4.Replace(".", ",");
+                    CommonStruct.cameraSpeed = trackBarCameraSpeed.Value - 100;
                 }
-            CommonStruct.k1 = Convert.ToDouble(k1);
-            CommonStruct.k2 = Convert.ToDouble(k2);
-            CommonStruct.k3 = Convert.ToDouble(k3);
-            CommonStruct.k4 = Convert.ToDouble(k4);
 
-            bool stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
-            if (stopSmoothly == true) { checkSmoothlyStop.IsChecked = true; }
-            else { checkSmoothlyStop.IsChecked = false; }
-            CommonStruct.stopSmoothly = stopSmoothly;
+                if (CommonStruct.culture == "ru-RU") { this.ButtonLanguageRu_Click(null, null); }
+                else { ButtonLanguageEng_Click(null, null); }
 
-            AllControlIsEnabled(false);
 
-            CommonStruct.permissionToSendToWebServer = true;
+                CultureInfo culture = CultureInfo.CurrentCulture;
+                string decimalSeparator = culture.NumberFormat.NumberDecimalSeparator;
+                string k1 = Convert.ToString(localContainer.Containers["settings"].Values["k1"]);
+                string k2 = Convert.ToString(localContainer.Containers["settings"].Values["k2"]);
+                string k3 = Convert.ToString(localContainer.Containers["settings"].Values["k3"]);
+                string k4 = Convert.ToString(localContainer.Containers["settings"].Values["k4"]);
+                if ((k1 == "") || (k1 == null)) { k1 = "0"; }
+                if ((k2 == "") || (k2 == null)) { k2 = "0"; }
+                if ((k3 == "") || (k3 == null)) { k3 = "0"; }
+                if ((k4 == "") || (k4 == null)) { k4 = "0"; }
+                if (decimalSeparator == ",")
+                {
+                    k1 = k1.Replace(".", ",");
+                    k2 = k2.Replace(".", ",");
+                    k3 = k3.Replace(".", ",");
+                    k4 = k4.Replace(".", ",");
+                }
+                CommonStruct.k1 = Convert.ToDouble(k1);
+                CommonStruct.k2 = Convert.ToDouble(k2);
+                CommonStruct.k3 = Convert.ToDouble(k3);
+                CommonStruct.k4 = Convert.ToDouble(k4);
+
+                bool stopSmoothly = Convert.ToBoolean(localContainer.Containers["settings"].Values["StopSmoothly"]);
+                if (stopSmoothly == true) { checkSmoothlyStop.IsChecked = true; }
+                else { checkSmoothlyStop.IsChecked = false; }
+                CommonStruct.stopSmoothly = stopSmoothly;
+
+                AllControlIsEnabled(false);
+
+                CommonStruct.permissionToSendToWebServer = true;
+            }
+            catch(Exception ex)
+            { }
         }
 
         private void HostWatchdogInitTimer_Tick(object sender, object e) {//Начальная установка в модулях
