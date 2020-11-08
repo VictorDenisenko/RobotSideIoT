@@ -159,11 +159,11 @@ namespace RobotSideUWP
         private DataWriter messageWriter;
         private string serverAddress = "";
         private Uri uriServerAddress = null;
-        private static bool isConnected = false;
+        private static bool isConnected = true;
         DispatcherTimer pingTimer;
         //DataFromRobot dataToSend = new DataFromRobot();
         public DataFromClient receivedData = new DataFromClient();
-        DispatcherTimer pongTimer;
+        //DispatcherTimer pongTimer;
         public string testString = "";
 
         DateTime now1;
@@ -289,9 +289,9 @@ namespace RobotSideUWP
             pingTimer.Interval = new TimeSpan(0, 0, 0, 20, 0); //Таймер для реконнекта к серверу
             pingTimer.Start();
 
-            pongTimer = new DispatcherTimer();
-            pongTimer.Tick += PongTimer_Tick;
-            pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
+            //pongTimer = new DispatcherTimer();
+            //pongTimer.Tick += PongTimer_Tick;
+            //pongTimer.Interval = new TimeSpan(0, 0, 0, 10, 0); //Таймер для приема ответа сервера pong
 
             robotTurningTimer = new DispatcherTimer();
             //robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, deltaTimeDocking);//Таймер для подталкивания робота при поиске док-станции
@@ -471,80 +471,98 @@ namespace RobotSideUWP
             //отключается сервер, то робот уже не поедет.
             try
             {
-                DataFromRobot dataToSend = new DataFromRobot();
-                dataToSend.comments = "ping";//Это пинг до сервера
-                NotifyUserForTesting("ping");
-                dataToSend.isThisData = false;
-                dataToSend.toWhom = "server";//
-                pongTimer.Start();
-                isConnected = false;
-                SendData(dataToSend);
-                now1 = DateTime.Now;
-                timeNow1 = now1.ToString();
-                ticksSent = now1.Ticks;
+                if (isConnected == false)
+                {
+                    pin26.SetDriveMode(GpioPinDriveMode.Output);
+                    pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
+                    Connect();
+                    //App.Current.Exit();
+                    Current.NotifyUser("Server is disconnected", NotifyType.StatusMessage);
+                    NotifyUserForTesting("Server is disconnected ");
+                    isConnected = true;
+                }
+                else
+                {
+                    DataFromRobot dataToSend = new DataFromRobot();
+                    dataToSend.comments = "ping";//Это пинг до сервера
+                    NotifyUserForTesting("ping");
+                    dataToSend.isThisData = false;
+                    dataToSend.toWhom = "server";//
+                    isConnected = false;
+                    SendData(dataToSend);
+                    now1 = DateTime.Now;
+                    timeNow1 = now1.ToString();
+                    ticksSent = now1.Ticks;
+                }
             }
             catch (Exception)
             { }
             if (readWrite.serialPort == null) readWrite.comPortInit();
         }
 
-        private void PongTimer_Tick(object sender, object e)
-        {//Событие появляется через 10 с после старта пинга
-            if (isConnected == false)
-            {
-                try{
-                    pin26.SetDriveMode(GpioPinDriveMode.Output);
-                    pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
+        //private void PongTimer_Tick(object sender, object e)
+        //{//Событие появляется через 10 с после старта пинга
+        //    if (isConnected == false)
+        //    {
+        //        try{
+        //            pin26.SetDriveMode(GpioPinDriveMode.Output);
+        //            pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
 
-                    var x = receivedData.comments;
-                    Connect();
-                    //App.Current.Exit();
-                    pongTimer.Stop();
-                    NotifyUser("Server is disconnected", NotifyType.StatusMessage);
-                    NotifyUserForTesting("Server is disconnected " + x);
-                }
-                catch (Exception ex)
-                { }
-            }
-            else
-            {
-                pongTimer.Stop();
-                pin26.SetDriveMode(GpioPinDriveMode.Output);
-                pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
-            }
-        }
+        //            var x = receivedData.comments;
+        //            Connect();
+        //            //App.Current.Exit();
+        //            pongTimer.Stop();
+        //            NotifyUser("Server is disconnected", NotifyType.StatusMessage);
+        //            NotifyUserForTesting("Server is disconnected " + x);
+        //        }
+        //        catch (Exception ex)
+        //        { }
+        //    }
+        //    else
+        //    {
+        //        pongTimer.Stop();
+        //        pin26.SetDriveMode(GpioPinDriveMode.Output);
+        //        pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
+        //    }
+        //}
 
         private void Connect()
         {
-            if (messageWebSocket != null)
+            try
             {
-                CloseSocket();
-                messageWebSocket = new MessageWebSocket();
+                if (messageWebSocket != null)
+                {
+                    CloseSocket();
+                    messageWebSocket = new MessageWebSocket();
+                }
+                else
+                {
+                    messageWebSocket = new MessageWebSocket();
+                }
+                messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
+                var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(CommonStruct.robotSerial));
+                messageWebSocket.SetRequestHeader("serial", serialBase64);//В заголовок добавил SN
+                messageWebSocket.MessageReceived += MessageReceived;
+                messageWebSocket.Closed += OnClosed;
+                //messageWebSocket.ServerCustomValidationRequested += MessageWebSocket_ServerCustomValidationRequested;
+                messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.Untrusted);
+                messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.InvalidName);
+
+                if (CommonStruct.defaultWebSiteAddress.Contains("https"))
+                {
+                    serverAddress = CommonStruct.defaultWebSiteAddress.Replace("https", "wss");
+                    uriServerAddress = new Uri(serverAddress + ":443/?robot");
+                }
+                else
+                {
+                    serverAddress = CommonStruct.defaultWebSiteAddress.Replace("http", "ws");
+                    uriServerAddress = new Uri(serverAddress + ":8080/?robot");
+                }
             }
-            else
+            catch(Exception e)
             {
-                messageWebSocket = new MessageWebSocket();
+
             }
-            messageWebSocket.Control.MessageType = SocketMessageType.Utf8;
-            var serialBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(CommonStruct.robotSerial));
-            messageWebSocket.SetRequestHeader("serial", serialBase64);//В заголовок добавил SN
-            messageWebSocket.MessageReceived += MessageReceived;
-            messageWebSocket.Closed += OnClosed;
-            //messageWebSocket.ServerCustomValidationRequested += MessageWebSocket_ServerCustomValidationRequested;
-            messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.Untrusted);
-            messageWebSocket.Control.IgnorableServerCertificateErrors.Add(ChainValidationResult.InvalidName);
-            
-            if (CommonStruct.defaultWebSiteAddress.Contains("https"))
-            {
-                serverAddress = CommonStruct.defaultWebSiteAddress.Replace("https", "wss");
-                uriServerAddress = new Uri(serverAddress + ":443/?robot");
-            }
-            else
-            {
-                serverAddress = CommonStruct.defaultWebSiteAddress.Replace("http", "ws");
-                uriServerAddress = new Uri(serverAddress + ":8080/?robot");
-            }
-            
             try{
                 Task connectTask = Task.Run(() => {
                     Windows.Foundation.IAsyncAction x = messageWebSocket.ConnectAsync(uriServerAddress);
@@ -561,7 +579,7 @@ namespace RobotSideUWP
             
 
             messageWriter = new DataWriter(messageWebSocket.OutputStream);
-            NotifyUser("Connected", NotifyType.StatusMessage);
+            Current.NotifyUser("Connected", NotifyType.StatusMessage);
         }
 
         //private async Task SendMessageUsingMessageWebSocketAsync(string message)
@@ -618,14 +636,14 @@ namespace RobotSideUWP
 
         private void MessageReceived(MessageWebSocket sender, MessageWebSocketMessageReceivedEventArgs args)
         {
-                       
             string read = null;
             DataReader reader;
             try
             {
                 _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
-                    try{
+                    try
+                    {
                         using (reader = args.GetDataReader())
                         {
                             if (reader == null)
@@ -633,342 +651,332 @@ namespace RobotSideUWP
                                 return;
                             }
                             reader.UnicodeEncoding = UnicodeEncoding.Utf8;
+
                             try
                             {
-                                try
-                                {
-                                    read = reader.ReadString(reader.UnconsumedBufferLength);
-                                    receivedData = JsonConvert.DeserializeObject<DataFromClient>(read);
-                                    sArr[0] = receivedData.serialFromClient;
-                                    sArr[1] = receivedData.x.ToString();
-                                    sArr[2] = receivedData.y.ToString();
-                                    sArr[3] = receivedData.wheelsStartStop;
-                                    sArr[4] = receivedData.camera;
-                                    sArr[5] = receivedData.dir;
-                                    sArr[6] = receivedData.comments;
-                                    sArr[14] = receivedData.packageNumber.ToString();
-                                    sArr[15] = receivedData.deltaTime;
-                                }
-                                catch(Exception e3)
-                                {
-                                    var x = e3.Message;
-                                }
-
-                                if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
-                                {
-                                    sArr[1] = "0";
-                                    sArr[2] = "0";
-                                    sArr[3] = "Stop";
-                                }
-
-                                if (receivedData.comments == "tabletPositioning")
-                                {
-                                    var x = "";
-                                }
-                                else if (receivedData.comments == "autodocking")
-                                {
-                                    var x = "";
-                                }
-                                else if (receivedData.comments == "endTabletPositioning")
-                                {
-                                    var x = "";
-                                }
-
-                                now2 = DateTime.Now;
-                                timeNow2 = now2.ToString();
-                                var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
-                                long deltaTicks = (ticksNow - ticksSent) / 10000; //Получаем в мс
-
-                                DateTime now3 = DateTime.Now;
-                                string timeNow3 = now3.ToString();
-
-                                testString = testString + deltaTicks + "   " + receivedData.comments + "\r";
-
-                                NotifyUserForTesting(testString);
-                                if (testString.Length > 300) testString = "";
-
-                                if (receivedData.comments == null)
-                                {
-                                    return;
-                                }
-
-                                if (receivedData.comments.Contains("pong"))
-                                {//pong - от сервера
-                                    isConnected = true;
-                                    pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
-                                }
-                                else if (receivedData.comments == "tabletPositioning")
-                                {//0 град - горизонтально, 90 град - вертикально.Далеее - отрицательные числа (<0)
-                                    positioningActsNumber++;
-                                    if (positioningActsNumber > 50)
-                                    {
-                                        plcControl.CameraStop();
-                                        cameraIsStoppedForDocking = "yes";
-                                        SendComments("stopDocking", "tablet");
-                                        DockingInitialization();
-                                        return;
-                                    }
-                                    if (receivedData.windowOrientation == "landscape")
-                                    {
-                                        if (receivedData.tabletAngle >= 30 || receivedData.tabletAngle <= 0)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("0", 90);//Вниз
-                                        }
-                                        else if (receivedData.tabletAngle < 19 && receivedData.tabletAngle > 0)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("1", 20);//Вверх
-                                        }
-                                        else if (receivedData.tabletAngle > 22 && receivedData.tabletAngle < 30)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("0", 20);//Вниз
-                                            //SendComments("tabletPositioning", "tablet");
-                                        }
-                                        else if (receivedData.tabletAngle >= 19 && receivedData.tabletAngle <= 22)
-                                        {
-                                            cameraIsStoppedForDocking = "yes";
-                                            plcControl.CameraStop();
-                                            if (CommonStruct.IsChargingCondition == false)
-                                            {
-                                                SendComments("endTabletPositioning", "tablet");
-                                            }
-                                        }
-                                    }
-                                    else if (receivedData.windowOrientation == "portrait")
-                                    {
-                                        int lowBoundary = 34;
-                                        int topBoundary = 37;
-                                        if (receivedData.tabletAngle >= (lowBoundary + 10) || receivedData.tabletAngle <= 0)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("0", 90);//Вниз
-                                        }
-                                        else if (receivedData.tabletAngle < lowBoundary && receivedData.tabletAngle > 0)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("1", 20);//Вверх
-                                        }
-                                        else if (receivedData.tabletAngle > topBoundary && receivedData.tabletAngle < topBoundary + 10)
-                                        {
-                                            cameraIsStoppedForDocking = "no";
-                                            tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
-                                            tabletPositioningTimer.Start();
-                                            plcControl.CameraUpDown("0", 20);//Вниз
-                                            //SendComments("tabletPositioning", "tablet");
-                                        }
-                                        else if (receivedData.tabletAngle >= lowBoundary && receivedData.tabletAngle <= topBoundary)
-                                        {
-                                            cameraIsStoppedForDocking = "yes";
-                                            plcControl.CameraStop();
-                                            if (CommonStruct.IsChargingCondition == false)
-                                            {
-                                                SendComments("endTabletPositioning", "tablet");
-                                            }
-                                        }
-                                    }
-                                }
-                                else if(receivedData.comments.Contains("autodocking"))
-                                {//Auto Docking
-                                    CommonStruct.ObstacleAvoidanceIs = false;
-
-                                    if (CommonStruct.IsChargingCondition == true)
-                                    {
-                                        DockingInitialization();
-                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
-                                        //robotTurningTimer.Start();
-                                        GoDirect(50);
-                                        return;
-                                    }
-                                    CommonStruct.autoDockingStarted = "yes";
-                                    int delta;
-                                    int distance;
-                                    int alpha;
-                                    try
-                                    {
-                                        distance = receivedData.distance;
-                                        alpha = receivedData.alpha;
-                                        delta = 3;//Position error in degrees
-                                    }
-                                    catch(Exception e4)
-                                    {
-                                        var x = e4.Message;
-                                    }
-                                    finally
-                                    {
-                                        distance = receivedData.distance;
-                                        alpha = receivedData.alpha;
-                                        delta = 3;//Position error in degrees
-                                    }
-
-                                    if (distance <= 50) delta = 4;
-                                    
-                                    if (dockingTurnsNumber > 100)
-                                    {
-                                        plcControl.WheelsStop();
-                                        SendComments("stopDocking", "tablet");
-                                        DockingInitialization();
-                                        return;
-                                    }
-                                    bool passedTroughTarget = true;
-                                    if ((oldAlpha > 90 && alpha <= 90) || (oldAlpha < 90 && alpha >= 90))
-                                    {
-                                        passedTroughTarget = true;//При повороте прошли через направление на док
-                                    }
-                                    else if ((oldAlpha > 90 && alpha >= 90) || (oldAlpha < 90 && alpha <= 90))
-                                    {
-                                        passedTroughTarget = false;
-                                    }
-
-                                    if (alpha < 90 - delta)
-                                    {//Поворот вправо
-                                        whereRobotIs = "turning";
-                                        double speed = 40;
-                                        if (90 - alpha < 10 || passedTroughTarget == true || distance <= 100)
-                                        {
-                                            deltaTimeTurning = 10;
-                                        }
-                                        else if ((90 - alpha >= 10) && (90 - alpha < 45))
-                                        {
-                                            deltaTimeTurning = 20;
-                                        }
-                                        else if (90 - alpha >= 45)
-                                        {
-                                            deltaTimeTurning = 30;
-                                        }
-                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
-                                        robotTurningTimer.Start();
-                                        TurnRight(speed);
-                                        dockingTurnsNumber++;
-                                        oldAlpha = alpha;
-                                    }
-                                    else if (alpha > 90 + delta)
-                                    {//Поворот влево  - это правильно. Нарисуй и подумай.
-                                        whereRobotIs = "turning";
-                                        double speed = 40;
-                                        if ((alpha - 90) < 10 || passedTroughTarget == true || distance < 100)
-                                        {
-                                            deltaTimeTurning = 10;
-                                        }
-                                        else if ((alpha - 90 >= 10) && (alpha - 90 < 45))
-                                        {
-                                            deltaTimeTurning = 20;
-                                        }
-                                        else if (alpha - 90 >= 45)
-                                        {
-                                            deltaTimeTurning = 30;
-                                        }
-                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
-                                        robotTurningTimer.Start();
-                                        TurnLeft(speed);
-                                        dockingTurnsNumber++;
-                                        oldAlpha = alpha;
-                                    }
-                                    else if ((alpha >= 90 - delta) && (alpha <= 90 + delta))
-                                    {//Go direct
-                                        whereRobotIs = "go";
-                                        double speed = 50;
-                                        if (distance <= 100)
-                                        {
-                                            deltaTimeGo = 100;
-                                        }
-                                        else if ((distance >= 100) && (distance <= 200))
-                                        {
-                                            deltaTimeGo = 100;
-                                        }
-                                        else if ((distance > 200) && (dockingGoesNumber != 0))
-                                        {
-                                            try
-                                            {
-                                                distanceVelocity = (oldDistance - distance) / deltaTimeGoOld;
-                                                deltaTimeGoRemaining = (int)(distance / distanceVelocity);
-                                                if (deltaTimeGoRemaining > 200) deltaTimeGoRemaining = deltaTimeGoRemaining - 200;
-                                            }
-                                            catch(Exception e5)
-                                            {
-                                                var x = e5.Message;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            deltaTimeGo = 100;
-                                        }
-                                        oldDistance = distance;
-                                        deltaTimeGoOld = deltaTimeGo;
-                                        robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeGo);
-                                        robotTurningTimer.Start();
-                                        GoDirect(speed);
-                                        dockingGoesNumber++;
-                                        if (dockingGoesNumber >100)
-                                        {
-                                            int x = dockingGoesNumber;
-                                            plcControl.WheelsStop();
-                                            SendComments("stopDocking", "tablet");
-                                            DockingInitialization();
-                                            return;
-                                        }
-                                    }
-                                }
-                                else if (receivedData.comments.Contains("stopDocking"))
-                                {
-                                    DockingInitialization();
-                                    robotTurningTimer.Stop();
-                                    plcControl.WheelsStop();
-                                    return;
-                                }
-                                else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
-                                {
-                                    CommonStruct.ObstacleAvoidanceIs = true;
-                                    localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = true;
-                                }
-                                else if (receivedData.comments.Contains("obstacleAvoidanceNo"))
-                                {
-                                    CommonStruct.ObstacleAvoidanceIs = false;
-                                    localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = false;
-                                }
-                                else
-                                {
-                                    var x = 0;
-                                }
-
-                                if (read != null)
-                                {//Т.е.п олучение любых данных от сервера говорит о том, что соединение есть. 
-                                    isConnected = true;
-                                    pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
-                                }
-                                else
-                                {
-                                    isConnected = false;
-                                    pin26.Write(GpioPinValue.Low);//pin26 - Зеленый светодиод выключен
-                                }
-                                Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
-                                //receivedData.comments = "";
-
-                                if ((plcControl.stopTimerCounter == 0) && (receivedData.isThisData == true))
-                                {
-                                    Polling(sArr);
-                                    //__SendReceiveAsync();
-                                }
-                                ////////////
+                                read = reader.ReadString(reader.UnconsumedBufferLength);
+                                receivedData = JsonConvert.DeserializeObject<DataFromClient>(read);
+                                sArr[0] = receivedData.serialFromClient;
+                                sArr[1] = receivedData.x.ToString();
+                                sArr[2] = receivedData.y.ToString();
+                                sArr[3] = receivedData.wheelsStartStop;
+                                sArr[4] = receivedData.camera;
+                                sArr[5] = receivedData.dir;
+                                sArr[6] = receivedData.comments;
+                                sArr[14] = receivedData.packageNumber.ToString();
+                                sArr[15] = receivedData.deltaTime;
                             }
-                            catch (Exception ex)
+                            catch (Exception e3)
                             {
+                                var x = e3.Message;
                             }
                         }
                     }
-                    catch (Exception e)
-                    {}
+                    catch(Exception ex)
+                    {
+                        var x = ex.Message;
+                    }
+
+                    if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
+                    {
+                        sArr[1] = "0";
+                        sArr[2] = "0";
+                        sArr[3] = "Stop";
+                    }
+
+                    if (receivedData.comments == "tabletPositioning")
+                    {
+                        var x = "";
+                    }
+                    else if (receivedData.comments == "autodocking")
+                    {
+                        var x = "";
+                    }
+                    else if (receivedData.comments == "endTabletPositioning")
+                    {
+                        var x = "";
+                    }
+
+                    now2 = DateTime.Now;
+                    timeNow2 = now2.ToString();
+                    var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
+                    long deltaTicks = (ticksNow - ticksSent) / 10000; //Получаем в мс
+
+                    DateTime now3 = DateTime.Now;
+                    string timeNow3 = now3.ToString();
+
+                    testString = testString + deltaTicks + "   " + receivedData.comments + "\r";
+
+                    NotifyUserForTesting(testString);
+                    if (testString.Length > 300) testString = "";
+
+                    if (receivedData.comments == null)
+                    {
+                        return;
+                    }
+
+                    if (receivedData.comments.Contains("pong"))
+                    {//pong - от сервера
+                        isConnected = true;
+                        pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
+                    }
+                    else if (receivedData.comments == "tabletPositioning")
+                    {//0 град - горизонтально, 90 град - вертикально.Далеее - отрицательные числа (<0)
+                        positioningActsNumber++;
+                        if (positioningActsNumber > 50)
+                        {
+                            plcControl.CameraStop();
+                            cameraIsStoppedForDocking = "yes";
+                            SendComments("stopDocking", "tablet");
+                            DockingInitialization();
+                            return;
+                        }
+                        if (receivedData.windowOrientation == "landscape")
+                        {
+                            if (receivedData.tabletAngle >= 30 || receivedData.tabletAngle <= 0)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("0", 90);//Вниз
+                            }
+                            else if (receivedData.tabletAngle < 19 && receivedData.tabletAngle > 0)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("1", 20);//Вверх
+                            }
+                            else if (receivedData.tabletAngle > 22 && receivedData.tabletAngle < 30)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("0", 20);//Вниз
+                                //SendComments("tabletPositioning", "tablet");
+                            }
+                            else if (receivedData.tabletAngle >= 19 && receivedData.tabletAngle <= 22)
+                            {
+                                cameraIsStoppedForDocking = "yes";
+                                plcControl.CameraStop();
+                                if (CommonStruct.IsChargingCondition == false)
+                                {
+                                    SendComments("endTabletPositioning", "tablet");
+                                }
+                            }
+                        }
+                        else if (receivedData.windowOrientation == "portrait")
+                        {
+                            int lowBoundary = 34;
+                            int topBoundary = 37;
+                            if (receivedData.tabletAngle >= (lowBoundary + 10) || receivedData.tabletAngle <= 0)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 500);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("0", 90);//Вниз
+                            }
+                            else if (receivedData.tabletAngle < lowBoundary && receivedData.tabletAngle > 0)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("1", 20);//Вверх
+                            }
+                            else if (receivedData.tabletAngle > topBoundary && receivedData.tabletAngle < topBoundary + 10)
+                            {
+                                cameraIsStoppedForDocking = "no";
+                                tabletPositioningTimer.Interval = new TimeSpan(0, 0, 0, 0, 20);
+                                tabletPositioningTimer.Start();
+                                plcControl.CameraUpDown("0", 20);//Вниз
+                                //SendComments("tabletPositioning", "tablet");
+                            }
+                            else if (receivedData.tabletAngle >= lowBoundary && receivedData.tabletAngle <= topBoundary)
+                            {
+                                cameraIsStoppedForDocking = "yes";
+                                plcControl.CameraStop();
+                                if (CommonStruct.IsChargingCondition == false)
+                                {
+                                    SendComments("endTabletPositioning", "tablet");
+                                }
+                            }
+                        }
+                    }
+                    else if(receivedData.comments.Contains("autodocking"))
+                    {//Auto Docking
+                        CommonStruct.ObstacleAvoidanceIs = false;
+
+                        if (CommonStruct.IsChargingCondition == true)
+                        {
+                            DockingInitialization();
+                            robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, 100);
+                            //robotTurningTimer.Start();
+                            GoDirect(50);
+                            return;
+                        }
+                        CommonStruct.autoDockingStarted = "yes";
+                        int delta;
+                        int distance;
+                        int alpha;
+                        try
+                        {
+                            distance = receivedData.distance;
+                            alpha = receivedData.alpha;
+                            delta = 3;//Position error in degrees
+                        }
+                        catch(Exception e4)
+                        {
+                            var x = e4.Message;
+                        }
+                        finally
+                        {
+                            distance = receivedData.distance;
+                            alpha = receivedData.alpha;
+                            delta = 3;//Position error in degrees
+                        }
+
+                        if (distance <= 50) delta = 4;
+                                    
+                        if (dockingTurnsNumber > 100)
+                        {
+                            plcControl.WheelsStop();
+                            SendComments("stopDocking", "tablet");
+                            DockingInitialization();
+                            return;
+                        }
+                        bool passedTroughTarget = true;
+                        if ((oldAlpha > 90 && alpha <= 90) || (oldAlpha < 90 && alpha >= 90))
+                        {
+                            passedTroughTarget = true;//При повороте прошли через направление на док
+                        }
+                        else if ((oldAlpha > 90 && alpha >= 90) || (oldAlpha < 90 && alpha <= 90))
+                        {
+                            passedTroughTarget = false;
+                        }
+
+                        if (alpha < 90 - delta)
+                        {//Поворот вправо
+                            whereRobotIs = "turning";
+                            double speed = 40;
+                            if (90 - alpha < 10 || passedTroughTarget == true || distance <= 100)
+                            {
+                                deltaTimeTurning = 10;
+                            }
+                            else if ((90 - alpha >= 10) && (90 - alpha < 45))
+                            {
+                                deltaTimeTurning = 20;
+                            }
+                            else if (90 - alpha >= 45)
+                            {
+                                deltaTimeTurning = 30;
+                            }
+                            robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
+                            robotTurningTimer.Start();
+                            TurnRight(speed);
+                            dockingTurnsNumber++;
+                            oldAlpha = alpha;
+                        }
+                        else if (alpha > 90 + delta)
+                        {//Поворот влево  - это правильно. Нарисуй и подумай.
+                            whereRobotIs = "turning";
+                            double speed = 40;
+                            if ((alpha - 90) < 10 || passedTroughTarget == true || distance < 100)
+                            {
+                                deltaTimeTurning = 10;
+                            }
+                            else if ((alpha - 90 >= 10) && (alpha - 90 < 45))
+                            {
+                                deltaTimeTurning = 20;
+                            }
+                            else if (alpha - 90 >= 45)
+                            {
+                                deltaTimeTurning = 30;
+                            }
+                            robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
+                            robotTurningTimer.Start();
+                            TurnLeft(speed);
+                            dockingTurnsNumber++;
+                            oldAlpha = alpha;
+                        }
+                        else if ((alpha >= 90 - delta) && (alpha <= 90 + delta))
+                        {//Go direct
+                            whereRobotIs = "go";
+                            double speed = 50;
+                            if (distance <= 100)
+                            {
+                                deltaTimeGo = 100;
+                            }
+                            else if ((distance >= 100) && (distance <= 200))
+                            {
+                                deltaTimeGo = 100;
+                            }
+                            else if ((distance > 200) && (dockingGoesNumber != 0))
+                            {
+                                try
+                                {
+                                    distanceVelocity = (oldDistance - distance) / deltaTimeGoOld;
+                                    deltaTimeGoRemaining = (int)(distance / distanceVelocity);
+                                    if (deltaTimeGoRemaining > 200) deltaTimeGoRemaining = deltaTimeGoRemaining - 200;
+                                }
+                                catch(Exception e5)
+                                {
+                                    var x = e5.Message;
+                                }
+                            }
+                            else
+                            {
+                                deltaTimeGo = 100;
+                            }
+                            oldDistance = distance;
+                            deltaTimeGoOld = deltaTimeGo;
+                            robotTurningTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeGo);
+                            robotTurningTimer.Start();
+                            GoDirect(speed);
+                            dockingGoesNumber++;
+                            if (dockingGoesNumber >100)
+                            {
+                                int x = dockingGoesNumber;
+                                plcControl.WheelsStop();
+                                SendComments("stopDocking", "tablet");
+                                DockingInitialization();
+                                return;
+                            }
+                        }
+                    }
+                    else if (receivedData.comments.Contains("stopDocking"))
+                    {
+                        DockingInitialization();
+                        robotTurningTimer.Stop();
+                        plcControl.WheelsStop();
+                        return;
+                    }
+                    else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
+                    {
+                        CommonStruct.ObstacleAvoidanceIs = true;
+                        localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = true;
+                    }
+                    else if (receivedData.comments.Contains("obstacleAvoidanceNo"))
+                    {
+                        CommonStruct.ObstacleAvoidanceIs = false;
+                        localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = false;
+                    }
+                    else
+                    {
+                        var x = 0;
+                    }
+
+                    if (read != null)
+                    {//Т.е.п олучение любых данных от сервера говорит о том, что соединение есть. 
+                        isConnected = true;
+                        pin26.Write(GpioPinValue.High);//pin26 - Зеленый светодиод включен
+                    }
+                    Current.NotifyUser(receivedData.comments, NotifyType.StatusMessage);
+                                
+                    if ((plcControl.stopTimerCounter == 0) && (receivedData.isThisData == true))
+                    {
+                        Polling(sArr);
+                    }
+                    ////////////
                 });
             }
             catch (Exception e)
@@ -990,23 +998,43 @@ namespace RobotSideUWP
 
         private async void OnClosed(IWebSocket sender, WebSocketClosedEventArgs args)
         {//вызывается событием пришедшим от сервера
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            
+            try
             {
-                if (messageWebSocket == sender)
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
-                    CloseSocket();
-                }
-            });
-            NotifyUser("Closed; Code: " + args.Code + ", Reason: " + args.Reason, NotifyType.StatusMessage);
+                    if (messageWebSocket == sender)
+                    {
+                        CloseSocket();
+                    }
+                });
+            }
+            catch(Exception e1)
+            {
+            }
+            try
+            {
+                //Current.NotifyUser("Closed; Code: " + args.Code + ", Reason: " + args.Reason, NotifyType.StatusMessage);
+            }
+            catch(Exception e)
+            {
+            }
         }
 
         private void CloseSocket()
         {
             if (messageWriter != null)
             {
-                messageWriter.DetachStream();
-                messageWriter.Dispose();
-                messageWriter = null;
+                try
+                {
+                    messageWriter.DetachStream();
+                    messageWriter.Dispose();
+                    messageWriter = null;
+                }
+                catch(Exception e)
+                {
+
+                }
             }
             if (messageWebSocket != null)
             {
@@ -1728,7 +1756,7 @@ namespace RobotSideUWP
 
         private void ScenarioControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            NotifyUser(String.Empty, NotifyType.StatusMessage);
+            Current.NotifyUser(String.Empty, NotifyType.StatusMessage);
             ListBox scenarioListBox = sender as ListBox;
             Scenario s = scenarioListBox.SelectedItem as Scenario;
             if (s != null)

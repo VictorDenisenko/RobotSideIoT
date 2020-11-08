@@ -127,16 +127,16 @@ namespace RobotSideUWP
                 Current.StatusBlock.Foreground = new SolidColorBrush(Windows.UI.Colors.Black);
             }
 
-            Task t = new Task(async () =>
-            {
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(async () =>
-                {
-                    if ((strMessage != "") && (type == NotifyType.ErrorMessage)) {
-                        //await SendErrorsToServer(strMessage);
-                    }
-                }));
-            });
-            t.Start();
+            //Task t = new Task(async () =>
+            //{
+            //    await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.High, new DispatchedHandler(async () =>
+            //    {
+            //        if ((strMessage != "") && (type == NotifyType.ErrorMessage)) {
+            //            //await SendErrorsToServer(strMessage);
+            //        }
+            //    }));
+            //});
+            //t.Start();
         }
 
         public void  NotifyUserFromOtherThreadAsync(string strMessage, NotifyType type)
