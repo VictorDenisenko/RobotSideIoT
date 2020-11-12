@@ -684,19 +684,7 @@ namespace RobotSideUWP
                         sArr[3] = "Stop";
                     }
 
-                    if (receivedData.comments == "tabletPositioning")
-                    {
-                        var x = "";
-                    }
-                    else if (receivedData.comments == "autodocking")
-                    {
-                        var x = "";
-                    }
-                    else if (receivedData.comments == "endTabletPositioning")
-                    {
-                        var x = "";
-                    }
-
+                  
                     now2 = DateTime.Now;
                     timeNow2 = now2.ToString();
                     var ticksNow = now2.Ticks;//Один такт - 100 нс.10 мс = 100000 тактов
