@@ -256,6 +256,7 @@ namespace RobotSideUWP
                     case 4: 
                             string hexAddress = CommonStruct.wheelsAddress;
                             MainPage.readWrite.Write("^RC" + hexAddress + "\r");//Стоп для обоих (Both) колес
+                            //MainPage.SendComments("stopped", "tablet");
                             break;
                     case 5:
                         
@@ -351,6 +352,7 @@ namespace RobotSideUWP
                     {
                         double speed = CommonStruct.cameraSpeed;//от 0 до 100.
                         string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);
+                        string test = "^R1" + hexAddress + direction + __speed + "000" + "4" + "\r";
                         MainPage.readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                     }
                 }
@@ -378,6 +380,7 @@ namespace RobotSideUWP
                 else if (CommonStruct.cameraController == "RD31")
                 {
                     string __speed = CommonFunctions.ZeroInFrontFromDoubleAsync(speed);//от 0 до 100.
+                    string test = "^R1" + hexAddress + direction + __speed + "000" + "4" + "\r";
                     MainPage.readWrite.Write("^R1" + hexAddress + direction + __speed + "000" + "4" + "\r");
                 }
 
@@ -497,6 +500,11 @@ namespace RobotSideUWP
                 }
 
                 CommonStruct.numberOfVoltageMeasurings++;//Это защита от случайного срабатывания после одного измерения
+
+                if ((CommonStruct.dVoltageCorrected < 1210) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+                {
+                    MainPage.Current.SendComments("Battery is low.");
+                }
 
                 if ((CommonStruct.dVoltageCorrected < 1200) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 

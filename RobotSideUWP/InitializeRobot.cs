@@ -19,7 +19,7 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["PWMSteppingSpeed"] = 220;//В единицах ШИМа. от 0 до 255
             localContainer.Containers["settings"].Values["MaxWheelsSpeed"] = 100;
             localContainer.Containers["settings"].Values["cameraController"] = "RD31";
-            localContainer.Containers["settings"].Values["CameraSpeed"] = 100;
+            localContainer.Containers["settings"].Values["CameraSpeed"] = 95;
 
             localContainer.Containers["settings"].Values["k1"] = 0.7;
             localContainer.Containers["settings"].Values["k2"] = 0.4;
@@ -152,7 +152,7 @@ namespace RobotSideUWP
                 CommonStruct.cameraSpeed = trackBarCameraSpeed.Value;
                 if (CommonStruct.cameraController == "RD31")
                 {
-                    CommonStruct.cameraSpeed = trackBarCameraSpeed.Value - 100;
+                    CommonStruct.cameraSpeed = Math.Abs(trackBarCameraSpeed.Value - 100);
                 }
 
                 if (CommonStruct.culture == "ru-RU") { this.ButtonLanguageRu_Click(null, null); }
@@ -279,7 +279,7 @@ namespace RobotSideUWP
             localContainer.Containers["settings"].Values["CameraSpeed"] = CommonStruct.cameraSpeed;
             if (CommonStruct.cameraController == "RD31")
             {
-                CommonStruct.cameraSpeed = trackBarCameraSpeed.Value - 100;
+                CommonStruct.cameraSpeed = Math.Abs(trackBarCameraSpeed.Value - 100);
             }
         }
 
