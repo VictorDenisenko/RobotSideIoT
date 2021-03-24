@@ -330,7 +330,7 @@ namespace RobotSideUWP
 
         private void Pin17_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {//Правый датчик столкновений
-            if ((CommonStruct.ObstacleAvoidanceIs == true) && (CommonStruct.wheelsIsStopped == false))
+            if (CommonStruct.ObstacleAvoidanceIs == true && CommonStruct.wheelsIsStopped == false && CommonStruct.IsChargingCondition == false)
             {//firstTimeObstacle = флаг запрета на повторные отправления сообщений, снимается после того как пользователь опять нажмет Go 
                 if (CommonStruct.firstTimeObstacle == true && (directionLeft == forwardDirection || directionRight == forwardDirection))
                 {
@@ -355,7 +355,7 @@ namespace RobotSideUWP
 
         private void Pin18_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
         {//Левый датчик столкновений
-            if ((CommonStruct.ObstacleAvoidanceIs == true) && (CommonStruct.wheelsIsStopped == false))
+            if (CommonStruct.ObstacleAvoidanceIs == true && CommonStruct.wheelsIsStopped == false && CommonStruct.IsChargingCondition == false)
             {
                 if (CommonStruct.firstTimeObstacle == true && (directionLeft == forwardDirection || directionRight == forwardDirection))
                 {
@@ -415,7 +415,14 @@ namespace RobotSideUWP
             {
                 SendComments("lookForPosition", "tablet");
             }
-            plcControl.WheelsStopSmoothly(50);
+            if (receivedData.camera == "goDirectFastStop")
+            {
+                plcControl.WheelsStop();
+            }
+            else
+            {
+                plcControl.WheelsStopSmoothly(50);
+            }
             robotGoTimer.Stop();
         }
 
@@ -729,6 +736,14 @@ namespace RobotSideUWP
                             robotGoTimer.Start();
                             GoDirect(speed);
                         }
+                        if (receivedData.camera == "goDirectFastStop")
+                        {
+                            deltaTimeTurning = receivedData.deltaTime;
+                            double speed = receivedData.speed;
+                            robotGoTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
+                            robotGoTimer.Start();
+                            GoDirect(speed);
+                        }
                     }
                     else if (receivedData.comments.Contains("stopDocking"))
                     {
@@ -742,6 +757,10 @@ namespace RobotSideUWP
                             GoDirect(speed);
                         }
                         return;
+                    }
+                    else if (receivedData.comments.Contains("stopTurning"))
+                    {
+                        plcControl.WheelsStop();
                     }
                     else if (receivedData.comments.Contains("obstacleAvoidanceIs"))
                     {

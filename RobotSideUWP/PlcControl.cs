@@ -121,7 +121,6 @@ namespace RobotSideUWP
                     double speedRadius = Math.Sqrt((speedLeft0 * speedLeft0) + (speedRight0 * speedRight0));
                     if (speedRadius > 1)
                     {
-
                         string speedLeft = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedLeft0).ToString());
                         string speedRight = CommonFunctions.ZeroInFrontSet(CommonFunctions.WheelsSpeedToPWM(speedRight0).ToString());
                         string hexAddress = CommonStruct.wheelsAddress;
@@ -484,18 +483,18 @@ namespace RobotSideUWP
                 isInt = Int32.TryParse(averagedVoltage, out res);
                 if ((averagedVoltage == "") || (isInt == false))
                 {
-                    averagedVoltage = "1200";
+                    averagedVoltage = "1220";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
                     return "";
                 }
                 double dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
-                double deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
-                CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
+                CommonStruct.deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
+                CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
                 {
-                    deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
-                    MainPage.Current.localContainer.Containers["settings"].Values["deltaV"] = deltaV;
-                    CommonStruct.dVoltageCorrected = dAveragedVoltage + deltaV;
+                    CommonStruct.deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
+                    MainPage.Current.localContainer.Containers["settings"].Values["deltaV"] = CommonStruct.deltaV;
+                    CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }
 

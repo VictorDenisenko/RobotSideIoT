@@ -46,7 +46,7 @@ namespace RobotSideUWP
 
             localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
             localContainer.Containers["settings"].Values["VReal"] = 12.75;
-            localContainer.Containers["settings"].Values["deltaV"] = 0.82;
+            localContainer.Containers["settings"].Values["deltaV"] = 0.0;
             localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = true;
         }
 
@@ -108,7 +108,7 @@ namespace RobotSideUWP
                 if (checkBoxOnlyLocal.IsChecked == true) { CommonStruct.checkBoxOnlyLocal = true; }
                 else { CommonStruct.checkBoxOnlyLocal = false; }
 
-                CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
+                //CommonStruct.deltaV = Convert.ToDouble(localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.VReal = Convert.ToDouble(localContainer.Containers["settings"].Values["VReal"]);
 
                 CommonStruct.ObstacleAvoidanceIs = Convert.ToBoolean(localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"]);
