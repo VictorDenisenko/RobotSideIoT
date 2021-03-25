@@ -181,6 +181,10 @@ namespace RobotSideUWP
         GpioPinValue val17Right = GpioPinValue.High;
         GpioPin pin18;// Левый датчик препятствия
         GpioPinValue val18Left = GpioPinValue.High;
+        GpioPin pin19;// Front датчик препятствия
+        GpioPinValue val19Front = GpioPinValue.High;
+        GpioPin pin27;// Rear датчик препятствия
+        GpioPinValue val27Rear = GpioPinValue.High;
         double deltaTimeTurning = 10;
 
         public MainPage()
@@ -297,6 +301,16 @@ namespace RobotSideUWP
             pin18.SetDriveMode(GpioPinDriveMode.Input);
             pin18.ValueChanged += Pin18_ValueChanged;
 
+            pin19 = GpioController.GetDefault().OpenPin(19);//Это правый датчик столкновений
+            pin19.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin19.SetDriveMode(GpioPinDriveMode.Input);
+            pin19.ValueChanged += Pin19_ValueChanged;
+
+            pin27 = GpioController.GetDefault().OpenPin(27);//Это правый датчик столкновений
+            pin27.DebounceTimeout = new TimeSpan(0, 0, 0, 0, 5);//Если таймаут большой, то событие может вообще не наступить
+            pin27.SetDriveMode(GpioPinDriveMode.Input);
+            pin27.ValueChanged += Pin27_ValueChanged;
+
             obstacleTimer = new DispatcherTimer();//Таймер для датчиков препятствий
             obstacleTimer.Tick += ObstacleTimer_Tick;
             obstacleTimer.Interval = new TimeSpan(0, 0, 3);//
@@ -324,6 +338,8 @@ namespace RobotSideUWP
         {
             CommonStruct.rightObstacle = false;
             CommonStruct.leftObstacle = false;
+            CommonStruct.frontObstacle = false;
+            CommonStruct.rearObstacle = false;
             CommonStruct.wheelsIsStopped = false;
             obstacleTimer.Stop();
         }
@@ -368,6 +384,54 @@ namespace RobotSideUWP
                         sArr = dataFromRobot;
                         plcControl.WheelsStop();
                         SendComments("Obstacle on the left", "client");
+                        _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                            obstacleTimer.Start();
+                        });
+                        CommonStruct.firstTimeObstacle = false;
+                    }
+                }
+            }
+        }
+
+        private void Pin19_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {//Передний датчик столкновений
+            if (CommonStruct.ObstacleAvoidanceIs == true && CommonStruct.wheelsIsStopped == false && CommonStruct.IsChargingCondition == false)
+            {//firstTimeObstacle = флаг запрета на повторные отправления сообщений, снимается после того как пользователь опять нажмет Go 
+                if (CommonStruct.firstTimeObstacle == true && (directionLeft == forwardDirection || directionRight == forwardDirection))
+                {
+                    val19Front = pin19.Read();
+                    if (val19Front == GpioPinValue.Low)
+                    {
+                        CommonStruct.frontObstacle = true;
+                        CommonStruct.wheelsIsStopped = true;
+                        sArr = dataFromRobot;
+                        plcControl.WheelsStop();
+                        SendComments("Obstacle on the front", "client");
+                        _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                            obstacleTimer.Start();
+                        });
+                        CommonStruct.firstTimeObstacle = false;
+                    }
+                }
+            }
+        }
+
+        private void Pin27_ValueChanged(GpioPin sender, GpioPinValueChangedEventArgs args)
+        {//Задний датчик столкновений
+            if (CommonStruct.ObstacleAvoidanceIs == true && CommonStruct.wheelsIsStopped == false && CommonStruct.IsChargingCondition == false)
+            {//firstTimeObstacle = флаг запрета на повторные отправления сообщений, снимается после того как пользователь опять нажмет Go 
+                if (CommonStruct.firstTimeObstacle == true && (directionLeft == backwardDirection || directionRight == backwardDirection))
+                {
+                    val27Rear = pin27.Read();
+                    if (val27Rear == GpioPinValue.Low)
+                    {
+                        CommonStruct.rearObstacle = true;
+                        CommonStruct.wheelsIsStopped = true;
+                        sArr = dataFromRobot;
+                        plcControl.WheelsStop();
+                        SendComments("Obstacle on the rear", "client");
                         _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                         {
                             obstacleTimer.Start();
@@ -646,7 +710,14 @@ namespace RobotSideUWP
                         var x = ex.Message;
                     }
 
-                    if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
+                    if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) || (CommonStruct.frontObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
+                    //if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) || (directionRight == forwardDirection)))
+                    {
+                        sArr[1] = "0";
+                        sArr[2] = "0";
+                        sArr[3] = "Stop";
+                    }
+                    else if (CommonStruct.rearObstacle == true && ((directionLeft == backwardDirection) || (directionRight == backwardDirection)))
                     {
                         sArr[1] = "0";
                         sArr[2] = "0";

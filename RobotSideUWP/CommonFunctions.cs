@@ -92,6 +92,8 @@ namespace RobotSideUWP
         public static long dockingCounter = 0;
         internal static bool rightObstacle;
         internal static bool leftObstacle;
+        internal static bool frontObstacle;
+        internal static bool rearObstacle;
         internal static bool firstTimeObstacle = true;
         internal static bool ObstacleAvoidanceIs;
     }

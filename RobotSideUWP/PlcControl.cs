@@ -86,7 +86,12 @@ namespace RobotSideUWP
             try
             {
                 CommonStruct.wheelsIsStopped = false;
-                if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) && ((directionLeft == forwardDirection) ||(directionRight == forwardDirection)))
+                if ((CommonStruct.rightObstacle == true) || (CommonStruct.leftObstacle == true) || (CommonStruct.frontObstacle == true) && ((directionLeft == forwardDirection) ||(directionRight == forwardDirection)))
+                {
+                    _speedLeft = 0.0; _speedRight = 0.0;
+                    return;
+                }
+                else if (CommonStruct.rearObstacle == true && ((directionLeft == backwardDirection) || (directionRight == backwardDirection)))
                 {
                     _speedLeft = 0.0; _speedRight = 0.0;
                     return;
@@ -483,7 +488,7 @@ namespace RobotSideUWP
                 isInt = Int32.TryParse(averagedVoltage, out res);
                 if ((averagedVoltage == "") || (isInt == false))
                 {
-                    averagedVoltage = "1220";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
+                    averagedVoltage = "1270";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
                     return "";
                 }
                 double dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
@@ -500,7 +505,7 @@ namespace RobotSideUWP
 
                 CommonStruct.numberOfVoltageMeasurings++;//Это защита от случайного срабатывания после одного измерения
 
-                if ((CommonStruct.dVoltageCorrected < 1210) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+                if ((CommonStruct.dVoltageCorrected < 1210) && (CommonStruct.numberOfVoltageMeasurings > 5) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {
                     MainPage.Current.SendComments("Battery is low.");
                 }
