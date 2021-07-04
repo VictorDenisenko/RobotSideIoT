@@ -115,7 +115,7 @@
                             <TextBlock x:Name="textBlockSpeedTuningParam" Margin="10,0,0,0" TextWrapping="Wrap" Text="SpeedTuningParam" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal"  Height="40" >
-                            <TextBox x:Name="textBoxRealVoltage" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="12.5" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
+                            <TextBox x:Name="textBoxRealVoltage" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="12.75" VerticalAlignment="Center" Foreground="#FF040404" BorderThickness="1"/>
                             <TextBlock x:Name="textBlocRealVoltage" Margin="10,0,0,0" TextWrapping="Wrap" Text="RealVoltage" VerticalAlignment="Center"/>
                             <Button x:Name="buttonVoltageCalibrate" Content="Calibrtate" Click="buttonVoltageCalibrate_Click"  Margin="100,0,0,0"/>
                         </StackPanel>

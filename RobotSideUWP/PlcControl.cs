@@ -491,15 +491,15 @@ namespace RobotSideUWP
                     averagedVoltage = "1270";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
                     return "";
                 }
-                double dAveragedVoltage = (Convert.ToDouble(averagedVoltage));
+                double dAveragedVoltage = Convert.ToDouble(averagedVoltage);
                 CommonStruct.deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
-                {
+                {//Это может запуститься в момент выключения робота и тогда запишутся ложные данные
                     CommonStruct.deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
                     MainPage.Current.localContainer.Containers["settings"].Values["deltaV"] = CommonStruct.deltaV;
-                    CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
+                    CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV; 
                     CommonStruct.textBoxRealVoltageChanged = false;
                 }
 
@@ -510,7 +510,7 @@ namespace RobotSideUWP
                     MainPage.Current.SendComments("Battery is low.");
                 }
 
-                if ((CommonStruct.dVoltageCorrected < 1200) && (CommonStruct.numberOfVoltageMeasurings > 1) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
+                if ((CommonStruct.dVoltageCorrected < 1200) && (CommonStruct.numberOfVoltageMeasurings > 2) && (CommonStruct.dChargeCurrent < 20) && (CommonStruct.dVoltageCorrected > 600))
                 {//Если порог слишком низкий, то Распберри отключается раньше, чем реле 
                     CommonStruct.numberOfVoltageMeasurings = 11;
                     //Посылаем команду "Старт таймера отключения батарей" и одновременно начинаем выгружать Виндовс 
