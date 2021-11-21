@@ -825,7 +825,14 @@ namespace RobotSideUWP
                             double speed = receivedData.speed;
                             robotGoTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)deltaTimeTurning);
                             robotGoTimer.Start();
-                            GoDirect(speed);
+                            if (speed == 0.0)
+                            {
+                                plcControl.WheelsStop();
+                            }
+                            else
+                            {
+                                GoDirect(speed);
+                            }
                         }
                         return;
                     }
