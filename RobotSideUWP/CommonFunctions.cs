@@ -79,7 +79,7 @@ namespace RobotSideUWP
 
         public static bool textBoxRealVoltageChanged = false;
         internal static double VReal = 12.75;
-        public static double deltaV = 1.0;
+        public static double deltaV = 0.0;
         public static bool permissionToSendToWebServer { get; set; }
 
         public static bool permissionToSend = true;//Эту переменную обязательно надо устанавливать в true раз в секунду с помощью ватчдог таймера

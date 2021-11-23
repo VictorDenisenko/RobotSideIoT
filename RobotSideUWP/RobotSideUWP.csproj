@@ -22,7 +22,7 @@
     <AppxBundle>Never</AppxBundle>
     <AppxBundlePlatforms>arm</AppxBundlePlatforms>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
-    <PackageCertificateThumbprint>381BF67ED44DB6FAE47C27699F2C4D0E316182E5</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>854C2EDDC28A6C87A7CB81B61C3E3DBC90FEC8A4</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppInstallerUpdateFrequency>0</AppInstallerUpdateFrequency>
     <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>

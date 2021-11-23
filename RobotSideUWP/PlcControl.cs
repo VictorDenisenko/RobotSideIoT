@@ -488,16 +488,16 @@ namespace RobotSideUWP
                 isInt = Int32.TryParse(averagedVoltage, out res);
                 if ((averagedVoltage == "") || (isInt == false))
                 {
-                    averagedVoltage = "1270";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
+                    averagedVoltage = "1220";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
                     return "";
                 }
-                double dAveragedVoltage = Convert.ToDouble(averagedVoltage);
+                double dAveragedVoltage = Convert.ToDouble(averagedVoltage) + 75;//Добавляю падение на диоде
                 CommonStruct.deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
 
                 if (CommonStruct.textBoxRealVoltageChanged == true)
                 {//Это может запуститься в момент выключения робота и тогда запишутся ложные данные
-                    CommonStruct.deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;
+                    CommonStruct.deltaV = 100 * CommonStruct.VReal - dAveragedVoltage;//VReal is measured Voltage
                     MainPage.Current.localContainer.Containers["settings"].Values["deltaV"] = CommonStruct.deltaV;
                     CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV; 
                     CommonStruct.textBoxRealVoltageChanged = false;
