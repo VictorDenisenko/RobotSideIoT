@@ -186,6 +186,8 @@ namespace RobotSideUWP
         GpioPin pin27;// Rear датчик препятствия
         GpioPinValue val27Rear = GpioPinValue.High;
         double deltaTimeTurning = 10;
+        long autodockingLimitCounter = 0;
+        bool stopDockingFlag = false;
 
         public MainPage()
         {
@@ -273,6 +275,7 @@ namespace RobotSideUWP
             {
                 CommonStruct.IsChargingCondition = true;
                 SendComments("Charging...");
+                autodockingLimitCounter = 0;
             }
 
             pingTimer = new DispatcherTimer();
@@ -475,7 +478,7 @@ namespace RobotSideUWP
 
         private void RobotGoTimer_Tick(object sender, object e)
         {
-            if ((receivedData.comments.Contains("stopDocking") == false) && (CommonStruct.IsChargingCondition == false))
+            if (stopDockingFlag == false && CommonStruct.IsChargingCondition == false)
             {
                 SendComments("lookForPosition", "tablet");
             }
@@ -492,7 +495,7 @@ namespace RobotSideUWP
 
         private void RobotTurningTimer_Tick(object sender, object e)
         {
-            if ((receivedData.comments.Contains("stopDocking") == false) && (CommonStruct.IsChargingCondition == false))
+            if (stopDockingFlag == false  && CommonStruct.IsChargingCondition == false)
             {
                 SendComments("lookForPosition", "tablet");
             }
@@ -769,7 +772,13 @@ namespace RobotSideUWP
                     }
                     else if(receivedData.comments.Contains("autodocking"))
                     {//Auto Docking
+                        stopDockingFlag = false;
                         CommonStruct.ObstacleAvoidanceIs = false;
+                        autodockingLimitCounter++;
+                        if (autodockingLimitCounter > 50)
+                        {
+                            return;
+                        }
 
                         if (CommonStruct.IsChargingCondition == true)
                         {
@@ -818,6 +827,8 @@ namespace RobotSideUWP
                     }
                     else if (receivedData.comments.Contains("stopDocking"))
                     {
+                        stopDockingFlag = true;
+                        autodockingLimitCounter = 0;
                         CommonStruct.ObstacleAvoidanceIs = true;
                         if (receivedData.camera == "goDirect")
                         {
@@ -834,6 +845,7 @@ namespace RobotSideUWP
                                 GoDirect(speed);
                             }
                         }
+                        
                         return;
                     }
                     else if (receivedData.comments.Contains("stopTurning"))
