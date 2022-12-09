@@ -1079,6 +1079,7 @@ namespace RobotSideUWP
                     if ((arr[5] == "0") && (arr[4] == "0"))
                     {//Управление мышкой  
                         double speedRadius = CommonFunctions.SpeedRadius(arr[1], arr[2]);//
+                        if (speedRadius >= 100) speedRadius = 100;
                         speedLeft0 = speedRadius;
                         speedRight0 = speedRadius;
                         alpha = CommonFunctions.Degrees(arr[1], arr[2]);//
@@ -1187,8 +1188,8 @@ namespace RobotSideUWP
                             {//4 - Движение назад 
                                 directionLeft = backwardDirection;
                                 directionRight = backwardDirection;
-                                speedRight = speedRight0;
-                                speedLeft = speedLeft0;
+                                speedRight = 0.6 * speedRight0;
+                                speedLeft = 0.6 * speedLeft0;
                                 if ((firstEnterInRed == true) && (fromStopToStart == true) && (lastColorArea == "yellow"))
                                 {
                                     plcControl.WheelsStopSmoothly(200);
@@ -1247,8 +1248,9 @@ namespace RobotSideUWP
 
                         double turnSpeed = 0.5 * Math.Abs(xCoord);
                         double speedY = Math.Abs(yCoord);
-                        speedLeft0 = speedY;//скорость левого колеса
-                        speedRight0 = speedY;//скорость правого колеса
+                        //speedY;//скорость левого колеса
+                        //speedY;//скорость правого колеса
+                        if (speedY >= 100) speedY = 100;
 
                         switch (arr[5])
                         {//Управление клавишами
@@ -1262,8 +1264,8 @@ namespace RobotSideUWP
                             case "top":
                                 directionLeft = forwardDirection;
                                 directionRight = forwardDirection;
-                                speedRight = speedRight0;
-                                speedLeft = speedLeft0;
+                                speedRight = speedY;
+                                speedLeft = speedY;
                                 plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "right":
@@ -1276,24 +1278,24 @@ namespace RobotSideUWP
                             case "topAndLeft":
                                 directionLeft = forwardDirection;
                                 directionRight = forwardDirection;
-                                speedRight = speedRight0;
-                                speedLeft = speedRight0 - turnSpeed;
+                                speedRight = speedY;
+                                speedLeft = speedY - turnSpeed;
                                 if (speedLeft < 0) { speedLeft = 0; }
                                 plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "topAndRight":
                                 directionLeft = forwardDirection;
                                 directionRight = forwardDirection;
-                                speedRight = speedLeft0 - turnSpeed;
+                                speedRight = speedY - turnSpeed;
                                 if (speedRight < 0) { speedRight = 0; }
-                                speedLeft = speedLeft0;
+                                speedLeft = speedY;
                                 plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                             case "bottom":
                                 directionLeft = backwardDirection;
                                 directionRight = backwardDirection;
-                                speedRight = speedRight0;
-                                speedLeft = speedLeft0;
+                                speedRight = 0.8 * speedY;
+                                speedLeft = 0.8 * speedY;
                                 plcControl.Wheels(directionLeft, speedLeft, directionRight, speedRight);
                                 break;
                         }
@@ -1348,7 +1350,7 @@ namespace RobotSideUWP
                     }
                     else
                     {
-                        labelChargeLevel.Text = CommonStruct.voltageLevelFromRobot + "%";
+                        labelChargeLevel.Text = 0.01 * CommonStruct.dVoltageCorrected + " V";
                         double levelCeiling = Convert.ToDouble(CommonStruct.voltageLevelFromRobot);
                         if (levelCeiling > 40)
                         {

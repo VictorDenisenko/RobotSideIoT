@@ -145,7 +145,7 @@
             </Grid>
         </Popup>
         <CheckBox x:Name="checkBoxOnlyLocal" Content="OnlyLocal" Checked="checkBoxOnlyLocal_Checked" Unchecked="checkBoxOnlyLocal_Unchecked" Margin="590,537,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="labelChargeLevel" HorizontalAlignment="Left" Margin="750,340,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="50%" VerticalAlignment="Top" BorderThickness="0" IsReadOnly="True" Background="#FF06970C" Foreground="#FFFFFDFD" />
+        <TextBox x:Name="labelChargeLevel" HorizontalAlignment="Left" Margin="750,340,0,0" TextAlignment="Center" TextWrapping="Wrap" Text="" VerticalAlignment="Top" BorderThickness="0" IsReadOnly="True" Background="#FF06970C" Foreground="#FFFFFDFD" />
         <TextBlock x:Name="labelAccumulator" HorizontalAlignment="Left" Margin="859,344,0,0" TextWrapping="Wrap" Text="Battery" VerticalAlignment="Top" />
         <Button x:Name="buttonShutdown" Click="buttonShutdown_Click" Content="Shutdown" HorizontalAlignment="Left" Margin="750,512,0,0" VerticalAlignment="Top" Width="115"/>
         <Button x:Name="buttonRestart" Content="Restart" HorizontalAlignment="Left" Margin="889,512,0,0" VerticalAlignment="Top" Width="115" Click="buttonRestart_Click"/>

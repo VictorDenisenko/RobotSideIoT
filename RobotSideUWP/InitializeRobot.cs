@@ -46,7 +46,7 @@ namespace RobotSideUWP
 
             localContainer.Containers["settings"].Values["initTime"] = 240; //Время перезагрузки Виндовс, в минутах (60*Hours)
             localContainer.Containers["settings"].Values["VReal"] = 12.75;
-            localContainer.Containers["settings"].Values["deltaV"] = 100.0;//Чтобы при первом измерении не было ниже нормы. 
+            localContainer.Containers["settings"].Values["deltaV"] = 0;//Чтобы при первом измерении не было ниже нормы. 
             localContainer.Containers["settings"].Values["ObstacleAvoidanceIs"] = true;
         }
 

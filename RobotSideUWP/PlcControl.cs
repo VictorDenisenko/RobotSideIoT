@@ -27,7 +27,7 @@ namespace RobotSideUWP
 
             batteryMeasuringTimer = new DispatcherTimer();
             batteryMeasuringTimer.Tick += BatteryMeasuringTimer_Tick;
-            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 20, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
+            batteryMeasuringTimer.Interval = new TimeSpan(0, 0, 5, 0, 0); //Таймер для измерения напряжения в состоянии покоя робота
             batteryMeasuringTimer.Start();
 
             timerRobotOff.Tick += TimerRobotOff_Tick;//Этот таймер инициирует выгрузку Windows
@@ -491,7 +491,7 @@ namespace RobotSideUWP
                     averagedVoltage = "1220";// Here was 1200 and I think it is why robot tuned down after discharge and recharge
                     return "";
                 }
-                double dAveragedVoltage = Convert.ToDouble(averagedVoltage) + 75;//Добавляю падение на диоде
+                double dAveragedVoltage = Convert.ToDouble(averagedVoltage);//
                 CommonStruct.deltaV = Convert.ToDouble(MainPage.Current.localContainer.Containers["settings"].Values["deltaV"]);
                 CommonStruct.dVoltageCorrected = dAveragedVoltage + CommonStruct.deltaV;
 

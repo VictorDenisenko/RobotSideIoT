@@ -120,7 +120,7 @@ namespace RobotSideUWP
                 var selectedNetwork = ResultsListView.SelectedItem as WiFiNetworkDisplay;
                 if (selectedNetwork == null || firstAdapter == null)
                 {
-                    rootPage.NotifyUser("Network not selcted", NotifyType.ErrorMessage);
+                    rootPage.NotifyUser("Network not selected", NotifyType.ErrorMessage);
                     return;
                 }
                 WiFiReconnectionKind reconnectionKind = WiFiReconnectionKind.Manual;
